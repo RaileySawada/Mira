@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Mira — Your personal study space",
+  "short_name": "Mira",
+  "description": "Flashcards, reviewers, and daily quizzes. A little wiser, every day.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf9f6",
+  "theme_color": "#8d80b5",
+  "lang": "en",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (() => {
+        let preference = "system";
+        try {
+          preference =
+            JSON.parse(localStorage.getItem("mira.study.v1") || "{}").settings
+              ?.theme || "system";
+        } catch {}
+        const dark =
+          preference === "dark" ||
+          (preference !== "light" &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      })();
+    </script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="Mira is your personal study space. Create reviewers, practice flashcards, take daily quizzes, and track your progress. No account needed. Your learning stays on your device."
+    />
+    <meta name="application-name" content="Mira" />
+    <meta name="theme-color" content="#8d80b5" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Mira" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Mira" />
+    <meta property="og:title" content="Mira — A little wiser, every day" />
+    <meta
+      property="og:description"
+      content="A quiet space to learn, grow, and surprise yourself. Flashcards, quizzes, and progress tracking — private, local, and yours."
+    />
+    <meta property="og:image" content="/icon.png" />
+    <meta property="og:image:width" content="1254" />
+    <meta property="og:image:height" content="1254" />
+    <meta property="og:image:alt" content="Mira monogram and wordmark." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mira — A little wiser, every day" />
+    <meta
+      name="twitter:description"
+      content="Your personal study space. Create flashcards, test your knowledge, and grow at your own pace. No login required."
+    />
+    <meta name="twitter:image" content="/icon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Mira: A little wiser, every day</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript
+      >Mira needs JavaScript to run your local study library. Enable JavaScript
+      to get started.</noscript
+    >
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

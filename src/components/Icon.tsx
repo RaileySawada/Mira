@@ -1,0 +1,79 @@
+import type { CSSProperties } from "react";
+import {
+  Menu,
+  House,
+  BookOpen,
+  FolderOpen,
+  ClipboardCheck,
+  ChartNoAxesCombined,
+  Settings2,
+  Plus,
+  ArrowRight,
+  Search,
+  Flame,
+  Check,
+  X,
+  Download,
+  Sparkles,
+  Clock,
+  Sun,
+  Moon,
+  Monitor,
+  ShieldCheck,
+  FileText,
+  CircleHelp,
+  Info,
+  Upload,
+  Trash2,
+  Palette,
+  Target,
+  Laptop,
+  Heart,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+const icons: Record<string, LucideIcon> = {
+  menu: Menu,
+  Home: House,
+  Reviewers: BookOpen,
+  Topics: FolderOpen,
+  Quizzes: ClipboardCheck,
+  Activity: ChartNoAxesCombined,
+  Settings: Settings2,
+  plus: Plus,
+  arrow: ArrowRight,
+  search: Search,
+  flame: Flame,
+  check: Check,
+  close: X,
+  download: Download,
+  spark: Sparkles,
+  clock: Clock,
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
+  Privacy: ShieldCheck,
+  Terms: FileText,
+  Guide: CircleHelp,
+  About: Info,
+  upload: Upload,
+  trash: Trash2,
+  palette: Palette,
+  target: Target,
+  laptop: Laptop,
+  heart: Heart,
+};
+export function Icon({
+  name,
+  size = 20,
+  style,
+}: {
+  name: string;
+  size?: number;
+  style?: CSSProperties;
+}) {
+  const Glyph = icons[name] || BookOpen;
+  return (
+    <Glyph size={size} style={style} strokeWidth={1.7} aria-hidden="true" />
+  );
+}

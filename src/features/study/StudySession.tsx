@@ -1,0 +1,235 @@
+import { useState } from "react";
+import type { Attempt, Card } from "../../types/study";
+import { Modal } from "../../components/ui";
+import { normalizeAnswer } from "../../utils/stats";
+export interface Session {
+  title: string;
+  reviewerId: string;
+  mode: "cards" | "quiz" | "daily";
+  cards: Card[];
+}
+export function StudySession({
+  session,
+  onClose,
+  onComplete,
+}: {
+  session: Session;
+  onClose: () => void;
+  onComplete: (a: Attempt) => boolean;
+}) {
+  const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [answers, setAnswers] = useState<
+    { answer: string; correct: boolean }[]
+  >([]);
+  const [checked, setChecked] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const [attemptId] = useState(() => crypto.randomUUID());
+  const card = session.cards[index];
+  const score = answers.filter((a) => a.correct).length;
+  function close() {
+    if (
+      complete ||
+      session.mode === "cards" ||
+      confirm("Leave this quiz? Unfinished answers will not be saved.")
+    )
+      onClose();
+  }
+  function next() {
+    if (index === session.cards.length - 1) {
+      if (
+        onComplete({
+          id: attemptId,
+          reviewerId: session.reviewerId,
+          title: session.title,
+          date: new Date().toISOString(),
+          correct: score,
+          total: session.cards.length,
+          mode: session.mode === "daily" ? "daily" : "quiz",
+        })
+      )
+        setComplete(true);
+    } else {
+      setIndex(index + 1);
+      setAnswer("");
+      setChecked(false);
+    }
+  }
+  return (
+    <Modal title={session.title} onClose={close}>
+      {complete ? (
+        <div>
+          <div className="py-5 text-center">
+            <p className="text-4xl font-semibold">
+              {Math.round((score / session.cards.length) * 100)}%
+            </p>
+            <h3 className="mt-3 text-xl font-medium">Another step forward.</h3>
+            <p className="mt-2 text-sm text-stone-500">
+              {score} of {session.cards.length} correct. Your progress is saved.
+            </p>
+          </div>
+          <div className="mb-5 space-y-3">
+            {session.cards.map((c, i) => (
+              <div
+                key={i}
+                className={`rounded-xl border p-4 ${answers[i].correct ? "border-green-200 bg-green-50/50" : "border-orange-200 bg-orange-50/50"}`}
+              >
+                <p className="text-sm font-medium">{c.question}</p>
+                <p className="mt-2 whitespace-pre-wrap text-xs text-stone-500">
+                  Your answer: {answers[i].answer}
+                </p>
+                {!answers[i].correct && (
+                  <p className="mt-2 whitespace-pre-wrap text-xs text-stone-700">
+                    Expected: {c.answer}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          <button className="button primary w-full" onClick={onClose}>
+            Back to learning
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 flex justify-between text-xs text-stone-500">
+            <span>
+              {session.mode === "cards"
+                ? "FLASHCARD PRACTICE"
+                : session.mode === "daily"
+                  ? "DAILY REVIEW"
+                  : "WRITTEN QUIZ"}
+            </span>
+            <span>
+              {index + 1} / {session.cards.length}
+            </span>
+          </div>
+          <div className="mb-6 h-1 rounded bg-stone-200">
+            <div
+              className="h-full rounded bg-[#8d80b5]"
+              style={{
+                width: `${((index + 1) / session.cards.length) * 100}%`,
+              }}
+            />
+          </div>
+          {session.mode === "cards" ? (
+            <>
+              <button
+                className="flex min-h-64 w-full flex-col items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/50 p-8 text-center"
+                onClick={() => setFlipped(!flipped)}
+              >
+                <span className="eyebrow mb-6">
+                  {flipped ? "ANSWER" : "QUESTION"}
+                </span>
+                <span className="whitespace-pre-wrap text-xl leading-8">
+                  {flipped ? card.answer : card.question}
+                </span>
+                <span className="mt-8 text-xs text-stone-400">
+                  Click to {flipped ? "see question" : "reveal answer"}
+                </span>
+              </button>
+              <div className="mt-5 flex justify-between">
+                <button
+                  className="button secondary"
+                  disabled={index === 0}
+                  onClick={() => {
+                    setIndex(index - 1);
+                    setFlipped(false);
+                  }}
+                >
+                  Previous
+                </button>
+                <button
+                  className="button primary"
+                  onClick={() => {
+                    if (index === session.cards.length - 1) onClose();
+                    else {
+                      setIndex(index + 1);
+                      setFlipped(false);
+                    }
+                  }}
+                >
+                  {index === session.cards.length - 1
+                    ? "Finish practice"
+                    : "Next card"}
+                </button>
+              </div>
+              <p className="mt-5 text-center text-xs leading-5 text-stone-400">
+                Flashcards are for practice. Take a quiz to record your accuracy
+                and streak.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="mb-6 whitespace-pre-wrap text-xl leading-8">
+                {card.question}
+              </h3>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (checked) {
+                    next();
+                    return;
+                  }
+                  if (!answer.trim()) return;
+                  setAnswers([
+                    ...answers,
+                    {
+                      answer: answer.trim(),
+                      correct:
+                        normalizeAnswer(answer) ===
+                        normalizeAnswer(card.answer),
+                    },
+                  ]);
+                  setChecked(true);
+                }}
+              >
+                <label className="field">
+                  Your answer
+                  <textarea
+                    autoFocus
+                    rows={3}
+                    required
+                    disabled={checked}
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="Take a breath. You've got this."
+                  />
+                </label>
+                {checked && (
+                  <div
+                    className={`mt-4 rounded-xl p-4 text-sm ${answers[index].correct ? "bg-green-50 text-green-800" : "bg-orange-50 text-orange-800"}`}
+                  >
+                    <p className="font-medium">
+                      {answers[index].correct
+                        ? "That’s right. Nicely done!"
+                        : "A little more practice for this one."}
+                    </p>
+                    {!answers[index].correct && (
+                      <p className="mt-2 whitespace-pre-wrap">
+                        Expected answer: {card.answer}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <button className="button primary mt-5 w-full">
+                  {checked
+                    ? index === session.cards.length - 1
+                      ? "Finish & save results"
+                      : "Next question"
+                    : "Check answer"}
+                </button>
+              </form>
+              <p className="mt-4 text-xs leading-5 text-stone-400">
+                Answers match your saved definition, ignoring letter case and
+                extra spaces. Use short, specific answers for the fairest
+                results.
+              </p>
+            </>
+          )}
+        </>
+      )}
+    </Modal>
+  );
+}
