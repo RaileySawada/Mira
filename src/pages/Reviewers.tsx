@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Reviewer, StudyData } from "../types/study";
+import { SearchSelect } from "../components/SearchSelect";
 import { Icon } from "../components/Icon";
 import { EmptyState, PageHeading } from "../components/ui";
 export function Reviewers({
@@ -58,20 +59,20 @@ export function Reviewers({
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <select
-          className="input"
-          aria-label="Filter by topic"
+        <SearchSelect
+          label="Filter by topic"
+          className="w-full sm:w-56"
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-        >
-          <option value="all">All topics</option>
-          <option value="">Uncategorized</option>
-          {data.topics.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+          onChange={setTopic}
+          options={[
+            { value: "all", label: "All topics" },
+            { value: "", label: "Uncategorized" },
+            ...data.topics.map((topic) => ({
+              value: topic.id,
+              label: topic.name,
+            })),
+          ]}
+        />
       </div>
       {reviewers.length ? (
         <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">

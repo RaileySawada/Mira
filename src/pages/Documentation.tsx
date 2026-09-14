@@ -3,7 +3,7 @@ import { PageHeading } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { RouteLink } from "../components/RouteLink";
 
-type DocumentPage = "Guide" | "Terms" | "Privacy" | "About";
+type DocumentPage = "Guide" | "Terms" | "Privacy" | "About" | "Contribute";
 const documents: Record<
   DocumentPage,
   {
@@ -20,7 +20,7 @@ const documents: Record<
     sections: [
       {
         title: "01 · Build your first reviewer",
-        text: "Create a topic to organize your library, then choose New reviewer. Add a title and question-and-answer cards. Use short, specific answers if you plan to take written quizzes. You can edit or delete reviewers any time.",
+        text: "Create a topic to organize your library, then choose New reviewer. You can also create a new topic directly in the reviewer form; it saves together with your reviewer. Add a title and question-and-answer cards. Use short, specific answers if you plan to take written quizzes. You can edit or delete reviewers any time.",
       },
       {
         title: "02 · Practice, then test yourself",
@@ -106,6 +106,30 @@ const documents: Record<
       },
     ],
   },
+  Contribute: {
+    eyebrow: "LET’S MAKE IT BETTER, TOGETHER",
+    title: "A little help makes a big difference.",
+    intro:
+      "Mira is open source. There’s room here for your ideas, care, and curiosity.",
+    sections: [
+      {
+        title: "Everyone has something to offer",
+        text: "You can contribute code, report bugs, improve documentation, test accessibility, or suggest a more thoughtful study experience. You don’t need to be an experienced developer to help.",
+      },
+      {
+        title: "Start with a conversation",
+        text: "Check existing GitHub issues before reporting a bug or proposing a feature. Describe the problem, include steps to reproduce it, and use fictional study content in examples. Never share private backups.",
+      },
+      {
+        title: "Make a focused change",
+        text: "Fork the repository, create a branch, and follow the contribution guide. Keep the current React and TypeScript structure, protect existing local data, and test your changes on desktop and mobile.",
+      },
+      {
+        title: "Share your work",
+        text: "Open a pull request with a short explanation, relevant screenshots, and your test results. Contributions are shared under Mira’s MIT License. Be kind in reviews and leave space for others to learn.",
+      },
+    ],
+  },
   About: {
     eyebrow: "MADE WITH A LITTLE CARE",
     title: "A quieter kind of study app.",
@@ -149,23 +173,53 @@ export function Documentation({ page }: { page: Page }) {
         title={document.title}
         description={document.intro}
       />
+      {page === "Contribute" && (
+        <div className="mb-7 flex flex-wrap gap-3">
+          <a
+            className="button primary"
+            href="https://github.com/RaileySawada/Mira"
+            target="_blank"
+            rel="noreferrer"
+          >
+            View repository
+          </a>
+          <a
+            className="button secondary"
+            href="https://github.com/RaileySawada/Mira/issues"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Report an issue
+          </a>
+          <a
+            className="button secondary"
+            href="https://github.com/RaileySawada/Mira/blob/HEAD/CONTRIBUTING.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Contribution guide
+          </a>
+        </div>
+      )}
       <div className="grid gap-8 xl:grid-cols-[210px_1fr]">
         <nav className="space-y-2" aria-label="Documentation">
-          {(["Guide", "Privacy", "Terms", "About"] as const).map((item) => (
-            <RouteLink
-              key={item}
-              page={item}
-              aria-current={page === item ? "page" : undefined}
-              className={`nav-item ${page === item ? "active" : ""}`}
-            >
-              <Icon name={item} size={18} />
-              {item === "Terms"
-                ? "Terms & conditions"
-                : item === "Guide"
-                  ? "Study guide"
-                  : item}
-            </RouteLink>
-          ))}
+          {(["Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
+            (item) => (
+              <RouteLink
+                key={item}
+                page={item}
+                aria-current={page === item ? "page" : undefined}
+                className={`nav-item ${page === item ? "active" : ""}`}
+              >
+                <Icon name={item} size={18} />
+                {item === "Terms"
+                  ? "Terms & conditions"
+                  : item === "Guide"
+                    ? "Study guide"
+                    : item}
+              </RouteLink>
+            ),
+          )}
         </nav>
         <article className="panel max-w-3xl divide-y divide-stone-200 px-6 sm:px-9">
           {document.sections.map((section) => (

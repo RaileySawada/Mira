@@ -71,7 +71,7 @@ export default function App() {
       <Sidebar page={page} />
       <div className="lg:ml-60">
         <MobileHeader page={page} />
-        <header className="hidden min-h-19 items-center justify-between border-b border-line px-9 lg:flex">
+        <header className="hidden min-h-12 items-center justify-between border-b border-line px-9 lg:flex">
           <div className="flex items-center gap-2 text-xs text-stone-400">
             <span>Your workspace</span>
             <span>/</span>
@@ -154,13 +154,20 @@ export default function App() {
           {page === "Settings" && (
             <Settings data={data} update={update} onThemeChange={changeTheme} />
           )}
-          {["Guide", "Privacy", "Terms", "About", "Not found"].includes(
-            page,
-          ) && <Documentation page={page} />}
+          {[
+            "Guide",
+            "Contribute",
+            "Privacy",
+            "Terms",
+            "About",
+            "Not found",
+          ].includes(page) && <Documentation page={page} />}
           <footer className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
             <span>A little wiser, every day.</span>
             <nav className="flex flex-wrap gap-4" aria-label="Footer">
-              {(["Guide", "Privacy", "Terms", "About"] as const).map((item) => (
+              {(
+                ["Guide", "Contribute", "Privacy", "Terms", "About"] as const
+              ).map((item) => (
                 <RouteLink
                   key={item}
                   page={item}

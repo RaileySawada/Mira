@@ -1,7 +1,9 @@
+import { lazy, Suspense } from "react";
 import type { Page, Reviewer, StudyData } from "../types/study";
-import { dayKey, percentage, streak, weekActivity } from "../utils/stats";
-import { Icon } from "../components/Icon";
+import { dayKey, percentage, streak } from "../utils/stats";
 import { EmptyState, PageHeading } from "../components/ui";
+
+const StudyCharts = lazy(() => import("../components/StudyCharts"));
 
 export function Home({
   data,
@@ -22,12 +24,6 @@ export function Home({
   const studied = today.reduce((n, a) => n + a.total, 0);
   const accuracy = percentage(data.attempts);
   const currentStreak = streak(data.attempts);
-  const week = weekActivity(data.attempts);
-  const maximum = Math.max(
-    data.settings.dailyGoal,
-    ...week.map((d) => d.total),
-    1,
-  );
   const cards = data.reviewers.reduce((n, r) => n + r.cards.length, 0);
   const dailyDone = today.some((a) => a.mode === "daily");
   const stats = [
@@ -61,7 +57,7 @@ export function Home({
         description="Make room for a little learning. Your future self will thank you."
         action={
           <button className="button primary" onClick={onCreate}>
-            <Icon name="plus" size={17} /> New reviewer
+            New reviewer
           </button>
         }
       />
@@ -93,7 +89,6 @@ export function Home({
                 ? "Practice again"
                 : "Start daily review"
               : "Explore reviewers"}
-            <Icon name="arrow" size={16} />
           </button>
           {cards === 0 && (
             <p className="mt-3 text-xs text-stone-500">
@@ -102,11 +97,10 @@ export function Home({
           )}
         </div>
         <div className="book-art" aria-hidden="true">
-          <span className="art-spark">✧</span>
           <div className="book book-back" />
           <div className="book book-front">
             <span>MIRA</span>
-            <div className="book-flower">✳</div>
+
             <small>
               a little wiser
               <br />
@@ -129,89 +123,9 @@ export function Home({
           </div>
         ))}
       </div>
-      <div className="mb-8 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
-        <section className="panel p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="section-title">Your learning rhythm</h2>
-              <p className="mt-1 text-xs text-stone-500">
-                Questions answered over the last 7 days
-              </p>
-            </div>
-            <span className="badge">This week</span>
-          </div>
-          <div
-            className="mt-6 flex h-40 gap-3"
-            role="img"
-            aria-label={week
-              .map((d) => `${d.label}: ${d.total} questions`)
-              .join(", ")}
-          >
-            <div className="flex flex-col justify-between pb-6 text-[10px] text-stone-400">
-              <span>{maximum}</span>
-              <span>{Math.round(maximum / 2)}</span>
-              <span>0</span>
-            </div>
-            <div className="chart-grid flex flex-1 items-end justify-around gap-3">
-              {week.map((day, i) => (
-                <div
-                  key={i}
-                  className="flex h-full flex-1 flex-col items-center justify-end gap-2"
-                >
-                  <div
-                    className={`chart-bar ${i === 6 ? "bg-[#8d80b5]" : "bg-[#dfd9ec]"}`}
-                    style={{
-                      height: `${Math.max(2, (day.total / maximum) * 115)}px`,
-                    }}
-                    title={`${day.total} questions`}
-                  />
-                  <span className="text-[10px] text-stone-400">
-                    {day.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="panel p-6">
-          <h2 className="section-title">A little more knowledgeable</h2>
-          <p className="mt-1 text-xs text-stone-500">
-            Your all-time quiz performance
-          </p>
-          <div className="mt-6 flex items-center justify-around gap-5">
-            <div
-              className="donut"
-              style={{
-                background: `conic-gradient(#8d80b5 ${accuracy}%, var(--chart-track) 0)`,
-              }}
-              role="img"
-              aria-label={`${accuracy}% correct answers`}
-            >
-              <div>
-                <strong className="text-3xl font-semibold">
-                  {data.attempts.length ? `${accuracy}%` : "—"}
-                </strong>
-                <span className="mt-1 text-[10px] text-stone-500">
-                  accuracy
-                </span>
-              </div>
-            </div>
-            <div className="space-y-4 text-xs">
-              <p className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#8d80b5]" />
-                Correct answers
-              </p>
-              <p className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#e7e3ed]" />
-                Room to grow
-              </p>
-              <p className="max-w-32 leading-5 text-stone-400">
-                A guide to your progress, not a measure of your potential.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
+      <Suspense fallback={<div className="mb-8 h-72" role="status">Loading charts…</div>}>
+        <StudyCharts attempts={data.attempts} />
+      </Suspense>
       <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
         <section>
           <div className="mb-4 flex items-center justify-between">
@@ -220,7 +134,7 @@ export function Home({
               className="text-button"
               onClick={() => navigate("Reviewers")}
             >
-              View all <Icon name="arrow" size={14} />
+              View all
             </button>
           </div>
           {data.reviewers.length === 0 ? (
@@ -229,7 +143,7 @@ export function Home({
               description="Create a reviewer with your own notes and flashcards. All your learning stays right here, on your device."
               action={
                 <button className="button secondary" onClick={onCreate}>
-                  <Icon name="plus" size={15} /> Create a reviewer
+                  Create a reviewer
                 </button>
               }
             />
@@ -255,7 +169,6 @@ export function Home({
                         {reviewer.cards.length === 1 ? "" : "s"}
                       </p>
                     </div>
-                    <Icon name="arrow" size={16} />
                   </button>
                 ))}
             </div>
@@ -292,7 +205,7 @@ export function Home({
             <br />
             You just have to keep going.”
             <span className="mt-2 block text-[10px] not-italic tracking-widest text-stone-400">
-              A REMINDER FROM MIRA ♡
+              A REMINDER FROM MIRA
             </span>
           </div>
         </section>

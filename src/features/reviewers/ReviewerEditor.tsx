@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Card, Reviewer, Topic } from "../../types/study";
+import { SearchSelect } from "../../components/SearchSelect";
 import { Icon } from "../../components/Icon";
 import { Modal } from "../../components/ui";
 export function ReviewerEditor({
@@ -13,6 +14,7 @@ export function ReviewerEditor({
   onSave: (reviewer: Reviewer, topic?: Topic) => boolean;
   onClose: () => void;
 }) {
+  const formId = useId();
   const [title, setTitle] = useState(reviewer?.title || "");
   const [description, setDescription] = useState(reviewer?.description || "");
   const [topicId, setTopicId] = useState(reviewer?.topicId || "");
@@ -31,8 +33,19 @@ export function ReviewerEditor({
     <Modal
       title={reviewer ? "Edit reviewer" : "Start a new chapter"}
       onClose={onClose}
+      footer={
+        <div className="flex justify-end gap-3">
+          <button type="button" className="button secondary" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="submit" form={formId} className="button primary">
+            Save reviewer
+          </button>
+        </div>
+      }
     >
       <form
+        id={formId}
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
@@ -101,21 +114,22 @@ export function ReviewerEditor({
             rows={2}
           />
         </label>
-        <label className="field">
-          Topic
-          <select
+        <div className="field">
+          <span>Topic</span>
+          <SearchSelect
+            label="Topic"
             disabled={addingTopic}
             value={topicId}
-            onChange={(e) => setTopicId(e.target.value)}
-          >
-            <option value="">Uncategorized</option>
-            {topics.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setTopicId}
+            options={[
+              { value: "", label: "Uncategorized" },
+              ...topics.map((topic) => ({
+                value: topic.id,
+                label: topic.name,
+              })),
+            ]}
+          />
+        </div>
         <button
           type="button"
           className="text-button"
@@ -157,7 +171,9 @@ export function ReviewerEditor({
         )}
         <div className="flex items-center justify-between">
           <h3 className="font-medium">Flashcards</h3>
-          <span className="text-xs text-stone-400">{cards.length} cards</span>
+          <span className="text-xs text-stone-400">
+            {cards.length} card{cards.length === 1 ? "" : "s"}
+          </span>
         </div>
         {cards.map((c, i) => (
           <div className="panel space-y-3 p-4" key={c.id}>
@@ -212,12 +228,6 @@ export function ReviewerEditor({
         >
           <Icon name="plus" size={16} /> Add a flashcard
         </button>
-        <div className="flex justify-end gap-3">
-          <button type="button" className="button secondary" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="button primary">Save reviewer</button>
-        </div>
       </form>
     </Modal>
   );

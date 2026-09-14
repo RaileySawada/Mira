@@ -12,6 +12,7 @@ export const routes: Record<Page, string> = {
   Terms: "/terms",
   Privacy: "/privacy",
   About: "/about",
+  Contribute: "/contribute",
   "Not found": "/not-found",
 };
 function readPage(): Page {

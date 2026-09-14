@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useScrollLock } from "../hooks/useScrollLock";
 import type { Page } from "../types/study";
 import { RouteLink } from "./RouteLink";
 import { Icon } from "./Icon";
@@ -22,13 +23,10 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
       <img
         src="/icon.png"
         alt=""
-        width={44}
-        height={44}
-        className="brand-image h-11 w-11 object-contain"
+        width={48}
+        height={48}
+        className="brand-image h-12 w-12 object-contain"
       />
-      <span className="text-3xl font-semibold tracking-[-1.5px]">
-        mira<span className="text-[#9b8ab8]">.</span>
-      </span>
     </RouteLink>
   );
 }
@@ -65,7 +63,7 @@ function NavigationLinks({
 export function Sidebar({ page }: { page: Page }) {
   return (
     <aside className="sidebar">
-      <div className="mb-10 px-3">
+      <div className="mb-6 px-3">
         <Brand />
       </div>
       <NavigationLinks page={page} />
@@ -97,10 +95,10 @@ export function MobileHeader({ page }: { page: Page }) {
   return (
     <>
       <header className="mobile-header lg:hidden">
-        <div>
+        <div className="flex items-center gap-3">
           <Brand />
-          <p className="ml-14 mt-0.5 text-[10px] tracking-wide text-stone-400">
-            {page} · A little wiser, every day
+          <p className="mt-1 text-[10px] tracking-wide text-stone-400">
+            {page}
           </p>
         </div>
         <button
@@ -123,12 +121,11 @@ export function MobileHeader({ page }: { page: Page }) {
   );
 }
 function MobileDrawer({ page, onClose }: { page: Page; onClose: () => void }) {
+  useScrollLock();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const desktop = matchMedia("(min-width: 1024px)");
     const resized = () => {
       if (desktop.matches) onClose();
@@ -137,7 +134,6 @@ function MobileDrawer({ page, onClose }: { page: Page; onClose: () => void }) {
     window.addEventListener("popstate", onClose);
     return () => {
       dialog?.close();
-      document.body.style.overflow = overflow;
       desktop.removeEventListener("change", resized);
       window.removeEventListener("popstate", onClose);
     };
@@ -189,11 +185,13 @@ function MobileDrawer({ page, onClose }: { page: Page; onClose: () => void }) {
           aria-label="Menu documentation"
           className="mt-5 flex flex-wrap gap-4 px-1 text-[11px] text-stone-500"
         >
-          {(["Guide", "Privacy", "Terms", "About"] as const).map((item) => (
-            <RouteLink key={item} page={item} onClick={onClose}>
-              {item}
-            </RouteLink>
-          ))}
+          {(["Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
+            (item) => (
+              <RouteLink key={item} page={item} onClick={onClose}>
+                {item}
+              </RouteLink>
+            ),
+          )}
         </nav>
       </div>
     </dialog>

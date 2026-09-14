@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import { useScrollLock } from "../hooks/useScrollLock";
 import { Icon } from "./Icon";
 export function PageHeading({
   eyebrow,
@@ -47,21 +48,21 @@ export function EmptyState({
 export function Modal({
   title,
   children,
+  footer,
   onClose,
 }: {
   title: string;
   children: ReactNode;
+  footer?: ReactNode;
   onClose: () => void;
 }) {
+  useScrollLock();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
       dialog?.close();
-      document.body.style.overflow = overflow;
     };
   }, []);
   return (
@@ -85,6 +86,11 @@ export function Modal({
         </button>
       </div>
       <div className="modal-content p-6">{children}</div>
+      {footer && (
+        <div className="shrink-0 border-t border-line bg-page px-6 py-4">
+          {footer}
+        </div>
+      )}
     </dialog>
   );
 }

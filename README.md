@@ -50,25 +50,17 @@ src/
 npm run lint
 npm run build
 npm run preview
-node --test tests/study.test.mjs
+npm test
 ```
 
 PWA caching is enabled only in production. Serve the generated `dist` directory at the domain root over HTTPS (localhost also works). Open it online once, allow the service worker to install, then test offline. A new release becomes active after old app tabs are closed.
 
-Before publishing, set `og:url` and a canonical URL in `index.html`, and change the social image metadata to the absolute URL of `/social-card.png` on your deployment. No domain is assumed in the source.
+Before publishing, set `og:url` and a canonical URL in `index.html`, and change the social image metadata to the absolute URL of `/icon.png` on your deployment. No domain is assumed in the source.
 
 ## License
 
 MIT. See [LICENSE](LICENSE).
 
-
-### Browser smoke test
-
-With the production preview running, execute `node tests/browser-smoke.mjs`.
-It uses an isolated headless Chrome profile and checks the main study flows,
-backup imports, responsive layout, persistence, and offline reload. It defaults
-to Chrome on Windows; set `CHROME_PATH` for another installation. Screenshots
-are written to the temporary profile directory printed by the test.
 
 ## Appearance, navigation, and documentation
 
@@ -86,3 +78,33 @@ for app paths. public/_redirects includes this fallback for compatible hosts;
 configure an equivalent SPA rewrite on other hosting services.
 
 In-app documentation is available at /guide, /privacy, /terms, and /about.
+
+
+## Topics and branding
+
+Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, while the existing localStorage key stays unchanged. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
+
+The mobile header opens a keyboard-accessible navigation drawer. The supplied public/icon.png and public/favicon.png power app branding, install icons, and social metadata.
+
+## Contributing
+
+Contributions are welcome: bug reports, documentation, accessibility, design, and code. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. The app also includes a /contribute page with links to this repository and its issues.
+
+## Testing with Jest
+
+All automated tests run through Jest. React Testing Library exercises the UI using accessible labels and user interactions.
+
+| Command | Purpose |
+| --- | --- |
+| `npm test` | Run application logic, hooks, components, and page tests |
+| `npm run test:watch` | Rerun affected tests while developing |
+| `npm run test:types` | Type-check the TypeScript tests |
+| `npm run test:coverage` | Enforce coverage and write an HTML report to coverage/lcov-report/index.html |
+| `npm run test:browser` | Build, start an isolated preview, and run the Chrome test through Jest |
+| `npm run test:all` | Run type checks, coverage, and production browser checks |
+
+The suite covers storage validation and migrations, failures and recovery, statistics, navigation, theme changes, scroll locking, every page and reusable component, reviewer/topic editing, quizzes, JSON import/export, and PWA registration. Coverage includes all runtime files under src; type-only interfaces are excluded. Required coverage is 100% functions and lines, 99% statements, and 95% branches.
+
+Jest uses Babel only for test compilation and a small adapter for Vite's import.meta.env.PROD flag. The separate TypeScript check validates types; production still builds with Vite.
+
+The browser suite needs Chrome. Set CHROME_PATH if it is not at the default Windows installation path. It starts its own preview on port 4179 and uses an isolated browser profile. Screenshots go to the temporary directory printed by the test. Browser checks verify real layout, keyboard/focus behavior, theme transitions, and offline reload; jsdom tests do not claim to verify browser rendering or service-worker caching.

@@ -51,5 +51,6 @@ export type Page =
   | "Guide"
   | "Terms"
   | "Privacy"
+  | "Contribute"
   | "About"
   | "Not found";

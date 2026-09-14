@@ -534,3 +534,58 @@ body {
     animation: none;
   }
 }
+
+.search-select {
+  min-width: 0;
+  position: relative;
+}
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid var(--color-stone-200);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--surface);
+  color: var(--color-stone-700);
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+}
+.select-panel {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px #0000000c;
+}
+.select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: var(--color-stone-600);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+}
+.select-option:hover,
+.select-option.is-active {
+  background: var(--soft);
+  color: var(--accent-ink);
+}
+
+/* Shared shadcn chart tokens follow the existing theme. */
+@theme inline {
+  --color-muted-foreground: var(--color-stone-500);
+  --color-border: var(--color-line);
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --color-muted: var(--color-soft);
+}
+.mobile-header { padding: 6px 20px; min-height: 60px; }
+[data-slot="chart"] { min-width: 0; }
