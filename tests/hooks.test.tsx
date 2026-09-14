@@ -31,7 +31,7 @@ describe("useStudyData", () => {
     act(() => expect(result.current.update(library())).toBe(false));
     expect(result.current.data.reviewers).toHaveLength(0);
     expect(result.current.error).toMatch(/could not be saved/);
-    expect(alert).toHaveBeenCalled();
+    expect(alert).not.toHaveBeenCalled();
   });
 });
 describe("routing and scroll locking", () => {

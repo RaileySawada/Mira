@@ -33,14 +33,9 @@ export function Reviewers({
         eyebrow="YOUR PERSONAL LIBRARY"
         title="Room for every little discovery."
         description="Collect your knowledge. Find your rhythm. Make it stick."
-        action={
-          <button className="button primary" onClick={onCreate}>
-            <Icon name="plus" size={16} /> New reviewer
-          </button>
-        }
       />
-      <div className="mb-6 flex flex-wrap gap-3">
-        <label className="relative min-w-52 flex-1">
+      <div className="reviewer-toolbar mb-6 flex items-start gap-2 sm:gap-3">
+        <label className="relative min-w-0 flex-1">
           <Icon
             name="search"
             style={{
@@ -61,7 +56,7 @@ export function Reviewers({
         </label>
         <SearchSelect
           label="Filter by topic"
-          className="w-full sm:w-56"
+          className="toolbar-filter w-[38%] max-w-56 shrink-0"
           value={topic}
           onChange={setTopic}
           options={[
@@ -73,6 +68,9 @@ export function Reviewers({
             })),
           ]}
         />
+        <button className="button primary toolbar-create" onClick={onCreate} aria-label="New reviewer">
+          <Icon name="plus" size={16} /><span className="hidden sm:inline">New reviewer</span>
+        </button>
       </div>
       {reviewers.length ? (
         <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">

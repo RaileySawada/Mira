@@ -8,12 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand && npm run test:server",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --runInBand --coverage",
+    "test:coverage": "jest --runInBand --coverage && npm run test:server -- --coverage",
     "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:browser": "npm run build && jest --config jest.browser.config.cjs --runInBand",
-    "test:all": "npm run test:types && npm run test:coverage && npm run test:browser"
+    "test:all": "npm run test:types && npm run test:coverage && npm run test:browser",
+    "test:server": "jest --config jest.server.config.cjs --runInBand"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

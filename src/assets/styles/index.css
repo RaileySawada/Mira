@@ -589,3 +589,22 @@ body {
 }
 .mobile-header { padding: 6px 20px; min-height: 60px; }
 [data-slot="chart"] { min-width: 0; }
+
+.reviewer-toolbar .input, .reviewer-toolbar .select-trigger, .toolbar-create { min-height: 42px; }
+.toolbar-create { flex-shrink: 0; padding-inline: 12px; }
+.toolbar-filter .select-panel { position: absolute; right: 0; z-index: 20; width: min(260px, calc(100vw - 104px)); }
+.documentation-tabs { display: flex; gap: 6px; overflow-x: auto; overflow-y: hidden; padding: 4px 2px 8px; scrollbar-width: thin; }
+.documentation-tabs .nav-item { flex: 0 0 auto; white-space: nowrap; padding: 10px 12px; font-size: 12px; }
+@media (min-width: 1280px) {
+  .documentation-tabs { display: block; overflow: visible; padding: 0; }
+  .documentation-tabs .nav-item { margin-bottom: 8px; }
+}
+button { transition: background-color 160ms, color 160ms, transform 120ms; }
+button:active:not(:disabled) { transform: scale(.97); }
+.process-button[data-state="success"] { background: #15803d; border-color: #15803d; color: white; opacity: 1; }
+.process-button[data-state="success"] svg { animation: action-check 180ms ease-out; }
+@keyframes action-check { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  button, .process-button svg { animation: none !important; transition: none; }
+  button:active:not(:disabled) { transform: none; }
+}

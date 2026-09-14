@@ -1,3 +1,5 @@
+import { useActionFeedback } from "../../hooks/useActionFeedback";
+import { ProcessButton } from "../../components/ProcessButton";
 import { useId, useState } from "react";
 import type { Card, Reviewer, Topic } from "../../types/study";
 import { SearchSelect } from "../../components/SearchSelect";
@@ -15,6 +17,7 @@ export function ReviewerEditor({
   onClose: () => void;
 }) {
   const formId = useId();
+  const save = useActionFeedback();
   const [title, setTitle] = useState(reviewer?.title || "");
   const [description, setDescription] = useState(reviewer?.description || "");
   const [topicId, setTopicId] = useState(reviewer?.topicId || "");
@@ -38,9 +41,7 @@ export function ReviewerEditor({
           <button type="button" className="button secondary" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" form={formId} className="button primary">
-            Save reviewer
-          </button>
+          <ProcessButton type="submit" form={formId} label="Save reviewer" state={save.state} successLabel="Saved" />
         </div>
       }
     >
@@ -73,8 +74,7 @@ export function ReviewerEditor({
               selectedTopicId = newTopic.id;
             }
           }
-          if (
-            onSave(
+          void save.run(() => onSave(
               {
                 id: reviewer?.id || crypto.randomUUID(),
                 title: title.trim(),
@@ -88,11 +88,10 @@ export function ReviewerEditor({
                 updatedAt: new Date().toISOString(),
               },
               newTopic,
-            )
-          )
-            onClose();
+            ), onClose);
         }}
       >
+        {save.error && <p role="alert" className="text-sm text-red-600">{save.error}</p>}
         <label className="field">
           Reviewer title
           <input

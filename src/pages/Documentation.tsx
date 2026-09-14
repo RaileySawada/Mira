@@ -40,7 +40,7 @@ const documents: Record<
       },
       {
         title: "06 · Install and study offline",
-        text: "Use your browser’s Install app or Add to Home Screen option. On iPhone, use Safari’s Share menu. Open the production app online once before studying offline. If offline setup reports an error, reconnect and reload. After an app update, close old Mira tabs and reopen.",
+        text: "Use your browser’s Install app or Add to Home Screen option. On iPhone, use Safari’s Share menu. Open the production app online once and allow offline setup to finish before disconnecting. Saved reviewers, quizzes, settings, and charts work offline; AI requires an internet connection and its controls are hidden offline. If offline setup reports an error, reconnect and reload. After an app update, close old Mira tabs and reopen.",
       },
       {
         title: "07 · If something feels off",
@@ -55,7 +55,7 @@ const documents: Record<
     sections: [
       {
         title: "What stays on your device",
-        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. The app does not send this study content to a Mira server and does not require an account.",
+        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no account is required. Optional AI requests send only the topic, notes, or question you explicitly submit to our Netlify function and then Pollinations. AI replies stay in memory until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
       },
       {
         title: "Storage and offline files",
@@ -98,7 +98,7 @@ const documents: Record<
       },
       {
         title: "Open-source software",
-        text: "Mira’s source code is released under the MIT License. You may use, copy, modify, and distribute it topic to that license, including retaining its copyright and permission notice. Third-party dependencies retain their respective licenses.",
+        text: "Mira’s source code is released under the MIT License. You may use, copy, modify, and distribute it subject to that license, including retaining its copyright and permission notice. Third-party dependencies retain their respective licenses.",
       },
       {
         title: "No warranty",
@@ -146,7 +146,7 @@ const documents: Record<
       },
       {
         title: "Built to be made your own",
-        text: "Mira uses React, TypeScript, Tailwind CSS, Vite, and Lucide icons. Its source is MIT licensed. The repository README explains the structure, development commands, and deployment setup; the LICENSE file contains the full license.",
+        text: "Mira uses React, TypeScript, Tailwind CSS, Vite, shadcn charts, Recharts, and Lucide icons. Its source is MIT licensed. The repository README explains the structure, development commands, and deployment setup; the LICENSE file contains the full license.",
       },
     ],
   },
@@ -202,7 +202,7 @@ export function Documentation({ page }: { page: Page }) {
         </div>
       )}
       <div className="grid gap-8 xl:grid-cols-[210px_1fr]">
-        <nav className="space-y-2" aria-label="Documentation">
+        <nav className="documentation-tabs" aria-label="Documentation">
           {(["Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
             (item) => (
               <RouteLink

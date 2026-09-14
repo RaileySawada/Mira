@@ -2,6 +2,7 @@ module.exports = {
   testEnvironment: "jsdom",
   testEnvironmentOptions: { url: "http://localhost/" },
   testMatch: ["<rootDir>/tests/**/*.test.ts", "<rootDir>/tests/**/*.test.tsx"],
+  testPathIgnorePatterns: ["/node_modules/", "/tests/server/"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   transform: { "^.+\\.[tj]sx?$": "<rootDir>/tests/transform.cjs" },
   moduleNameMapper: { "\\.(css|svg|png)$": "<rootDir>/tests/assetMock.cjs" },

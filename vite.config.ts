@@ -4,6 +4,7 @@ import type { Plugin } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 // Generate the offline asset list from the build so each release has its own cache.
 function offlinePlugin(): Plugin {
@@ -57,5 +58,6 @@ self.addEventListener("fetch", event => {
   };
 }
 export default defineConfig({
+  resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [react(), tailwindcss(), offlinePlugin()],
 });

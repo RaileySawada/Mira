@@ -1,3 +1,5 @@
+import { ProcessButton } from "../../components/ProcessButton";
+import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { useState } from "react";
 import type { Attempt, Card } from "../../types/study";
 import { Modal } from "../../components/ui";
@@ -17,6 +19,7 @@ export function StudySession({
   onClose: () => void;
   onComplete: (a: Attempt) => boolean;
 }) {
+  const save = useActionFeedback();
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -30,7 +33,7 @@ export function StudySession({
   const score = answers.filter((a) => a.correct).length;
   function close() {
     if (
-      complete ||
+      complete || save.state === "success" ||
       session.mode === "cards" ||
       confirm("Leave this quiz? Unfinished answers will not be saved.")
     )
@@ -38,8 +41,7 @@ export function StudySession({
   }
   function next() {
     if (index === session.cards.length - 1) {
-      if (
-        onComplete({
+      void save.run(() => onComplete({
           id: attemptId,
           reviewerId: session.reviewerId,
           title: session.title,
@@ -47,9 +49,7 @@ export function StudySession({
           correct: score,
           total: session.cards.length,
           mode: session.mode === "daily" ? "daily" : "quiz",
-        })
-      )
-        setComplete(true);
+        }), () => setComplete(true));
     } else {
       setIndex(index + 1);
       setAnswer("");
@@ -213,13 +213,14 @@ export function StudySession({
                     )}
                   </div>
                 )}
-                <button className="button primary mt-5 w-full">
+                {save.error && <p role="alert" className="mt-4 text-sm text-red-600">{save.error}</p>}
+                <ProcessButton className="button primary mt-5 w-full" state={save.state} successLabel="Saved" label={checked ? index === session.cards.length - 1 ? "Finish & save results" : "Next question" : "Check answer"}>
                   {checked
                     ? index === session.cards.length - 1
                       ? "Finish & save results"
                       : "Next question"
                     : "Check answer"}
-                </button>
+                </ProcessButton>
               </form>
               <p className="mt-4 text-xs leading-5 text-stone-400">
                 Answers match your saved definition, ignoring letter case and

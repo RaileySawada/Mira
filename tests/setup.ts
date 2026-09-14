@@ -88,3 +88,17 @@ afterEach(() => {
   cleanup();
   jest.useRealTimers();
 });
+
+// jsdom has no layout engine; give responsive charts a stable viewport.
+const originalBounds = Element.prototype.getBoundingClientRect;
+Element.prototype.getBoundingClientRect = function () {
+  if (this.classList.contains("recharts-responsive-container"))
+    return { x: 0, y: 0, top: 0, left: 0, bottom: 200, right: 320, width: 320, height: 200, toJSON: () => ({}) };
+  return originalBounds.call(this);
+};
+class TestResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(globalThis, "ResizeObserver", { configurable: true, value: TestResizeObserver });

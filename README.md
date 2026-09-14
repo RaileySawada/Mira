@@ -1,6 +1,6 @@
 # Mira
 
-A little wiser, every day. A local-first study app built with React, TypeScript, Vite, and Tailwind CSS. No account, backend, or external analytics.
+A little wiser, every day. A local-first study app built with React, TypeScript, Vite, and Tailwind CSS. No account or external analytics. Core studying works offline; optional AI assistance uses a Netlify function.
 
 ## Getting started
 
@@ -34,6 +34,7 @@ A streak counts consecutive local-calendar days with completed quizzes, includin
 src/
   app/                  Application shell and navigation
   components/           Shared UI and icons
+  features/ai/          Online tutor and batch generation
   features/reviewers/   Reviewer editor
   features/study/       Flashcards and quiz sessions
   hooks/                Local data state
@@ -96,15 +97,30 @@ All automated tests run through Jest. React Testing Library exercises the UI usi
 
 | Command | Purpose |
 | --- | --- |
-| `npm test` | Run application logic, hooks, components, and page tests |
+| `npm test` | Run application logic, hooks, components, pages, and server tests |
+| `npm run test:server` | Run Netlify function tests |
 | `npm run test:watch` | Rerun affected tests while developing |
 | `npm run test:types` | Type-check the TypeScript tests |
 | `npm run test:coverage` | Enforce coverage and write an HTML report to coverage/lcov-report/index.html |
 | `npm run test:browser` | Build, start an isolated preview, and run the Chrome test through Jest |
 | `npm run test:all` | Run type checks, coverage, and production browser checks |
 
-The suite covers storage validation and migrations, failures and recovery, statistics, navigation, theme changes, scroll locking, every page and reusable component, reviewer/topic editing, quizzes, JSON import/export, and PWA registration. Coverage includes all runtime files under src; type-only interfaces are excluded. Required coverage is 100% functions and lines, 99% statements, and 95% branches.
+The suite covers storage validation and migrations, failures and recovery, statistics, navigation, theme changes, scroll locking, every page and reusable component, reviewer/topic editing, quizzes, JSON import/export, and PWA registration. Coverage includes all runtime files under src; type-only interfaces are excluded. Required application coverage is 100% functions and lines, 99% statements, and 95% branches. Netlify functions have a separate Node Jest suite requiring 100% coverage. AI tests use mock responses and do not spend provider credits.
 
 Jest uses Babel only for test compilation and a small adapter for Vite's import.meta.env.PROD flag. The separate TypeScript check validates types; production still builds with Vite.
 
 The browser suite needs Chrome. Set CHROME_PATH if it is not at the default Windows installation path. It starts its own preview on port 4179 and uses an isolated browser profile. Screenshots go to the temporary directory printed by the test. Browser checks verify real layout, keyboard/focus behavior, theme transitions, and offline reload; jsdom tests do not claim to verify browser rendering or service-worker caching.
+
+## Online study assistant (Netlify)
+
+Mira's core library, quizzes, settings, and charts work locally. The optional assistant uses a Netlify Function and Pollinations; nothing is sent until the user submits a question or generation request. Generate 1–5 reviewers with 5 cards each, inspect the preview, then save the batch with its topic. Existing topic names are reused. AI may be inaccurate; check material against course sources.
+
+Set `POLLINATIONS_SK` in Netlify's environment variables with Functions scope, then redeploy. Optional server variables are `POLLINATIONS_BASE_URL` (default https://gen.pollinations.ai/v1) and `POLLINATIONS_MODEL` (default openai). Never prefix the secret with VITE_. Local .env files are not deployed. Configure a spending limit on the provider key; the endpoint is anonymous and has a Netlify limit of 10 requests per IP/domain per minute. Origin checks are not authentication.
+
+The included netlify.toml builds dist and deploys netlify/functions. A manual upload of dist alone does not deploy functions: use a Git-connected Netlify build or the Netlify CLI. For local AI development, use `npx netlify dev`; plain Vite remains sufficient for offline/local study development.
+
+AI requests are bounded and cancellable, are never cached, and disappear from the UI when offline. A browser may report online while the connection is unusable; requests then show an error or time out. Saved data remains available. AI responses depend on network/provider speed; core studying never waits for the AI server.
+
+The chart and assistant code load in separate chunks. The production service worker precaches all emitted chunks so charts work offline even if not previously visited. Open the production app online and allow setup to finish before disconnecting. Close older tabs after updates. Netlify serves hashed assets with immutable caching and revalidates the service worker.
+
+Implementation references: [shadcn charts](https://ui.shadcn.com/docs/components/radix/chart), [Netlify Functions](https://docs.netlify.com/build/functions/api/), [Pollinations API](https://github.com/pollinations/pollinations/tree/main/gen.pollinations.ai).

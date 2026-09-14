@@ -1,3 +1,5 @@
+import { useActionFeedback } from "../hooks/useActionFeedback";
+import { ProcessButton } from "../components/ProcessButton";
 import { useState } from "react";
 import type { StudyData, Topic } from "../types/study";
 import { EmptyState, Modal, PageHeading } from "../components/ui";
@@ -9,10 +11,12 @@ export function Topics({
   data: StudyData;
   update: (d: StudyData) => boolean;
 }) {
+  const save = useActionFeedback();
   const [editing, setEditing] = useState<Topic | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#8d80b5");
   function open(topic: Topic) {
+    save.reset();
     setEditing(topic);
     setName(topic.name);
     setColor(topic.color);
@@ -74,7 +78,7 @@ export function Topics({
       {editing && (
         <Modal
           title={editing.id ? "Edit topic" : "Create a topic"}
-          onClose={() => setEditing(null)}
+          onClose={() => { save.reset(); setEditing(null); }}
         >
           <form
             className="space-y-5"
@@ -86,15 +90,12 @@ export function Topics({
                 name: name.trim(),
                 color,
               };
-              if (
-                update({
+              void save.run(() => update({
                   ...data,
                   topics: editing.id
                     ? data.topics.map((s) => (s.id === editing.id ? topic : s))
                     : [...data.topics, topic],
-                })
-              )
-                setEditing(null);
+                }), () => setEditing(null));
             }}
           >
             <label className="field">
@@ -116,7 +117,8 @@ export function Topics({
                 onChange={(e) => setColor(e.target.value)}
               />
             </label>
-            <button className="button primary">Save topic</button>
+            {save.error && <p role="alert" className="text-sm text-red-600">{save.error}</p>}
+            <ProcessButton label="Save topic" state={save.state} successLabel="Saved" />
           </form>
         </Modal>
       )}

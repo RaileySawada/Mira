@@ -133,13 +133,21 @@ test("production study flows, themes, mobile overlays and offline reload", async
       /Your next chapter/,
     );
     expect(
-      await evaluate("document.querySelectorAll('main .panel svg').length"),
+      await evaluate("[...document.querySelectorAll('main .panel svg')].filter(svg => !svg.closest('[data-slot=chart]')).length"),
     ).toBe(0);
     expect(
       await evaluate(
         "document.querySelector('a[aria-label=\"Mira home\"]').textContent.trim()",
       ),
     ).toBe("");
+    await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
+    expect(await evaluate("document.querySelector('header.hidden').getBoundingClientRect().height")).toBeLessThanOrEqual(52);
+    expect(await evaluate("performance.getEntriesByType('resource').some(entry => entry.name.includes('/.netlify/functions/'))")).toBe(false);
+    await evaluate("Array.from(document.links).find(a => a.pathname === '/activity').click()");
+    await waitFor("location.pathname === '/activity'");
+    expect(await evaluate("Math.abs(innerHeight - document.querySelector('footer').getBoundingClientRect().bottom) <= 42")).toBe(true);
+    await evaluate("Array.from(document.links).find(a => a.pathname === '/').click()");
+    await waitFor("location.pathname === '/'");
     await evaluate("window.scrollTo(0, 250)");
     const priorScroll = await evaluate("window.scrollY");
     await click("New reviewer");
@@ -178,6 +186,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
       "Cell biology",
     );
     await click("Save reviewer");
+    await waitFor("!document.querySelector('dialog[open]')");
     expect(
       await evaluate(
         "JSON.parse(localStorage.getItem('mira.study.v1')).topics[0].name",
@@ -241,6 +250,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
       "  CELL BIOLOGY  ",
     );
     await click("Save reviewer");
+    await waitFor("!document.querySelector('dialog[open]')");
     expect(
       await evaluate(
         "JSON.parse(localStorage.getItem('mira.study.v1')).topics.length",
@@ -252,6 +262,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await fill("dialog textarea", "Mitochondria");
     await click("Check answer");
     await click("Finish & save results");
+    await waitFor("document.body.innerText.includes('Another step forward.')");
     await waitFor(
       "document.body.innerText.includes('Your progress is saved.')",
     );
@@ -267,6 +278,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await click("New topic");
     await fill("dialog input", "Biology");
     await click("Save topic");
+    await waitFor("!document.querySelector('dialog[open]')");
     expect(
       await evaluate(
         "JSON.parse(localStorage.getItem('mira.study.v1')).topics.some(topic => topic.name === 'Biology')",
@@ -293,6 +305,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await waitFor(
       "document.body.innerText.includes('Your backup has been imported.')",
     );
+    await waitFor("document.querySelector('button[aria-label=\"Import JSON\"]').dataset.state === 'idle'");
     expect(
       await evaluate(
         "JSON.parse(localStorage.getItem('mira.study.v1')).settings.name",
@@ -533,6 +546,25 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "document.querySelector('meta[property=\"og:image\"]').content",
       ),
     ).toBe("/icon.png");
+    expect(await evaluate("document.querySelector('.mobile-header').getBoundingClientRect().height")).toBeLessThanOrEqual(64);
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
+    await evaluate("Array.from(document.links).find(a => a.pathname === '/reviewers').click()");
+    await waitFor("document.querySelector('.reviewer-toolbar')");
+    expect(await evaluate("new Set([...document.querySelector('.reviewer-toolbar').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
+    await evaluate("document.querySelector('button[aria-label=\"Filter by topic\"]').focus(); document.querySelector('button[aria-label=\"Filter by topic\"]').click()");
+    expect(await evaluate("document.activeElement.getAttribute('aria-label')")).toBe("Filter by topic");
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().left >= 0")).toBe(true);
+    await evaluate("Array.from(document.links).find(a => a.pathname === '/about').click()");
+    await waitFor("document.querySelector('.documentation-tabs')");
+    expect(await evaluate("new Set([...document.querySelector('.documentation-tabs').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
+    expect(await evaluate("document.querySelector('.documentation-tabs').scrollWidth > document.querySelector('.documentation-tabs').clientWidth")).toBe(true);
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    const compact = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(profile, "mobile-about.png"), Buffer.from(compact.data, "base64"));
+    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await evaluate("Array.from(document.links).find(a => a.pathname === '/').click()");
+    await waitFor("location.pathname === '/'");
     const mobile = await send("Page.captureScreenshot", {
       format: "png",
       captureBeyondViewport: true,
@@ -577,6 +609,20 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("document.querySelector('[aria-label=\"Color theme\"]')");
 
+    // Exercise the real browser client with deterministic AI responses (no paid calls).
+    await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => {
+      if (url !== '/.netlify/functions/ai') return window.originalFetch(url, options);
+      return Promise.resolve(Response.json({reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
+    }`);
+    await click("AI study assistant");
+    await waitFor("document.querySelector('dialog[open]')");
+    await fill("dialog input", "AI Biology");
+    await click("Generate reviewers");
+    await waitFor("document.body.innerText.includes('Ready to review')");
+    await click("Save all reviewers");
+    await waitFor("!document.querySelector('dialog[open]')");
+    expect(await evaluate("JSON.parse(localStorage.getItem('mira.study.v1')).reviewers.filter(r=>r.title.startsWith('AI reviewer')).length")).toBe(3);
+    await evaluate("window.fetch = window.originalFetch");
     await waitFor("navigator.serviceWorker.controller !== null");
     await send("Network.emulateNetworkConditions", {
       offline: true,
@@ -595,6 +641,15 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "JSON.parse(localStorage.getItem('mira.study.v1')).attempts.length",
       ),
     ).toBe(1);
+    expect(await evaluate("document.body.innerText.includes('AI study assistant')")).toBe(false);
+    expect(await evaluate("document.body.innerText.includes('offline')")).toBe(true);
+    await evaluate("document.querySelector('a[href=\"/\"]').click()");
+    await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    await evaluate("document.querySelector('a[href=\"/reviewers\"]').click()");
+    await waitFor("document.body.innerText.includes('AI reviewer 0')");
+    await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await waitFor("document.body.innerText.includes('AI study assistant')");
     expect(errors).toEqual([]);
     console.log(
       "PASS: inline topics, duplicate reuse, study flows, imports, clean routes, themes, mobile drawer/focus/Escape/backdrop, branding, docs, offline reload.",

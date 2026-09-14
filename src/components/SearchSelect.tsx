@@ -80,9 +80,12 @@ export function SearchSelect({
         aria-controls={`${id}-list`}
         onClick={() => (open ? close() : show())}
         onKeyDown={(event) => {
+          if (open && event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); }
+          if (open && event.key === "Enter") { event.preventDefault(); if (filtered[active]) choose(filtered[active]); }
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {
             event.preventDefault();
-            show();
+            if (open) setActive(index => Math.max(0, Math.min(filtered.length - 1, index + (event.key === "ArrowDown" ? 1 : -1))));
+            else show();
           }
         }}
       >
@@ -101,7 +104,6 @@ export function SearchSelect({
               aria-hidden="true"
             />
             <input
-              autoFocus
               className="input w-full !pl-9"
               role="combobox"
               aria-label={`Search ${label.toLowerCase()}`}

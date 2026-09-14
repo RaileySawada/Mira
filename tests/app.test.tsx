@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { waitFor, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../src/app/App";
 import { saveData, STORAGE_KEY } from "../src/services/storage";
@@ -45,7 +45,7 @@ test("daily review saves a result into the application library", async () => {
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).attempts[0]).toEqual(
     expect.objectContaining({ correct: 1, mode: "daily" }),
   );
-  await user.click(screen.getByRole("button", { name: "Back to learning" }));
+  await user.click(await screen.findByRole("button", { name: "Back to learning" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
 test("reviewer page starts flashcards and individual quizzes", async () => {
@@ -70,6 +70,7 @@ test("application creates and edits reviewers and confirms deletion", async () =
   );
   await user.type(screen.getByLabelText("New topic name"), "Math");
   await user.click(screen.getByRole("button", { name: "Save reviewer" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).topics).toHaveLength(2);
   await user.click(screen.getAllByRole("button", { name: "Edit" })[0]);
   await user.clear(screen.getByLabelText("Reviewer title"));
@@ -127,7 +128,8 @@ test("unreadable storage offers recovery and reports blocked recovery access", a
   await user.click(
     screen.getByRole("button", { name: "Export existing storage" }),
   );
-  expect(alert).toHaveBeenCalledWith(expect.stringContaining("unavailable"));
+  expect(screen.getByRole("alert")).toHaveTextContent("unavailable");
+  expect(alert).not.toHaveBeenCalled();
 });
 test("cards without a topic stay usable", async () => {
   const data = library();

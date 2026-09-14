@@ -17,11 +17,11 @@ npm install
 npm run dev
 ```
 
-The app uses React, TypeScript, Vite, Tailwind CSS, and Lucide. Keep changes focused, follow the existing folders, and prefer readable code over abstractions. Add dependencies only when needed.
+The app uses React, TypeScript, Vite, Tailwind CSS, shadcn charts, Recharts, and Lucide. Keep changes focused, follow the existing folders, and prefer readable code over abstractions. Add dependencies only when needed.
 
 ## Protect existing libraries
 
-Study data lives in localStorage. Preserve backward compatibility when changing backup schemas. Test migrations with fictional data and keep imports validated. No login, backend, analytics, or external storage is required for the current app.
+Study data lives in localStorage. Preserve backward compatibility when changing backup schemas. Test migrations with fictional data and keep imports validated. Core study tools require no login, backend, analytics, or external storage. Optional AI uses a Netlify function; never expose provider keys in browser code or send saved libraries automatically. See README for local Netlify setup. AI tests use mock responses so contributors do not need a key.
 
 ## Before opening a pull request
 

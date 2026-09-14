@@ -26,7 +26,6 @@ export function useStudyData() {
       const message =
         "Your changes could not be saved. Storage may be full or unavailable. Export a backup and free some space, then try again.";
       setError(message);
-      alert(message);
       return false;
     }
   }

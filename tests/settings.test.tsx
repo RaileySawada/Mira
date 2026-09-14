@@ -130,3 +130,14 @@ test("clearing data requires confirmation and reports successful resets", async 
   expect(update).toHaveBeenCalledWith(emptyData());
   expect(screen.getByRole("status")).toHaveTextContent("cleared");
 });
+
+test("failed preference saves and resets return to idle with an in-app error", async () => {
+  render(<Settings data={library()} update={jest.fn(() => false)} onThemeChange={jest.fn()} />);
+  await userEvent.click(screen.getByRole("button", { name: "Save preferences" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("could not be completed");
+  expect(screen.getByRole("button", { name: "Save preferences" })).toHaveAttribute("data-state", "idle");
+  await userEvent.click(screen.getByRole("button", { name: "Clear all local data" }));
+  expect(screen.getByRole("button", { name: "Clear all local data" })).toHaveAttribute("data-state", "idle");
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(alert).not.toHaveBeenCalled();
+});

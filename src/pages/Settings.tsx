@@ -1,3 +1,5 @@
+import { ProcessButton } from "../components/ProcessButton";
+import { useActionFeedback } from "../hooks/useActionFeedback";
 import { useRef, useState } from "react";
 import type { StudyData, Theme } from "../types/study";
 import { downloadJson, emptyData, validateData } from "../services/storage";
@@ -15,6 +17,10 @@ export function Settings({
   update: (d: StudyData) => boolean;
   onThemeChange: (theme: Theme, origin: HTMLElement) => void;
 }) {
+  const save = useActionFeedback();
+  const exporting = useActionFeedback();
+  const importing = useActionFeedback();
+  const clearing = useActionFeedback();
   const [settings, setSettings] = useState(data.settings);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -23,26 +29,22 @@ export function Settings({
     if (!file) return;
     setMessage("");
     setError("");
-    try {
-      if (file.size > 5 * 1024 * 1024)
-        throw new Error("Please choose a backup smaller than 5 MB.");
-      const imported = validateData(JSON.parse(await file.text()));
-      if (
-        !confirm(
-          `Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`,
-        )
-      )
-        return;
-      if (update(imported)) {
+    await importing.run(async () => {
+      try {
+        if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a backup smaller than 5 MB.");
+        const imported = validateData(JSON.parse(await file.text()));
+        if (!confirm(`Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`)) return null;
+        if (!update(imported)) return false;
         setSettings(imported.settings);
         setMessage("Your backup has been imported. Welcome back.");
+        return true;
+      } finally {
+        if (input.current) input.current.value = "";
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not read this backup.");
-    } finally {
-      if (input.current) input.current.value = "";
-    }
+    });
   }
+  const actionError = error || save.error || exporting.error || importing.error || clearing.error;
+
   return (
     <>
       <PageHeading
@@ -67,12 +69,12 @@ export function Settings({
           {message}
         </p>
       )}
-      {error && (
+      {actionError && (
         <p
           role="alert"
           className="mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-800"
         >
-          {error}
+          {actionError}
         </p>
       )}
       <div className="grid items-start gap-6 xl:grid-cols-[1.45fr_1fr]">
@@ -92,7 +94,7 @@ export function Settings({
             className="panel space-y-5 p-6 sm:p-7"
             onSubmit={(event) => {
               event.preventDefault();
-              if (
+              void save.run(() => { if (
                 update({
                   ...data,
                   settings: { ...settings, theme: data.settings.theme },
@@ -100,7 +102,8 @@ export function Settings({
               ) {
                 setError("");
                 setMessage("Your preferences are saved.");
-              }
+                return true;
+              } return false; });
             }}
           >
             <SectionTitle
@@ -205,10 +208,7 @@ export function Settings({
               <span className="text-[11px] text-stone-400">
                 Your next session, your way.
               </span>
-              <button className="button primary">
-                <Icon name="check" size={15} />
-                Save preferences
-              </button>
+              <ProcessButton label="Save preferences" state={save.state} successLabel="Saved" />
             </div>
           </form>
         </div>
@@ -239,20 +239,8 @@ export function Settings({
               or bring your library to another device.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                className="button secondary"
-                onClick={() => downloadJson(data)}
-              >
-                <Icon name="download" size={16} />
-                Export JSON
-              </button>
-              <button
-                className="button secondary"
-                onClick={() => input.current?.click()}
-              >
-                <Icon name="upload" size={16} />
-                Import JSON
-              </button>
+              <ProcessButton label="Export JSON" className="button secondary" state={exporting.state} successLabel="Exported" onClick={() => void exporting.run(() => downloadJson(data))} />
+              <ProcessButton label="Import JSON" className="button secondary" state={importing.state} successLabel="Imported" onClick={() => input.current?.click()} />
             </div>
             <input
               ref={input}
@@ -316,7 +304,7 @@ export function Settings({
             Clear your library, results, and preferences. Export a backup first.
           </p>
         </div>
-        <button
+        <ProcessButton label="Clear all local data" state={clearing.state} successLabel="Cleared"
           className="button border border-red-200 text-red-700 hover:bg-red-50"
           onClick={() => {
             if (
@@ -324,18 +312,19 @@ export function Settings({
                 "Permanently clear all Mira data on this device? Export a backup first.",
               )
             ) {
+              void clearing.run(() => {
               const fresh = emptyData();
               if (update(fresh)) {
                 setSettings(fresh.settings);
                 setError("");
                 setMessage("Your local data has been cleared.");
-              }
+                return true;
+              } return false; });
             }
           }}
         >
-          <Icon name="trash" size={15} />
           Clear all local data
-        </button>
+        </ProcessButton>
       </section>
     </>
   );

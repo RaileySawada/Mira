@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { waitFor, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReviewerEditor } from "../src/features/reviewers/ReviewerEditor";
 import { StudySession } from "../src/features/study/StudySession";
@@ -30,7 +30,7 @@ test("creates a reviewer and inline topic together", async () => {
     }),
     expect.objectContaining({ name: "Anatomy", color: "#123456" }),
   );
-  expect(close).toHaveBeenCalled();
+  await waitFor(() => expect(close).toHaveBeenCalled());
 });
 test("edits cards, reuses topics, and remains open after save failure", async () => {
   const user = userEvent.setup(),
@@ -136,7 +136,7 @@ test("quiz grades answers and saves only the complete result", async () => {
   expect(complete).toHaveBeenCalledWith(
     expect.objectContaining({ correct: 1, total: 2, mode: "quiz" }),
   );
-  expect(screen.getByText("50%")).toBeVisible();
+  expect(await screen.findByText("50%")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Back to learning" }));
   expect(close).toHaveBeenCalled();
 });

@@ -1,0 +1,84 @@
+import handler, { config } from "../../netlify/functions/ai";
+import { generated } from "../ai-fixtures";
+
+const origin = "https://mira.example";
+const chat = { mode: "chat", prompt: "Explain cells" };
+const batch = { mode: "generate", prompt: "Basics", topic: "Biology", count: 1 };
+function request(body: unknown = chat, init: RequestInit = {}) {
+  return new Request(origin + "/.netlify/functions/ai", {
+    method: "POST", headers: { origin, "content-type": "application/json" },
+    body: typeof body === "string" ? body : JSON.stringify(body), ...init,
+  });
+}
+const provider = (content: string) => Response.json({ choices: [{ message: { content } }] });
+beforeEach(() => {
+  process.env.POLLINATIONS_SK = "test-only-not-a-real-key";
+  delete process.env.POLLINATIONS_BASE_URL;
+  delete process.env.POLLINATIONS_MODEL;
+});
+afterEach(() => { delete process.env.POLLINATIONS_SK; });
+
+test("restricts methods, origins, media types and request sizes", async () => {
+  expect((await handler(new Request(origin))).status).toBe(405);
+  expect((await handler(request(chat, { headers: { origin: "https://other.example" } }))).status).toBe(403);
+  expect((await handler(request(chat, { headers: { origin } }))).status).toBe(415);
+  expect((await handler(request(chat, { headers: { origin, "content-type": "text/plain" } }))).status).toBe(415);
+  expect((await handler(request("x".repeat(16001)))).status).toBe(413);
+  expect((await handler(request("invalid json"))).status).toBe(400);
+});
+test.each([null, {}, { mode: "unknown", prompt: "hello" }, { ...batch, count: 1.5 }, { ...batch, count: 0 }, { ...batch, count: 6 }, { ...batch, topic: "" }])("validates requests %p", async value => {
+  expect((await handler(request(value))).status).toBe(400);
+});
+test("missing secrets return setup guidance without calling the provider", async () => {
+  delete process.env.POLLINATIONS_SK;
+  const fetchMock = jest.spyOn(globalThis, "fetch");
+  expect((await handler(request())).status).toBe(503);
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+test("sends bounded chat requests with server-only credentials and no caching", async () => {
+  const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(provider("Cells are living units."));
+  const result = await handler(request());
+  expect(await result.json()).toEqual({ answer: "Cells are living units." });
+  expect(result.headers.get("cache-control")).toBe("no-store");
+  const [url, options] = fetchMock.mock.calls[0];
+  expect(url).toBe("https://gen.pollinations.ai/v1/chat/completions");
+  const body = JSON.parse(String(options!.body));
+  expect(body.max_tokens).toBe(1200);
+  expect(body.model).toBe("openai");
+  expect(body.messages[1].content).toBe(chat.prompt);
+  expect(options!.signal).toBeInstanceOf(AbortSignal);
+  expect(config.rateLimit).toMatchObject({ windowLimit: 10, windowSize: 60 });
+});
+test("generates validated reviewers and respects server configuration", async () => {
+  process.env.POLLINATIONS_BASE_URL = "https://gen.pollinations.ai/v1/";
+  process.env.POLLINATIONS_MODEL = "configured-model";
+  const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(provider(JSON.stringify({ reviewers: [generated()] })));
+  const result = await handler(request(batch));
+  expect(await result.json()).toEqual({ reviewers: [generated()] });
+  const body = JSON.parse(String(fetchMock.mock.calls[0][1]!.body));
+  expect(body.model).toBe("configured-model");
+  expect(body.max_tokens).toBe(6500);
+  expect(body.response_format.type).toBe("json_object");
+  expect(body.messages[1].content).toBe("Biology\nBasics");
+});
+test.each([429, 401, 500])("provider status %s is handled without leaking response details", async status => {
+  jest.spyOn(globalThis, "fetch").mockResolvedValue(new Response("secret provider details", { status }));
+  const result = await handler(request());
+  expect(result.status).toBe(status === 429 ? 429 : 502);
+  expect(await result.text()).not.toContain("secret provider details");
+});
+test.each([null, {}, { choices: [] }, { choices: [{}] }, { choices: [{ message: {} }] }])("invalid provider response %p is rejected", async body => {
+  jest.spyOn(globalThis, "fetch").mockResolvedValue(Response.json(body));
+  expect((await handler(request())).status).toBe(502);
+});
+test("incomplete batches, invalid JSON and network failures never return study data", async () => {
+  const fetchMock = jest.spyOn(globalThis, "fetch");
+  fetchMock.mockResolvedValueOnce(provider(JSON.stringify({ reviewers: [generated(), generated()] })));
+  expect((await handler(request(batch))).status).toBe(502);
+  fetchMock.mockResolvedValueOnce(provider("not JSON"));
+  expect((await handler(request(batch))).status).toBe(502);
+  fetchMock.mockResolvedValueOnce(provider(JSON.stringify({ reviewers: [{ title: "missing cards" }] })));
+  expect((await handler(request(batch))).status).toBe(502);
+  fetchMock.mockRejectedValueOnce(new Error("network"));
+  expect((await handler(request())).status).toBe(502);
+});

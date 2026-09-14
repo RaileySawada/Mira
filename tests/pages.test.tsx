@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { waitFor, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Home } from "../src/pages/Home";
 import { Reviewers } from "../src/pages/Reviewers";
@@ -163,6 +163,7 @@ test("topics create, update, and delete without removing reviewer cards", async 
       topics: [expect.objectContaining({ name: "Math", color: "#123456" })],
     }),
   );
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   rerender(<Topics data={library()} update={update} />);
   await user.click(screen.getByRole("button", { name: "Edit topic" }));
   await user.clear(screen.getByLabelText("Topic name"));
@@ -173,6 +174,7 @@ test("topics create, update, and delete without removing reviewer cards", async 
       topics: [expect.objectContaining({ id: "topic-1", name: "Cells" })],
     }),
   );
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   jest.mocked(confirm).mockReturnValueOnce(false);
   update.mockClear();
   await user.click(screen.getByRole("button", { name: "Delete" }));

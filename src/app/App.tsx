@@ -1,3 +1,4 @@
+import { OnlineAssistant } from "../features/ai/OnlineAssistant";
 import { useEffect, useState } from "react";
 import { navigate, usePage } from "../hooks/usePage";
 import { RouteLink } from "../components/RouteLink";
@@ -21,6 +22,7 @@ import { downloadJson, STORAGE_KEY } from "../services/storage";
 export default function App() {
   const { data, update, error } = useStudyData();
   const page = usePage();
+  const [recoveryError, setRecoveryError] = useState("");
   const changeTheme = useTheme(data.settings.theme, (theme) =>
     update({ ...data, settings: { ...data.settings, theme } }),
   );
@@ -69,7 +71,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-page text-ink">
       <Sidebar page={page} />
-      <div className="lg:ml-60">
+      <div className="flex min-h-dvh flex-col lg:ml-60">
         <MobileHeader page={page} />
         <header className="hidden min-h-12 items-center justify-between border-b border-line px-9 lg:flex">
           <div className="flex items-center gap-2 text-xs text-stone-400">
@@ -85,13 +87,15 @@ export default function App() {
             })}
           </span>
         </header>
-        <main className="mx-auto max-w-7xl px-5 py-8 sm:px-9 sm:py-10">
-          {error && (
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10">
+          <div className="min-w-0 flex-1">
+          <OnlineAssistant data={data} update={update} />
+          {(error || recoveryError) && (
             <div
               role="alert"
               className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
             >
-              {error}
+              {recoveryError || error}
               <button
                 className="ml-3 underline"
                 onClick={() => {
@@ -101,7 +105,7 @@ export default function App() {
                       "mira-recovery.json",
                     );
                   } catch {
-                    alert(
+                    setRecoveryError(
                       "Browser storage is unavailable. Please check your browser permissions.",
                     );
                   }
@@ -162,6 +166,7 @@ export default function App() {
             "About",
             "Not found",
           ].includes(page) && <Documentation page={page} />}
+          </div>
           <footer className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
             <span>A little wiser, every day.</span>
             <nav className="flex flex-wrap gap-4" aria-label="Footer">
