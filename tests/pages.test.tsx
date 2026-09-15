@@ -1,3 +1,4 @@
+import { confirmAction as confirm } from "../src/components/confirmAction";
 import { waitFor, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Home } from "../src/pages/Home";
@@ -175,7 +176,7 @@ test("topics create, update, and delete without removing reviewer cards", async 
     }),
   );
   await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-  jest.mocked(confirm).mockReturnValueOnce(false);
+  jest.mocked(confirm).mockResolvedValueOnce(false);
   update.mockClear();
   await user.click(screen.getByRole("button", { name: "Delete" }));
   expect(update).not.toHaveBeenCalled();

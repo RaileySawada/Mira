@@ -55,7 +55,7 @@ const documents: Record<
     sections: [
       {
         title: "What stays on your device",
-        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no account is required. Optional AI requests send only the topic, notes, or question you explicitly submit to our Netlify function and then Pollinations. AI replies stay in memory until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
+        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no account is required. Optional AI requests send only the topic, notes, or question you explicitly submit and recent chat messages for follow-up context to our Netlify function and then Pollinations. AI replies stay in memory until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
       },
       {
         title: "Storage and offline files",

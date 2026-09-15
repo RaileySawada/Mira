@@ -1,10 +1,11 @@
-import { isRecord } from "../features/ai/schema";
+import { isRecord, type ChatMessage } from "../features/ai/schema";
 
 export interface AiRequest {
   mode: "chat" | "generate";
   prompt: string;
   topic: string;
   count: number;
+  history?: ChatMessage[];
 }
 
 export async function requestAi(input: AiRequest, signal: AbortSignal): Promise<unknown> {

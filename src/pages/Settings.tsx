@@ -1,3 +1,4 @@
+import { confirmAction } from "../components/confirmAction";
 import { ProcessButton } from "../components/ProcessButton";
 import { useActionFeedback } from "../hooks/useActionFeedback";
 import { useRef, useState } from "react";
@@ -33,7 +34,7 @@ export function Settings({
       try {
         if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a backup smaller than 5 MB.");
         const imported = validateData(JSON.parse(await file.text()));
-        if (!confirm(`Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`)) return null;
+        if (!await confirmAction(`Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`)) return null;
         if (!update(imported)) return false;
         setSettings(imported.settings);
         setMessage("Your backup has been imported. Welcome back.");
@@ -306,9 +307,9 @@ export function Settings({
         </div>
         <ProcessButton label="Clear all local data" state={clearing.state} successLabel="Cleared"
           className="button border border-red-200 text-red-700 hover:bg-red-50"
-          onClick={() => {
+          onClick={async () => {
             if (
-              confirm(
+              await confirmAction(
                 "Permanently clear all Mira data on this device? Export a backup first.",
               )
             ) {

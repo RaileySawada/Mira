@@ -1,3 +1,4 @@
+import { confirmAction } from "../../components/confirmAction";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { useState } from "react";
@@ -31,11 +32,11 @@ export function StudySession({
   const [attemptId] = useState(() => crypto.randomUUID());
   const card = session.cards[index];
   const score = answers.filter((a) => a.correct).length;
-  function close() {
+  async function close() {
     if (
       complete || save.state === "success" ||
       session.mode === "cards" ||
-      confirm("Leave this quiz? Unfinished answers will not be saved.")
+      await confirmAction("Leave this quiz? Unfinished answers will not be saved.")
     )
       onClose();
   }

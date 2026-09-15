@@ -17,9 +17,10 @@ describe("useStudyData", () => {
   test("requires recovery confirmation and allows retrying", () => {
     localStorage.setItem(STORAGE_KEY, "bad");
     const { result } = renderHook(useStudyData);
-    jest.mocked(confirm).mockReturnValueOnce(false);
+
     act(() => expect(result.current.update(library())).toBe(false));
     expect(localStorage.getItem(STORAGE_KEY)).toBe("bad");
+    act(() => result.current.allowRecovery());
     act(() => expect(result.current.update(library())).toBe(true));
     expect(result.current.error).toBe("");
   });

@@ -1,5 +1,5 @@
 import type { Config } from "@netlify/functions";
-import { isRecord, parseReviewers, validText } from "../../src/features/ai/schema";
+import { isRecord, parseHistory, parseReviewers, validText } from "../../src/features/ai/schema";
 
 export const config: Config = {
   rateLimit: { action: "rate_limit", aggregateBy: ["ip", "domain"], windowLimit: 10, windowSize: 60 },
@@ -21,6 +21,8 @@ export default async function handler(request: Request): Promise<Response> {
   try { input = JSON.parse(raw); } catch { return reply({ error: "Invalid JSON." }, 400); }
   if (!isRecord(input) || !validText(input.prompt, 3000) || !["chat", "generate"].includes(String(input.mode)))
     return reply({ error: "Enter a study question or topic (up to 3,000 characters)." }, 400);
+  let history: ReturnType<typeof parseHistory>;
+  try { history = parseHistory(input.history); } catch { return reply({ error: "Invalid conversation history." }, 400); }
   const generating = input.mode === "generate";
   if (generating && (!Number.isInteger(input.count) || Number(input.count) < 1 || Number(input.count) > 5 || !validText(input.topic, 150)))
     return reply({ error: "Choose a topic and between 1 and 5 reviewers." }, 400);
@@ -36,7 +38,7 @@ export default async function handler(request: Request): Promise<Response> {
       signal: AbortSignal.any([request.signal, AbortSignal.timeout(25000)]),
       body: JSON.stringify({
         model: process.env.POLLINATIONS_MODEL || "openai",
-        messages: [{ role: "system", content: instructions }, { role: "user", content: generating ? String(input.topic) + "\n" + input.prompt : input.prompt }],
+        messages: [{ role: "system", content: instructions }, ...(generating ? [] : history), { role: "user", content: generating ? String(input.topic) + "\n" + input.prompt : input.prompt }],
         max_tokens: generating ? 6500 : 1200,
         ...(generating ? { response_format: { type: "json_object" } } : {}),
       }),

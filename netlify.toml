@@ -23,3 +23,10 @@
   for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache"
+
+[dev]
+  command = "npm run dev -- --host 127.0.0.1 --port 5174 --strictPort"
+  targetPort = 5174
+  port = 8888
+  framework = "#custom"
+  autoLaunch = false

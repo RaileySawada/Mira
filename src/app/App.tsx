@@ -1,3 +1,4 @@
+import { confirmAction } from "../components/confirmAction";
 import { OnlineAssistant } from "../features/ai/OnlineAssistant";
 import { useEffect, useState } from "react";
 import { navigate, usePage } from "../hooks/usePage";
@@ -20,7 +21,7 @@ import { prepareCards } from "../utils/stats";
 import { downloadJson, STORAGE_KEY } from "../services/storage";
 
 export default function App() {
-  const { data, update, error } = useStudyData();
+  const { data, update, error, needsRecovery, allowRecovery } = useStudyData();
   const page = usePage();
   const [recoveryError, setRecoveryError] = useState("");
   const changeTheme = useTheme(data.settings.theme, (theme) =>
@@ -113,6 +114,9 @@ export default function App() {
               >
                 Export existing storage
               </button>
+              {needsRecovery && <button className="ml-3 underline" onClick={async () => {
+                if (await confirmAction("Your existing data could not be loaded. Future saves will replace it. Export existing storage first if you need to recover it. Continue?")) allowRecovery();
+              }}>Allow replacing unreadable data</button>}
             </div>
           )}
           {page === "Home" && (
@@ -129,9 +133,9 @@ export default function App() {
               data={data}
               onCreate={() => setEditor("new")}
               onEdit={setEditor}
-              onDelete={(r) => {
+              onDelete={async (r) => {
                 if (
-                  confirm(
+                  await confirmAction(
                     `Delete “${r.title}” and its cards? Past quiz results will be kept.`,
                   )
                 )

@@ -96,11 +96,6 @@ export function MobileHeader({ page }: { page: Page }) {
     <>
       <header className="mobile-header lg:hidden">
         <div className="flex items-center gap-3">
-          <Brand />
-          <p className="mt-1 text-[10px] tracking-wide text-stone-400">
-            {page}
-          </p>
-        </div>
         <button
           type="button"
           className="menu-button"
@@ -115,6 +110,9 @@ export function MobileHeader({ page }: { page: Page }) {
         >
           <Icon name="menu" size={23} />
         </button>
+          <Brand />
+          <span className="text-xs text-stone-400">{page}</span>
+        </div>
       </header>
       {open && <MobileDrawer page={page} onClose={close} />}
     </>

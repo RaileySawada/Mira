@@ -1,3 +1,4 @@
+import { confirmAction as confirm } from "../src/components/confirmAction";
 import { waitFor, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../src/app/App";
@@ -77,7 +78,7 @@ test("application creates and edits reviewers and confirms deletion", async () =
   await user.type(screen.getByLabelText("Reviewer title"), "Updated title");
   await user.click(screen.getByRole("button", { name: "Save reviewer" }));
   expect(screen.getByRole("heading", { name: "Updated title" })).toBeVisible();
-  jest.mocked(confirm).mockReturnValueOnce(false);
+  jest.mocked(confirm).mockResolvedValueOnce(false);
   await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).reviewers).toHaveLength(
     2,

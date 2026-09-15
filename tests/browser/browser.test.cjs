@@ -109,7 +109,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     }
     async function click(text) {
       await evaluate(
-        `(() => { const button = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(text)}); if (!button) throw new Error('Missing button: ' + ${JSON.stringify(text)}); button.click(); })()`,
+        `(() => { const button = [...document.querySelectorAll('button')].find(b => (b.textContent.trim() === ${JSON.stringify(text)} || b.getAttribute("aria-label") === ${JSON.stringify(text)})); if (!button) throw new Error('Missing button: ' + ${JSON.stringify(text)}); button.click(); })()`,
       );
       await delay(150);
     }
@@ -302,6 +302,8 @@ test("production study flows, themes, mobile overlays and offline reload", async
     input.files = transfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
   })()`);
+    await waitFor("Boolean(document.querySelector('dialog[aria-label=\"Please confirm\"]'))");
+    await click("Continue");
     await waitFor(
       "document.body.innerText.includes('Your backup has been imported.')",
     );
@@ -547,6 +549,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
       ),
     ).toBe("/icon.png");
     expect(await evaluate("document.querySelector('.mobile-header').getBoundingClientRect().height")).toBeLessThanOrEqual(64);
+    expect(await evaluate("document.querySelector('.mobile-header .menu-button').getBoundingClientRect().right < document.querySelector('.mobile-header img').getBoundingClientRect().left")).toBe(true);
     await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
     await evaluate("Array.from(document.links).find(a => a.pathname === '/reviewers').click()");
     await waitFor("document.querySelector('.reviewer-toolbar')");
@@ -612,10 +615,23 @@ test("production study flows, themes, mobile overlays and offline reload", async
     // Exercise the real browser client with deterministic AI responses (no paid calls).
     await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => {
       if (url !== '/.netlify/functions/ai') return window.originalFetch(url, options);
+      const input = JSON.parse(options.body);
+      if (input.mode === 'chat') return Promise.resolve(Response.json({answer: 'Cells are the building blocks of life.'}));
       return Promise.resolve(Response.json({reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
     }`);
     await click("AI study assistant");
     await waitFor("document.querySelector('dialog[open]')");
+    expect(await evaluate("document.querySelector('.ai-panel').getBoundingClientRect().right <= innerWidth")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-panel')).position")).toBe("fixed");
+    expect(await evaluate("getComputedStyle(document.body).position")).not.toBe("fixed");
+    await fill("dialog textarea", "What are cells?");
+    await click("Send question");
+    await waitFor("document.querySelectorAll('.chat-message').length === 2");
+    expect(await evaluate("[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')")).toBe(true);
+    const chatScreenshot = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
+    await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
+    await click("Create reviewers");
     await fill("dialog input", "AI Biology");
     await click("Generate reviewers");
     await waitFor("document.body.innerText.includes('Ready to review')");
@@ -641,7 +657,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "JSON.parse(localStorage.getItem('mira.study.v1')).attempts.length",
       ),
     ).toBe(1);
-    expect(await evaluate("document.body.innerText.includes('AI study assistant')")).toBe(false);
+    expect(await evaluate("Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))")).toBe(false);
     expect(await evaluate("document.body.innerText.includes('offline')")).toBe(true);
     await evaluate("document.querySelector('a[href=\"/\"]').click()");
     await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
@@ -649,12 +665,9 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("document.querySelector('a[href=\"/reviewers\"]').click()");
     await waitFor("document.body.innerText.includes('AI reviewer 0')");
     await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-    await waitFor("document.body.innerText.includes('AI study assistant')");
+    await waitFor("Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))");
     expect(errors).toEqual([]);
-    console.log(
-      "PASS: inline topics, duplicate reuse, study flows, imports, clean routes, themes, mobile drawer/focus/Escape/backdrop, branding, docs, offline reload.",
-    );
-    console.log("Screenshots: " + profile);
+
   } finally {
     socket?.close();
     chrome.kill();

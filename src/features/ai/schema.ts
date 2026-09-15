@@ -44,3 +44,15 @@ export function addGeneratedReviewers(data: StudyData, topicName: string, drafts
     }))],
   };
 }
+
+export interface ChatMessage { role: "user" | "assistant"; content: string; }
+
+export function parseHistory(value: unknown): ChatMessage[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > 6) throw new Error("Invalid conversation history.");
+  return value.map(message => {
+    if (!isRecord(message) || (message.role !== "user" && message.role !== "assistant") || !validText(message.content, 1800))
+      throw new Error("Invalid conversation message.");
+    return { role: message.role, content: message.content };
+  });
+}

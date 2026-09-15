@@ -1,3 +1,4 @@
+import { confirmAction as confirm } from "../src/components/confirmAction";
 import { waitFor, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ReviewerEditor } from "../src/features/reviewers/ReviewerEditor";
@@ -142,7 +143,7 @@ test("quiz grades answers and saves only the complete result", async () => {
 });
 test("daily quiz retries failed saves and confirms abandoned attempts", async () => {
   const user = userEvent.setup(),
-    complete = jest.fn().mockReturnValueOnce(false).mockReturnValue(true),
+    complete = jest.fn().mockResolvedValueOnce(false).mockReturnValue(true),
     close = jest.fn();
   render(
     <StudySession
@@ -156,7 +157,7 @@ test("daily quiz retries failed saves and confirms abandoned attempts", async ()
       onComplete={complete}
     />,
   );
-  jest.mocked(confirm).mockReturnValueOnce(false);
+  jest.mocked(confirm).mockResolvedValueOnce(false);
   await user.click(screen.getByLabelText("Close dialog"));
   expect(close).not.toHaveBeenCalled();
   const dialog = screen.getByRole("dialog");

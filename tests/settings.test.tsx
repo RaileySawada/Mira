@@ -1,3 +1,4 @@
+import { confirmAction as confirm } from "../src/components/confirmAction";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Settings } from "../src/pages/Settings";
@@ -79,7 +80,7 @@ test("cancelled imports and failed saves preserve the library", async () => {
   render(
     <Settings data={library()} update={update} onThemeChange={jest.fn()} />,
   );
-  jest.mocked(confirm).mockReturnValueOnce(false);
+  jest.mocked(confirm).mockResolvedValueOnce(false);
   await userEvent.upload(screen.getByLabelText("Import Mira backup"), backup());
   expect(update).not.toHaveBeenCalled();
   await userEvent.upload(screen.getByLabelText("Import Mira backup"), backup());
@@ -119,7 +120,7 @@ test("clearing data requires confirmation and reports successful resets", async 
   render(
     <Settings data={library()} update={update} onThemeChange={jest.fn()} />,
   );
-  jest.mocked(confirm).mockReturnValueOnce(false);
+  jest.mocked(confirm).mockResolvedValueOnce(false);
   await userEvent.click(
     screen.getByRole("button", { name: "Clear all local data" }),
   );

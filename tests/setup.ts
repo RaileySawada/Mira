@@ -1,3 +1,4 @@
+jest.mock("../src/components/confirmAction", () => ({ confirmAction: jest.fn().mockResolvedValue(true) }));
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 

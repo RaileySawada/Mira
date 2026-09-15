@@ -1,3 +1,4 @@
+import { confirmAction } from "../components/confirmAction";
 import { useActionFeedback } from "../hooks/useActionFeedback";
 import { ProcessButton } from "../components/ProcessButton";
 import { useState } from "react";
@@ -48,9 +49,9 @@ export function Topics({
               <div className="mt-6 flex gap-4 text-xs text-stone-500">
                 <button onClick={() => open(s)}>Edit topic</button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (
-                      confirm(
+                      await confirmAction(
                         `Delete “${s.name}”? Its reviewers will move to Uncategorized.`,
                       )
                     )

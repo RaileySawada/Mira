@@ -9,13 +9,7 @@ export function useStudyData() {
   const [needsRecovery, setNeedsRecovery] = useState(Boolean(initial.error));
 
   function update(next: StudyData) {
-    if (
-      needsRecovery &&
-      !confirm(
-        "Your existing data could not be loaded. Saving will replace it. Export existing storage first if you need to recover it. Continue?",
-      )
-    )
-      return false;
+    if (needsRecovery) return false;
     try {
       saveData(next);
       setData(next);
@@ -29,5 +23,5 @@ export function useStudyData() {
       return false;
     }
   }
-  return { data, update, error };
+  return { data, update, error, needsRecovery, allowRecovery: () => setNeedsRecovery(false) };
 }

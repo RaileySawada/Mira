@@ -14,7 +14,8 @@
     "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:browser": "npm run build && jest --config jest.browser.config.cjs --runInBand",
     "test:all": "npm run test:types && npm run test:coverage && npm run test:browser",
-    "test:server": "jest --config jest.server.config.cjs --runInBand"
+    "test:server": "jest --config jest.server.config.cjs --runInBand",
+    "dev:netlify": "netlify dev --offline"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -22,7 +23,9 @@
     "lucide-react": "^1.46.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.8.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3"
   },
@@ -43,8 +46,12 @@
     "babel-jest": "^30.5.1",
     "jest": "^30.5.1",
     "jest-environment-jsdom": "^30.5.1",
+    "netlify-cli": "^27.6.0",
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "overrides": {
+    "sharp": "^0.35.4"
   }
 }

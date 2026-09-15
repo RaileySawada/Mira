@@ -117,10 +117,18 @@ Mira's core library, quizzes, settings, and charts work locally. The optional as
 
 Set `POLLINATIONS_SK` in Netlify's environment variables with Functions scope, then redeploy. Optional server variables are `POLLINATIONS_BASE_URL` (default https://gen.pollinations.ai/v1) and `POLLINATIONS_MODEL` (default openai). Never prefix the secret with VITE_. Local .env files are not deployed. Configure a spending limit on the provider key; the endpoint is anonymous and has a Netlify limit of 10 requests per IP/domain per minute. Origin checks are not authentication.
 
-The included netlify.toml builds dist and deploys netlify/functions. A manual upload of dist alone does not deploy functions: use a Git-connected Netlify build or the Netlify CLI. For local AI development, use `npx netlify dev`; plain Vite remains sufficient for offline/local study development.
+The included netlify.toml builds dist and deploys netlify/functions. A manual upload of dist alone does not deploy functions: use a Git-connected Netlify build or the Netlify CLI. For local AI development, use `npm run dev:netlify`; plain Vite remains sufficient for offline/local study development.
 
 AI requests are bounded and cancellable, are never cached, and disappear from the UI when offline. A browser may report online while the connection is unusable; requests then show an error or time out. Saved data remains available. AI responses depend on network/provider speed; core studying never waits for the AI server.
 
 The chart and assistant code load in separate chunks. The production service worker precaches all emitted chunks so charts work offline even if not previously visited. Open the production app online and allow setup to finish before disconnecting. Close older tabs after updates. Netlify serves hashed assets with immutable caching and revalidates the service worker.
 
 Implementation references: [shadcn charts](https://ui.shadcn.com/docs/components/radix/chart), [Netlify Functions](https://docs.netlify.com/build/functions/api/), [Pollinations API](https://github.com/pollinations/pollinations/tree/main/gen.pollinations.ai).
+
+## Local AI development
+
+Run `npm run dev:netlify` and open http://localhost:8888. Netlify Dev starts Vite on port 5174 and runs the serverless AI function through port 8888. Keep `POLLINATIONS_SK` in your local `.env` (never commit it). Plain `npm run dev` starts only Vite and does not serve AI functions.
+
+The floating assistant uses the supplied Mira and user avatars. Questions appear as a conversation, with the latest six messages (up to 1,800 characters each) included for follow-up context. Chat stays in memory and is cleared when the assistant closes or the device goes offline. Only submitted chat text and recent conversation context are sent to Pollinations; saved reviewers are not uploaded.
+
+The CLI uses `--offline` to avoid requiring a linked Netlify account for local configuration. This does not block your function from reaching Pollinations: AI still requires internet access. The development-only Sharp override selects the patched image-processing release.
