@@ -6,6 +6,7 @@ import { OnlineAssistant } from "../src/features/ai/OnlineAssistant";
 import { requestAi } from "../src/services/ai";
 import { library } from "./fixtures";
 import { generated } from "./ai-fixtures";
+import { AI_SESSION_KEY, saveAiSession } from "../src/services/aiSession";
 
 jest.mock("../src/services/ai", () => ({ requestAi: jest.fn() }));
 const request = jest.mocked(requestAi);
@@ -190,4 +191,15 @@ test("chat starts as a conversation and sends context for follow-up questions", 
   expect(screen.getAllByAltText("Mira")).toHaveLength(3);
   fireEvent.keyDown(screen.getByLabelText("Your study question"), { key: "Escape" });
   expect(close).toHaveBeenCalled();
+});
+
+
+test("closing Mira clears only the temporary conversation session", () => {
+  saveAiSession([{ role: "user", content: "Remember this only while open." }]);
+  const close = jest.fn();
+  render(<AiAssistant onClose={close} onSave={jest.fn()} />);
+  expect(screen.getByText("Remember this only while open.")).toBeVisible();
+  click("Close dialog");
+  expect(close).toHaveBeenCalledTimes(1);
+  expect(sessionStorage.getItem(AI_SESSION_KEY)).toBeNull();
 });

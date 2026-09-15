@@ -7,6 +7,7 @@ import { ArrowUp, Plus, RotateCcw, X } from "lucide-react";
 import miraAvatar from "../../assets/images/profile_pictures/mira.png";
 import userAvatar from "../../assets/images/profile_pictures/user.png";
 import { requestAi } from "../../services/ai";
+import { clearAiSession, readAiSession, saveAiSession } from "../../services/aiSession";
 import { isRecord, parseReviewers, validText, type ChatMessage, type GeneratedReviewer } from "./schema";
 
 type Mode = "chat" | "generate";
@@ -23,23 +24,31 @@ export default function AiAssistant({ onClose, onSave }: {
   const [busy, setBusy] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
   const [error, setError] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(readAiSession);
+  const [typingAnswer, setTypingAnswer] = useState("");
   const [drafts, setDrafts] = useState<GeneratedReviewer[]>([]);
   const [savedTopic, setSavedTopic] = useState("");
   const conversation = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const controller = useRef<AbortController | null>(null);
   const timer = useRef<number | undefined>(undefined);
+  const responseTimer = useRef<number | undefined>(undefined);
   const successTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => { closeButton.current?.focus(); }, []);
-  useEffect(() => { const log = conversation.current; if (log) log.scrollTop = log.scrollHeight; }, [messages, busy]);
+  useEffect(() => { const log = conversation.current; if (log) log.scrollTop = log.scrollHeight; }, [messages, typingAnswer, busy]);
+  useEffect(() => { if (messages.length) saveAiSession(messages); }, [messages]);
   useEffect(() => () => {
     controller.current?.abort();
     window.clearTimeout(timer.current);
+    window.clearTimeout(responseTimer.current);
     clearTimeout(successTimer.current);
   }, []);
 
+  function closeAssistant() {
+    clearAiSession();
+    onClose();
+  }
   function openMode(next: Mode) {
     setMode(next);
     setError("");
@@ -47,14 +56,47 @@ export default function AiAssistant({ onClose, onSave }: {
   function cancelRequest() {
     controller.current?.abort();
     window.clearTimeout(timer.current);
+    window.clearTimeout(responseTimer.current);
+    setTypingAnswer("");
     setBusy(false);
   }
   function startFreshConversation() {
     if (busy) return;
     setMessages([]);
+    clearAiSession();
     setPrompt("");
+    setTypingAnswer("");
     setError("");
   }
+  function revealAnswer(answer: string, signal: AbortSignal) {
+    return new Promise<void>((resolve) => {
+      const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduceMotion) {
+        setMessages((current) => [...current, { role: "assistant", content: answer }]);
+        resolve();
+        return;
+      }
+      let position = 0;
+      const reveal = () => {
+        if (signal.aborted) {
+          setTypingAnswer("");
+          resolve();
+          return;
+        }
+        position = Math.min(answer.length, position + Math.max(2, Math.ceil(answer.length / 180)));
+        setTypingAnswer(answer.slice(0, position));
+        if (position === answer.length) {
+          setMessages((current) => [...current, { role: "assistant", content: answer }]);
+          setTypingAnswer("");
+          resolve();
+          return;
+        }
+        responseTimer.current = window.setTimeout(reveal, 16);
+      };
+      reveal();
+    });
+  }
+
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || (mode === "generate" ? !topic.trim() : !prompt.trim())) return;
@@ -91,8 +133,7 @@ export default function AiAssistant({ onClose, onSave }: {
         setSavedTopic(topic.trim());
       } else {
         if (!isRecord(result) || !validText(result.answer, 80000)) throw new Error("AI returned an empty answer. Please try again.");
-        const answer = result.answer as string;
-        setMessages(current => [...current, { role: "assistant", content: answer }]);
+        await revealAnswer(result.answer as string, pending.signal);
       }
       setSucceeded(true);
       successTimer.current = setTimeout(() => setSucceeded(false), 600);
@@ -112,14 +153,14 @@ export default function AiAssistant({ onClose, onSave }: {
 
   return createPortal(
     <aside className="ai-panel ai-conversation" aria-label="Your study assistant" role="complementary" tabIndex={-1} onKeyDown={event => {
-      if (event.key === "Escape") { event.stopPropagation(); onClose(); }
+      if (event.key === "Escape") { event.stopPropagation(); closeAssistant(); }
     }}>
       <header className="ai-chat-header">
         <div className="ai-identity"><img src={miraAvatar} alt="Mira" /><div><h2>Mira</h2><p><i /> Online study companion</p></div></div>
         <div className="ai-header-actions">
           {mode === "chat" ? <button type="button" className="ai-header-action" onClick={() => openMode("generate")} disabled={busy}><Plus size={15} /> Create reviewers</button> : <button type="button" className="ai-header-action" onClick={() => openMode("chat")} disabled={busy}>Ask a question</button>}
           {mode === "chat" && messages.length > 0 && <button type="button" className="icon-button" aria-label="Start a new conversation" onClick={startFreshConversation} disabled={busy}><RotateCcw size={17} /></button>}
-          <button ref={closeButton} className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={19} /></button>
+          <button ref={closeButton} className="icon-button" aria-label="Close dialog" onClick={closeAssistant}><X size={19} /></button>
         </div>
       </header>
 
@@ -137,7 +178,8 @@ export default function AiAssistant({ onClose, onSave }: {
             <img className="chat-avatar" src={message.role === "user" ? userAvatar : miraAvatar} alt={message.role === "user" ? "You" : "Mira"} />
             <div className="chat-message-content"><span className="chat-author">{message.role === "user" ? "You" : "Mira"}</span><div className="chat-bubble">{message.role === "assistant" ? <MarkdownMessage content={message.content} /> : <p>{message.content}</p>}</div></div>
           </div>)}
-          {busy && <div className="chat-message assistant"><img className="chat-avatar" src={miraAvatar} alt="" /><div className="chat-message-content"><span className="chat-author">Mira</span><p className="chat-bubble typing-dots" aria-label="Mira is typing"><i /><i /><i /></p></div></div>}
+          {typingAnswer && <div className="chat-message assistant" aria-live="polite"><img className="chat-avatar" src={miraAvatar} alt="" /><div className="chat-message-content"><span className="chat-author">Mira</span><div className="chat-bubble chat-streaming"><MarkdownMessage content={typingAnswer} /><span className="typing-cursor" aria-hidden="true" /></div></div></div>}
+          {busy && !typingAnswer && <div className="chat-message assistant"><img className="chat-avatar" src={miraAvatar} alt="" /><div className="chat-message-content"><span className="chat-author">Mira</span><p className="chat-bubble typing-dots" aria-label="Mira is typing"><i /><i /><i /></p></div></div>}
         </div>
         <div className="chat-composer-wrap">
           {error && <p className="ai-inline-error" role="alert">{error}</p>}
@@ -161,7 +203,7 @@ export default function AiAssistant({ onClose, onSave }: {
         {drafts.length > 0 && <section className="generator-results" aria-label="Generated reviewers"><div className="generator-result-heading"><span className="chat-eyebrow">YOUR STUDY SET</span><h3>Ready to review · {drafts.length} reviewers</h3><p>Open each reviewer to check answers before saving.</p></div>
           {drafts.map((draft, index) => <details key={index} className="generator-preview"><summary><span className="preview-number">{String(index + 1).padStart(2, "0")}</span><span>{draft.title}<small>{draft.cards.length} flashcards</small></span></summary><p className="my-3 text-xs text-stone-500">{draft.description}</p><dl className="space-y-3 text-sm">{draft.cards.map((card, cardIndex) => <div key={cardIndex}><dt className="font-medium">{card.question}</dt><dd className="mt-1 text-stone-500">{card.answer}</dd></div>)}</dl></details>)}
           {saving.error && <p role="alert" className="ai-inline-error">{saving.error}</p>}
-          <ProcessButton label="Save all reviewers" state={saving.state} successLabel="Saved" onClick={() => void saving.run(() => onSave(savedTopic, drafts), onClose)} />
+          <ProcessButton label="Save all reviewers" state={saving.state} successLabel="Saved" onClick={() => void saving.run(() => onSave(savedTopic, drafts), closeAssistant)} />
         </section>}
       </section>}
     </aside>, document.body,
