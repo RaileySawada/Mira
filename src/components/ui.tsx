@@ -73,7 +73,10 @@ export function Modal({
         event.preventDefault();
         onClose();
       }}
-      className="mira-modal m-auto max-h-[90dvh] w-[min(640px,94vw)] rounded-2xl border border-stone-200 bg-page p-0 shadow-xl backdrop:bg-stone-950/40"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      className="mira-modal"
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-200 bg-page px-6 py-5">
         <h2 className="text-xl font-semibold">{title}</h2>

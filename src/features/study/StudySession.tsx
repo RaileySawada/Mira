@@ -117,17 +117,22 @@ export function StudySession({
           {session.mode === "cards" ? (
             <>
               <button
-                className="flex min-h-64 w-full flex-col items-center justify-center rounded-2xl border border-violet-200 bg-violet-50/50 p-8 text-center"
+                className={`study-card ${flipped ? "is-flipped" : ""}`}
+                aria-pressed={flipped}
+                aria-label={`${flipped ? "Answer" : "Question"}: ${flipped ? card.answer : card.question}. Click to ${flipped ? "see question" : "reveal answer"}`}
                 onClick={() => setFlipped(!flipped)}
               >
-                <span className="eyebrow mb-6">
-                  {flipped ? "ANSWER" : "QUESTION"}
-                </span>
-                <span className="whitespace-pre-wrap text-xl leading-8">
-                  {flipped ? card.answer : card.question}
-                </span>
-                <span className="mt-8 text-xs text-stone-400">
-                  Click to {flipped ? "see question" : "reveal answer"}
+                <span className="study-card-inner">
+                  <span className="study-card-face study-card-front">
+                    <span className="eyebrow mb-6">QUESTION</span>
+                    <span className="study-card-copy">{card.question}</span>
+                    <span className="study-card-hint">Tap to reveal answer</span>
+                  </span>
+                  <span className="study-card-face study-card-back">
+                    <span className="eyebrow mb-6">ANSWER</span>
+                    <span className="study-card-copy">{card.answer}</span>
+                    <span className="study-card-hint">Tap to see question</span>
+                  </span>
                 </span>
               </button>
               <div className="mt-5 flex justify-between">

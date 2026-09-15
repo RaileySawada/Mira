@@ -98,7 +98,10 @@ test("flashcards flip, navigate backwards, and finish without saving a score", a
       onComplete={complete}
     />,
   );
-  await user.click(screen.getByRole("button", { name: /Powerhouse/ }));
+  const card = screen.getByRole("button", { name: /Powerhouse/ });
+  expect(card).not.toHaveClass("is-flipped");
+  await user.click(card);
+  expect(card).toHaveClass("is-flipped");
   expect(screen.getByText("Mitochondria")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Next card" }));
   await user.click(screen.getByRole("button", { name: "Previous" }));

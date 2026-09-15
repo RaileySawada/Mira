@@ -736,3 +736,102 @@ button:active:not(:disabled) { transform: scale(.97); }
 .chat-markdown :is(th,td) { padding: 8px 10px; border: 1px solid var(--line); text-align: left; min-width: 90px; }
 .chat-markdown th { background: var(--soft); font-weight: 600; }
 .chat-markdown hr { border: 0; border-top: 1px solid var(--line); margin-block: 16px; }
+
+
+/* Motion and depth make review feel tactile without obscuring the material. */
+.study-card { display: block; width: 100%; min-height: 280px; padding: 0; border: 0; border-radius: 18px; background: transparent; perspective: 1200px; text-align: inherit; }
+.study-card-inner { position: relative; display: block; width: 100%; min-height: 280px; transform-style: preserve-3d; transition: transform 520ms cubic-bezier(.2,.78,.2,1); }
+.study-card.is-flipped .study-card-inner { transform: rotateY(180deg); }
+.study-card-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px; border: 1px solid var(--line); border-radius: 18px; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 14px 30px #00000010; text-align: center; }
+.study-card-front { background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 80%, #eae2f4), var(--surface)); }
+.study-card-back { background: linear-gradient(145deg, #78659f, #645383); color: white; transform: rotateY(180deg); box-shadow: 0 16px 36px #61507d40; }
+.study-card-back .eyebrow, .study-card-back .study-card-hint { color: #ffffffa8; }
+.study-card-copy { max-width: 38rem; white-space: pre-wrap; font-size: clamp(1.15rem, 3vw, 1.5rem); line-height: 1.6; }
+.study-card-hint { margin-top: 28px; font-size: 11px; color: var(--color-stone-500); }
+.study-card:not(.is-flipped):hover .study-card-inner { transform: translateY(-3px) rotateX(1deg); }
+.study-card.is-flipped:hover .study-card-inner { transform: translateY(-3px) rotateY(180deg) rotateX(1deg); }
+
+/* Modals use the native top layer and become a comfortable bottom sheet on phones. */
+.mira-modal { margin: auto; width: min(640px, 94vw); max-width: none; max-height: min(90dvh, 860px); padding: 0; border: 1px solid var(--line); border-radius: 20px; background: var(--page); box-shadow: 0 24px 80px #0006; animation: modal-enter 180ms ease-out; }
+.mira-modal::backdrop { background: color-mix(in srgb, #111827 46%, transparent); backdrop-filter: blur(7px); }
+@keyframes modal-enter { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Mira is an independent assistant dock, not a blocking application dialog. */
+.ai-panel { top: auto; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); left: auto; width: min(440px, calc(100vw - 32px)); height: min(760px, calc(100dvh - 32px)); border-radius: 22px; box-shadow: 0 24px 60px #0004; animation: ai-enter 220ms cubic-bezier(.2,.78,.2,1); }
+.ai-panel-header { background: linear-gradient(115deg, var(--surface), var(--soft)); }
+@keyframes ai-enter { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.panel, .settings-banner, .install-card { transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.panel:hover, .settings-banner:hover, .install-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px #0000000b; border-color: color-mix(in srgb, var(--accent-ink) 28%, var(--line)); }
+.nav-item { transition: color 160ms ease, background 160ms ease, transform 160ms ease; }
+.nav-item:hover { transform: translateX(3px); }
+@media (max-width: 640px) {
+  .mira-modal { position: fixed; inset: auto 0 0; margin: 0; width: 100%; max-height: min(88dvh, 760px); border-width: 1px 0 0; border-radius: 24px 24px 0 0; animation: sheet-enter 220ms cubic-bezier(.2,.78,.2,1); }
+  .mira-modal > div:first-child { padding: 18px 20px; }
+  .mira-modal > div:first-child::before { content: ""; display: block; position: absolute; top: 8px; left: 50%; width: 38px; height: 4px; border-radius: 999px; background: var(--line); transform: translateX(-50%); }
+  .modal-content { padding: 20px; }
+  .ai-panel { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: min(82dvh, 700px); border-width: 1px 0 0; border-radius: 24px 24px 0 0; }
+  .study-card, .study-card-inner { min-height: 250px; }
+  .study-card-face { padding: 24px; }
+}
+@keyframes sheet-enter { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .study-card-inner, .mira-modal, .ai-panel { transition: none; animation: none; }
+  .study-card:hover .study-card-inner { transform: none; }
+  .study-card.is-flipped:hover .study-card-inner { transform: rotateY(180deg); }
+}
+
+
+/* Mira behaves as a small conversation app, revealed from her launcher. */
+.ai-conversation { display: flex; flex-direction: column; overflow: hidden; background: var(--page); animation: mira-reveal 360ms cubic-bezier(.22,.8,.22,1) both; transform-origin: bottom right; }
+@keyframes mira-reveal { from { clip-path: circle(24px at calc(100% - 42px) calc(100% - 42px)); opacity: .5; } to { clip-path: circle(150% at calc(100% - 42px) calc(100% - 42px)); opacity: 1; } }
+.ai-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 68px; padding: 13px 16px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.ai-identity { display: flex; align-items: center; min-width: 0; gap: 10px; }
+.ai-identity > img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px var(--soft); }
+.ai-identity h2 { font-size: 14px; font-weight: 650; letter-spacing: -.02em; }
+.ai-identity p { display: flex; align-items: center; gap: 5px; margin-top: 3px; color: var(--color-stone-500); font-size: 10px; }
+.ai-identity p i { width: 6px; height: 6px; border-radius: 50%; background: #22a35a; }
+.ai-header-actions { display: flex; align-items: center; flex-shrink: 0; gap: 3px; }
+.ai-header-action { display: inline-flex; align-items: center; gap: 5px; padding: 8px 9px; border-radius: 8px; color: var(--accent-ink); font-size: 11px; font-weight: 600; }
+.ai-header-action:hover { background: var(--soft); }
+.ai-chat-main { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.ai-conversation .chat-log { flex: 1; min-height: 0; max-height: none; margin: 0; padding: 24px 18px 12px; overflow-y: auto; overscroll-behavior: contain; }
+.chat-empty-state { max-width: 330px; margin: auto; padding: 36px 6px 22px; }
+.chat-empty-state > img { width: 54px; height: 54px; margin-bottom: 22px; border-radius: 18px; object-fit: cover; box-shadow: 0 0 0 5px var(--soft); }
+.chat-empty-state h3 { margin: 7px 0 10px; font-size: 23px; font-weight: 650; line-height: 1.3; letter-spacing: -.04em; }
+.chat-empty-state p { color: var(--color-stone-500); font-size: 13px; line-height: 1.7; }
+.chat-suggestions { display: grid; gap: 7px; margin-top: 22px; }
+.chat-suggestions button { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--color-stone-600); text-align: left; font-size: 12px; }
+.chat-suggestions button:hover { border-color: var(--accent-ink); background: var(--soft); color: var(--accent-ink); }
+.ai-conversation .chat-message { align-items: flex-start; gap: 9px; margin: 0 0 20px; }
+.ai-conversation .chat-message.user { flex-direction: row-reverse; }
+.ai-conversation .chat-message .chat-avatar { width: 30px; height: 30px; }
+.chat-message-content { min-width: 0; max-width: calc(100% - 40px); }
+.ai-conversation .chat-author { margin: 0 0 5px 2px; color: var(--color-stone-500); font-size: 10px; font-weight: 600; }
+.ai-conversation .user .chat-author { margin-right: 2px; text-align: right; }
+.ai-conversation .chat-bubble { max-width: none; padding: 11px 13px; border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; background: var(--surface); box-shadow: 0 2px 7px #00000005; font-size: 13px; }
+.ai-conversation .user .chat-bubble { border-color: transparent; border-radius: 14px 14px 4px 14px; background: #756499; box-shadow: none; }
+.chat-composer-wrap { flex-shrink: 0; padding: 10px 14px 12px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--page) 90%, transparent); }
+.ai-conversation .chat-composer { display: flex; align-items: flex-end; gap: 8px; margin: 0; padding: 7px 7px 7px 13px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: 0 6px 20px #00000009; }
+.ai-conversation .chat-composer:focus-within { border-color: color-mix(in srgb, var(--accent-ink) 65%, var(--line)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-ink) 12%, transparent); }
+.ai-conversation .chat-input-label { flex: 1; }
+.ai-conversation .chat-composer textarea { display: block; width: 100%; min-height: 38px; max-height: 130px; padding: 8px 0; border: 0; background: transparent; box-shadow: none; color: var(--ink); font-size: 13px; line-height: 1.55; outline: none; resize: none; }
+.ai-conversation .chat-send { width: 36px; height: 36px; flex: 0 0 36px; padding: 0; border-radius: 10px; }
+.chat-composer-meta { display: flex; justify-content: space-between; gap: 12px; padding: 8px 3px 0; color: var(--color-stone-500); font-size: 9px; line-height: 1.4; }
+.chat-composer-meta button { color: var(--accent-ink); font-size: 10px; font-weight: 600; }
+.ai-inline-error { margin: 0 0 8px; padding: 9px 11px; border: 1px solid var(--color-red-200); border-radius: 10px; background: var(--color-red-50); color: var(--color-red-800); font-size: 11px; line-height: 1.5; }
+.ai-generator-workspace { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 20px; }
+.ai-generator-workspace .generator-intro { margin-bottom: 22px; }
+.ai-generator-workspace .generator-intro h3 { margin: 7px 0 10px; font-size: 22px; }
+.ai-generator-workspace .reviewer-generator { padding: 0; }
+.ai-generator-workspace .reviewer-generator > .primary { width: 100%; min-height: 44px; }
+.ai-generator-workspace .generator-results { margin: 24px 0 0; }
+@media (max-width: 640px) {
+  .ai-conversation { height: min(86dvh, 720px); }
+  .ai-chat-header { min-height: 64px; padding: 12px 14px; }
+  .ai-header-action { max-width: 112px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ai-conversation .chat-log { padding: 18px 14px 10px; }
+  .chat-composer-wrap { padding: 10px 10px max(12px, env(safe-area-inset-bottom)); }
+  .chat-empty-state { padding-top: 20px; }
+  @keyframes mira-reveal { from { clip-path: circle(25px at calc(100% - 36px) calc(100% - 36px)); opacity: .5; } to { clip-path: circle(160% at calc(100% - 36px) calc(100% - 36px)); opacity: 1; } }
+}
+@media (prefers-reduced-motion: reduce) { .ai-conversation { animation: none; clip-path: none; } }

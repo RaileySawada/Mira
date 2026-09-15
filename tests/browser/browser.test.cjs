@@ -620,11 +620,11 @@ test("production study flows, themes, mobile overlays and offline reload", async
       return Promise.resolve(Response.json({reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
     }`);
     await click("AI study assistant");
-    await waitFor("document.querySelector('dialog[open]')");
+    await waitFor("document.querySelector('.ai-panel')");
     expect(await evaluate("document.querySelector('.ai-panel').getBoundingClientRect().right <= innerWidth")).toBe(true);
     expect(await evaluate("getComputedStyle(document.querySelector('.ai-panel')).position")).toBe("fixed");
     expect(await evaluate("getComputedStyle(document.body).position")).not.toBe("fixed");
-    await fill("dialog textarea", "What are cells?");
+    await fill(".ai-panel textarea", "What are cells?");
     await click("Send question");
     await waitFor("document.querySelectorAll('.chat-message').length === 2");
     expect(await evaluate("[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')")).toBe(true);
@@ -632,11 +632,11 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
     await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
     await click("Create reviewers");
-    await fill("dialog input", "AI Biology");
+    await fill(".ai-panel input", "AI Biology");
     await click("Generate reviewers");
     await waitFor("document.body.innerText.includes('Ready to review')");
     await click("Save all reviewers");
-    await waitFor("!document.querySelector('dialog[open]')");
+    await waitFor("!document.querySelector('.ai-panel')");
     expect(await evaluate("JSON.parse(localStorage.getItem('mira.study.v1')).reviewers.filter(r=>r.title.startsWith('AI reviewer')).length")).toBe(3);
     await evaluate("window.fetch = window.originalFetch");
     await waitFor("navigator.serviceWorker.controller !== null");
