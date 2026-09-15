@@ -1,6 +1,22 @@
-# Mira
+<div align="center">
 
-A little wiser, every day. A local-first study app built with React, TypeScript, Vite, and Tailwind CSS. No account or external analytics. Core studying works offline; optional AI assistance uses a Netlify function.
+  <img src="./public/icon.png" width="82" alt="Mira logo" />
+
+  <h1>Mira</h1>
+
+  <p>A little wiser, every day.</p>
+
+  <p>
+    <img src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white" alt="Vite" />
+    <img src="https://img.shields.io/badge/Tailwind_CSS-38BDF8?logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+    <img src="https://img.shields.io/badge/Netlify-00C7B7?logo=netlify&logoColor=white" alt="Netlify" />
+  </p>
+
+</div>
+
+Mira is a local-first study app with no account or external analytics. Core studying works offline; optional AI assistance uses a Netlify function.
 
 ## Getting started
 
