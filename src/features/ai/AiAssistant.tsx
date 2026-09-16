@@ -83,7 +83,7 @@ export default function AiAssistant({ onClose, onSave }: {
           resolve();
           return;
         }
-        position = Math.min(answer.length, position + Math.max(2, Math.ceil(answer.length / 180)));
+        position = Math.min(answer.length, position + Math.max(4, Math.ceil(answer.length / 90)));
         setTypingAnswer(answer.slice(0, position));
         if (position === answer.length) {
           setMessages((current) => [...current, { role: "assistant", content: answer }]);
@@ -91,7 +91,8 @@ export default function AiAssistant({ onClose, onSave }: {
           resolve();
           return;
         }
-        responseTimer.current = window.setTimeout(reveal, 16);
+        // Keep the typing pace while avoiding a Markdown parse on every display frame.
+        responseTimer.current = window.setTimeout(reveal, 32);
       };
       reveal();
     });

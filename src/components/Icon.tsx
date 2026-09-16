@@ -29,6 +29,12 @@ import {
   Target,
   Laptop,
   Heart,
+  Grid2X2,
+  List,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -62,6 +68,12 @@ const icons: Record<string, LucideIcon> = {
   target: Target,
   laptop: Laptop,
   heart: Heart,
+  grid: Grid2X2,
+  list: List,
+  up: ChevronUp,
+  down: ChevronDown,
+  previous: ChevronLeft,
+  next: ChevronRight,
 };
 export function Icon({
   name,

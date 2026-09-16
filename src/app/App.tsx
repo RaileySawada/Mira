@@ -89,8 +89,8 @@ export default function App() {
           </span>
         </header>
         <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10">
-          <div className="min-w-0 flex-1">
           <OnlineAssistant data={data} update={update} />
+          <div key={page} className="page-content min-w-0 flex-1">
           {(error || recoveryError) && (
             <div
               role="alert"

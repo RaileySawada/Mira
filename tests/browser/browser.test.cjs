@@ -118,6 +118,22 @@ test("production study flows, themes, mobile overlays and offline reload", async
         `(() => { const input = document.querySelector(${JSON.stringify(selector)}); const setter = Object.getOwnPropertyDescriptor(input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set; setter.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`,
       );
     }
+    const performanceSamples = [];
+    async function sampleWork(label, action) {
+      const readMetrics = async () => Object.fromEntries((await send("Performance.getMetrics")).metrics.map(metric => [metric.name, metric.value]));
+      const before = await readMetrics();
+      await action();
+      const after = await readMetrics();
+      performanceSamples.push({
+        label,
+        elapsedMs: Math.round((after.Timestamp - before.Timestamp) * 1000),
+        mainThreadMs: Math.round((after.TaskDuration - before.TaskDuration) * 1000),
+        scriptMs: Math.round((after.ScriptDuration - before.ScriptDuration) * 1000),
+        layoutMs: Math.round((after.LayoutDuration - before.LayoutDuration) * 1000),
+        heapMb: Math.round(after.JSHeapUsedSize / 1048576),
+      });
+    }
+    await send("Performance.enable");
     await send("Page.enable");
     await send("Runtime.enable");
     await send("Network.enable");
@@ -141,6 +157,8 @@ test("production study flows, themes, mobile overlays and offline reload", async
       ),
     ).toBe("");
     await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
+    await delay(1500);
+    await sampleWork("home-idle", () => delay(2000));
     expect(await evaluate("document.querySelector('header.hidden').getBoundingClientRect().height")).toBeLessThanOrEqual(52);
     expect(await evaluate("performance.getEntriesByType('resource').some(entry => entry.name.includes('/.netlify/functions/'))")).toBe(false);
     await evaluate("Array.from(document.links).find(a => a.pathname === '/activity').click()");
@@ -612,11 +630,17 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("document.querySelector('[aria-label=\"Color theme\"]')");
 
+    // The launcher stays attached to the viewport after page animations and scrolling.
+    await evaluate("window.scrollTo(0, document.body.scrollHeight)");
+    await waitFor("scrollY > 0");
+    expect(await evaluate("Math.round(innerWidth - document.querySelector('.ai-launcher').getBoundingClientRect().right)")).toBe(20);
+    expect(await evaluate("Math.round(innerHeight - document.querySelector('.ai-launcher').getBoundingClientRect().bottom)")).toBe(20);
+
     // Exercise the real browser client with deterministic AI responses (no paid calls).
     await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => {
       if (url !== '/.netlify/functions/ai') return window.originalFetch(url, options);
       const input = JSON.parse(options.body);
-      if (input.mode === 'chat') return Promise.resolve(Response.json({answer: 'Cells are the building blocks of life.'}));
+      if (input.mode === 'chat') return Promise.resolve(Response.json({answer: ['## Cells', '', 'Cells are the **building blocks** of life. They contain structures that perform specific functions.', ''].join(String.fromCharCode(10)).repeat(30)}));
       return Promise.resolve(Response.json({reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
     }`);
     await click("AI study assistant");
@@ -624,13 +648,22 @@ test("production study flows, themes, mobile overlays and offline reload", async
     expect(await evaluate("document.querySelector('.ai-panel').getBoundingClientRect().right <= innerWidth")).toBe(true);
     expect(await evaluate("getComputedStyle(document.querySelector('.ai-panel')).position")).toBe("fixed");
     expect(await evaluate("getComputedStyle(document.body).position")).not.toBe("fixed");
+    await evaluate("window.openMiraPanel = document.querySelector('.ai-panel'); document.querySelector('a[href=\"/quizzes\"]').click()");
+    await waitFor("location.pathname === '/quizzes'");
+    expect(await evaluate("document.querySelector('.ai-panel') === window.openMiraPanel")).toBe(true);
+    await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
+    await waitFor("location.pathname === '/settings'");
     await fill(".ai-panel textarea", "What are cells?");
-    await click("Send question");
-    await waitFor("document.querySelectorAll('.chat-message').length === 2");
-    expect(await evaluate("[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')")).toBe(true);
-    const chatScreenshot = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
-    await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
+    await sampleWork("ai-answer-typing", async () => {
+      await click("Send question");
+      await waitFor("document.querySelectorAll('.chat-message').length === 2");
+      expect(await evaluate("[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')")).toBe(true);
+      const chatScreenshot = await send("Page.captureScreenshot", { format: "png" });
+      await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
+      await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
+    });
+    await sampleWork("ai-open-idle", () => delay(2000));
+    await writeFile(path.join(tmpdir(), "mira-performance.json"), JSON.stringify(performanceSamples, null, 2));
     await click("Create reviewers");
     await fill(".ai-panel input", "AI Biology");
     await click("Generate reviewers");
