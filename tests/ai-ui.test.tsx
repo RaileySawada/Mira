@@ -144,8 +144,8 @@ test("online launcher saves locally and hides tools immediately on disconnect", 
   expect(screen.queryByRole("button", { name: "AI study assistant" })).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent("offline");
   act(() => { online = true; window.dispatchEvent(new Event("online")); });
-  expect(screen.getByRole("button", { name: "AI study assistant" })).toBeVisible();
-  expect(screen.queryByRole("complementary", { name: "Your study assistant" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "AI study assistant" })).not.toBeInTheDocument();
+  expect(screen.getByRole("complementary", { name: "Your study assistant" })).toBeVisible();
   unmount();
 });
 
@@ -168,7 +168,7 @@ test("disconnecting aborts AI work and reconnecting does not restart it", async 
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   act(() => { online = true; window.dispatchEvent(new Event("online")); });
   expect(request).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("button", { name: "AI study assistant" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Generate reviewers" })).toBeEnabled();
 });
 
 test("chat starts as a conversation and sends context for follow-up questions", async () => {
@@ -214,6 +214,26 @@ test("chat previews requested reviewers and saves only after a click", async () 
   await waitFor(() => expect(screen.getByLabelText("Your study question")).not.toBeDisabled());
   expect(save).not.toHaveBeenCalled();
   expect(request).toHaveBeenCalledWith(expect.objectContaining({ mode: "chat", prompt: "Create biology reviewers" }), expect.any(AbortSignal));
-  click("Save all reviewers");
+  await act(async () => { click("Save all reviewers"); });
   expect(save).toHaveBeenCalledWith("Biology", drafts);
+});
+
+test("idle conversations survive network blips with unsent text intact", async () => {
+  let online = true;
+  jest.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+  render(<OnlineAssistant data={library()} update={jest.fn()} />);
+  click("AI study assistant");
+  const panel = await screen.findByRole("complementary", { name: "Your study assistant" });
+  change("Your study question", "My unsent question");
+  jest.useFakeTimers();
+  try {
+    act(() => jest.advanceTimersByTime(10 * 60 * 1000));
+    expect(panel).toBeVisible();
+    act(() => { online = false; window.dispatchEvent(new Event("offline")); });
+    expect(panel).not.toBeVisible();
+    act(() => { online = true; window.dispatchEvent(new Event("online")); });
+    expect(screen.getByRole("complementary", { name: "Your study assistant" })).toBe(panel);
+    expect(screen.getByLabelText("Your study question")).toHaveValue("My unsent question");
+    expect(request).not.toHaveBeenCalled();
+  } finally { jest.useRealTimers(); }
 });

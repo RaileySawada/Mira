@@ -4,7 +4,7 @@ interface Recognition {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> }) => void) | null;
   onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
   start: () => void;
@@ -38,57 +38,79 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   }, []);
   function start(prefix: string) {
     const Constructor = recognitionConstructor();
-    if (!Constructor || recognition.current || !navigator.onLine) return;
-    const current = new Constructor();
-    recognition.current = current;
-    current.lang = navigator.language || "en-US";
+    if (!Constructor || keepListening.current || !navigator.onLine) return;
+    const RecognitionClass = Constructor;
     keepListening.current = true;
     let savedText = prefix.trimEnd();
-    let latestText = savedText;
-    current.continuous = true;
-    current.interimResults = true;
-    current.onresult = event => {
-      const words = Array.from(event.results).map(result => result[0].transcript).join(" ");
-      latestText = (savedText + (savedText ? " " : "") + words).slice(0, 3000);
-      transcript.current(latestText);
-    };
-    current.onerror = event => {
-      if (event.error === "no-speech") return;
-      keepListening.current = false;
-      setError(event.error === "not-allowed" ? "Microphone permission was denied. Allow it in your browser or type your message." : "Could not transcribe your voice. Try again or type your message.");
-    };
-    current.onend = () => {
+    setError("");
+    setListening(true);
+
+    function beginUtterance() {
       if (!keepListening.current || !navigator.onLine) {
-        recognition.current = null;
+        keepListening.current = false;
         setListening(false);
         return;
       }
-      // Some browsers end even continuous recognition after silence.
-      // Preserve this session's text before the next result list starts over.
-      savedText = latestText;
-      restartTimer.current = setTimeout(() => {
-        try { current.start(); } catch {
+      // A fresh single-utterance recognizer avoids reusing cumulative mobile results.
+      const current = new RecognitionClass();
+      recognition.current = current;
+      current.lang = navigator.language || "en-US";
+      current.continuous = false;
+      current.interimResults = true;
+      let finalText = "";
+      const combine = (words: string) => [savedText, words.trim()].filter(Boolean).join(" ").slice(0, 3000);
+      current.onresult = event => {
+        if (recognition.current !== current) return;
+        // Results are a snapshot, not new text to append on every event.
+        const results = Array.from(event.results);
+        finalText = results.filter(result => result.isFinal).map(result => result[0].transcript.trim()).join(" ");
+        const interim = results.filter(result => !result.isFinal).map(result => result[0].transcript.trim()).join(" ");
+        transcript.current(combine([finalText, interim].filter(Boolean).join(" ")));
+      };
+      current.onerror = event => {
+        if (recognition.current !== current || event.error === "no-speech") return;
+        keepListening.current = false;
+        setError(event.error === "not-allowed" ? "Microphone permission was denied. Allow it in your browser or type your message." : "Could not transcribe your voice. Try again or type your message.");
+      };
+      current.onend = () => {
+        if (recognition.current !== current) return;
+        current.onresult = null;
+        current.onerror = null;
+        current.onend = null;
+        recognition.current = null;
+        // Only confirmed words carry into the next session. Interim guesses can
+        // be replayed or corrected by the browser and must not become a prefix.
+        savedText = combine(finalText);
+        transcript.current(savedText);
+        if (!keepListening.current || !navigator.onLine) {
           keepListening.current = false;
-          recognition.current = null;
           setListening(false);
-          setError("Listening stopped. Tap the microphone to continue.");
+          return;
         }
-      }, 500);
-    };
-    setError("");
-    setListening(true);
-    try { current.start(); } catch {
-      keepListening.current = false;
-      recognition.current = null;
-      setListening(false);
-      setError("Could not start the microphone. Try again or type your message.");
+        clearTimeout(restartTimer.current);
+        restartTimer.current = setTimeout(beginUtterance, 500);
+      };
+      try { current.start(); } catch {
+        recognition.current = null;
+        keepListening.current = false;
+        setListening(false);
+        setError("Could not start the microphone. Try again or type your message.");
+      }
     }
+    beginUtterance();
   }
+
   function stop() {
     keepListening.current = false;
     clearTimeout(restartTimer.current);
-    recognition.current?.stop();
+    const current = recognition.current;
     recognition.current = null;
+    if (current) {
+      current.onresult = null;
+      current.onerror = null;
+      current.onend = null;
+      current.abort();
+    }
     setListening(false);
   }
   return { supported: Boolean(recognitionConstructor()), listening, error, start, stop };

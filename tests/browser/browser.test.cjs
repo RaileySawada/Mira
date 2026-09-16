@@ -654,6 +654,14 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("location.pathname === '/settings'");
     await fill(".ai-panel textarea", "What are cells?");
+    await evaluate("window.idlePanel = document.querySelector('.ai-panel'); true");
+    await send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+    await waitFor("document.querySelector('.ai-panel').hidden");
+    await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await waitFor("!document.querySelector('.ai-panel').hidden");
+    expect(await evaluate("document.querySelector('.ai-panel') === window.idlePanel")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-panel textarea').value")).toBe("What are cells?");
+
     await sampleWork("ai-answer-typing", async () => {
       await click("Send question");
       await waitFor("document.querySelectorAll('.chat-message').length === 2");

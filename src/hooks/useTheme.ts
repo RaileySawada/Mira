@@ -66,8 +66,7 @@ export function useTheme(theme: Theme, save: (theme: Theme) => boolean) {
         // A newer theme selection can intentionally skip an unfinished transition.
       },
     );
-    void transition.finished.finally(() => {
-      if (active.current === transition) active.current = null;
-    });
+    const finish = () => { if (active.current === transition) active.current = null; };
+    void transition.finished.then(finish, finish);
   };
 }

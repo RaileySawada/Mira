@@ -12,7 +12,7 @@ function compareAttempt(a: Attempt, b: Attempt, key: SortKey) {
   if (key === "title") return a.title.localeCompare(b.title);
   if (key === "mode") return a.mode.localeCompare(b.mode);
   if (key === "result") return result(a) - result(b);
-  return a.date.localeCompare(b.date);
+  return new Date(a.date).getTime() - new Date(b.date).getTime();
 }
 
 export function Activity({ data }: { data: StudyData }) {

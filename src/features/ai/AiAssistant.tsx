@@ -3,7 +3,7 @@ import { useVoiceInput } from "../../hooks/useVoiceInput";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
-import { useEffect, useRef, useState, type SubmitEvent } from "react";
+import { useEffect, useEffectEvent, useRef, useState, type SubmitEvent } from "react";
 import { createPortal } from "react-dom";
 import { ArrowUp, Mic, Square, Plus, RotateCcw, X } from "lucide-react";
 import miraAvatar from "../../assets/images/profile_pictures/mira.png";
@@ -14,7 +14,8 @@ import { isRecord, parseReviewers, validText, type ChatMessage, type GeneratedRe
 
 type Mode = "chat" | "generate";
 
-export default function AiAssistant({ onClose, onSave }: {
+export default function AiAssistant({ onClose, onSave, online = true }: {
+  online?: boolean;
   onClose: () => void;
   onSave: (topic: string, reviewers: GeneratedReviewer[]) => boolean;
 }) {
@@ -65,8 +66,16 @@ export default function AiAssistant({ onClose, onSave }: {
     setTypingAnswer("");
     setBusy(false);
   }
+  const pauseOffline = useEffectEvent(() => { cancelRequest(); voice.stop(); });
+  useEffect(() => {
+    const disconnected = () => pauseOffline();
+    window.addEventListener("offline", disconnected);
+    return () => window.removeEventListener("offline", disconnected);
+  }, []);
+
   function startFreshConversation() {
     if (busy) return;
+    voice.stop();
     setDrafts([]);
     setMessages([]);
     clearAiSession();
@@ -82,6 +91,8 @@ export default function AiAssistant({ onClose, onSave }: {
         resolve();
         return;
       }
+      const aborted = () => { window.clearTimeout(responseTimer.current); resolve(); };
+      signal.addEventListener("abort", aborted, { once: true });
       let position = 0;
       const reveal = () => {
         if (signal.aborted) {
@@ -92,6 +103,7 @@ export default function AiAssistant({ onClose, onSave }: {
         position = Math.min(answer.length, position + Math.max(4, Math.ceil(answer.length / 90)));
         setTypingAnswer(answer.slice(0, position));
         if (position === answer.length) {
+          signal.removeEventListener("abort", aborted);
           setMessages((current) => [...current, { role: "assistant", content: answer }]);
           setTypingAnswer("");
           resolve();
@@ -106,7 +118,7 @@ export default function AiAssistant({ onClose, onSave }: {
 
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || voice.listening || (mode === "generate" ? !topic.trim() : !prompt.trim())) return;
+    if (!online || !navigator.onLine || busy || voice.listening || (mode === "generate" ? !topic.trim() : !prompt.trim())) return;
     const pending = new AbortController();
     controller.current = pending;
     const question = prompt.trim();
@@ -134,6 +146,7 @@ export default function AiAssistant({ onClose, onSave }: {
         ...(mode === "chat" ? { history: messages.slice(-6).map(message => ({ ...message, content: message.content.slice(0, 1800) })) } : {}),
       }, pending.signal);
       if (pending.signal.aborted) return;
+      window.clearTimeout(timeout);
       if (mode === "generate") {
         const reviewers = parseReviewers(result);
         if (reviewers.length !== count || reviewers.some(reviewer => reviewer.cards.length !== cardsPerReviewer)) throw new Error("AI did not finish every reviewer. Please try a smaller batch.");
@@ -148,6 +161,7 @@ export default function AiAssistant({ onClose, onSave }: {
         }
         await revealAnswer(result.answer as string, pending.signal);
       }
+      if (pending.signal.aborted) return;
       setSucceeded(true);
       successTimer.current = setTimeout(() => setSucceeded(false), 600);
     } catch (failure) {
@@ -171,7 +185,7 @@ export default function AiAssistant({ onClose, onSave }: {
         </section>;
 
   return createPortal(
-    <aside className="ai-panel ai-conversation" aria-label="Your study assistant" role="complementary" tabIndex={-1} onKeyDown={event => {
+    <aside hidden={!online} style={!online ? { display: "none" } : undefined} className="ai-panel ai-conversation" aria-label="Your study assistant" role="complementary" tabIndex={-1} onKeyDown={event => {
       if (event.key === "Escape") { event.stopPropagation(); closeAssistant(); }
     }}>
       <header className="ai-chat-header">

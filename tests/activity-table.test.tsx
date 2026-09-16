@@ -52,3 +52,15 @@ test("quizzes offer matching grid and list layouts", () => {
   fireEvent.click(screen.getByRole("button", { name: "List view" }));
   expect(document.querySelector(".quiz-list")).toBeTruthy();
 });
+
+test("activity dates sort by instant rather than timezone text", () => {
+  const data = library();
+  data.attempts = [
+    attempt({ id: "earlier", title: "Earlier", date: "2026-01-02T01:00:00+08:00" }),
+    attempt({ id: "later", title: "Later", date: "2026-01-01T23:00:00Z" }),
+  ];
+  render(<Activity data={data} />);
+  expect(within(screen.getAllByRole("row")[1]).getByText("Later")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /Date/ }));
+  expect(within(screen.getAllByRole("row")[1]).getByText("Earlier")).toBeVisible();
+});
