@@ -1,20 +1,22 @@
+import { useViewPreference } from "../hooks/useViewPreference";
 import { confirmAction } from "../components/confirmAction";
 import { useActionFeedback } from "../hooks/useActionFeedback";
 import { useState } from "react";
 import type { StudyData, Topic } from "../types/study";
 import { EmptyState, Modal, PageHeading } from "../components/ui";
 import { Icon } from "../components/Icon";
-import { ViewToggle, type ViewMode } from "../components/ViewToggle";
+import { ViewToggle } from "../components/ViewToggle";
 import { ProcessButton } from "../components/ProcessButton";
 
 export function Topics({ data, update }: { data: StudyData; update: (d: StudyData) => boolean }) {
   const save = useActionFeedback();
-  const [view, setView] = useState<ViewMode>("grid");
+  const { view, setView, error: layoutError } = useViewPreference("topics");
   const [editing, setEditing] = useState<Topic | null>(null);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#8d80b5");
   function open(topic: Topic) { save.reset(); setEditing(topic); setName(topic.name); setColor(topic.color); }
   return <>
+    {layoutError && <p role="status" className="mb-4 text-xs text-stone-500">{layoutError}</p>}
     <PageHeading eyebrow="A PLACE FOR EVERYTHING" title="Follow your curiosity." description="Give your reviewers a home. Organize them into topics that make sense to you." action={<div className="page-heading-actions"><ViewToggle value={view} onChange={setView} label="Topic layout" /><button className="button primary" onClick={() => open({ id: "", name: "", color: "#8d80b5" })}><Icon name="plus" size={16} /> New topic</button></div>} />
     {data.topics.length ? <div className={view === "grid" ? "topic-collection topic-grid" : "topic-collection topic-list"}>
       {data.topics.map(topic => {

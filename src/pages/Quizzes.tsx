@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useViewPreference } from "../hooks/useViewPreference";
 import type { Reviewer, StudyData } from "../types/study";
 import { EmptyState, PageHeading } from "../components/ui";
 import { dayKey } from "../utils/stats";
-import { ViewToggle, type ViewMode } from "../components/ViewToggle";
+import { ViewToggle } from "../components/ViewToggle";
 
 export function Quizzes({ data, onQuiz, onDaily }: { data: StudyData; onQuiz: (r: Reviewer) => void; onDaily: () => void }) {
-  const [view, setView] = useState<ViewMode>("grid");
+  const { view, setView, error: layoutError } = useViewPreference("quizzes");
   const available = data.reviewers.filter(reviewer => reviewer.cards.length);
   const done = data.attempts.some(attempt => attempt.mode === "daily" && dayKey(attempt.date) === dayKey(new Date()));
   return <>
+    {layoutError && <p role="status" className="mb-4 text-xs text-stone-500">{layoutError}</p>}
     <PageHeading eyebrow="YOUR PRACTICE SPACE" title="Put your knowledge to the test." description="Pick a reviewer to focus on, or mix things up with a daily review." />
     <section className="quiz-daily-card">
       <div>

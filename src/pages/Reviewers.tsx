@@ -1,16 +1,18 @@
+import { useViewPreference } from "../hooks/useViewPreference";
 import { useState } from "react";
 import type { Reviewer, StudyData } from "../types/study";
 import { SearchSelect } from "../components/SearchSelect";
 import { Icon } from "../components/Icon";
 import { EmptyState, PageHeading } from "../components/ui";
-import { ViewToggle, type ViewMode } from "../components/ViewToggle";
+import { ViewToggle } from "../components/ViewToggle";
 
 export function Reviewers({ data, onCreate, onEdit, onDelete, onStudy, onQuiz }: { data: StudyData; onCreate: () => void; onEdit: (r: Reviewer) => void; onDelete: (r: Reviewer) => void; onStudy: (r: Reviewer) => void; onQuiz: (r: Reviewer) => void }) {
   const [search, setSearch] = useState("");
   const [topic, setTopic] = useState("all");
-  const [view, setView] = useState<ViewMode>("grid");
+  const { view, setView, error: layoutError } = useViewPreference("reviewers");
   const reviewers = data.reviewers.filter(reviewer => (reviewer.title + " " + reviewer.description).toLowerCase().includes(search.toLowerCase()) && (topic === "all" || reviewer.topicId === topic));
   return <>
+    {layoutError && <p role="status" className="mb-4 text-xs text-stone-500">{layoutError}</p>}
     <PageHeading eyebrow="YOUR PERSONAL LIBRARY" title="Room for every little discovery." description="Collect your knowledge. Find your rhythm. Make it stick." />
     <div className="reviewer-toolbar mb-6 flex items-start gap-2 sm:gap-3">
       <label className="relative min-w-0 flex-1"><Icon name="search" style={{ position: "absolute", left: 13, top: 12, color: "#a8a29e" }} size={18} /><input className="input w-full pl-10" aria-label="Search reviewers" placeholder="Find a reviewer…" value={search} onChange={event => setSearch(event.target.value)} /></label>

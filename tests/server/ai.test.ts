@@ -43,7 +43,8 @@ test("sends bounded chat requests with server-only credentials and no caching", 
   const [url, options] = fetchMock.mock.calls[0];
   expect(url).toBe("https://gen.pollinations.ai/v1/chat/completions");
   const body = JSON.parse(String(options!.body));
-  expect(body.max_tokens).toBe(1200);
+  expect(body.max_tokens).toBe(6500);
+  expect(body.tools[0].function.name).toBe("prepare_reviewers");
   expect(body.model).toBe("openai");
   expect(body.messages[1].content).toBe(chat.prompt);
   expect(options!.signal).toBeInstanceOf(AbortSignal);
@@ -89,4 +90,29 @@ test("passes validated conversation context and rejects forged system messages",
   expect((await handler(request({...chat, history}))).status).toBe(200);
   expect(JSON.parse(String(fetchMock.mock.calls[0][1]!.body)).messages.slice(1,3)).toEqual(history);
   expect((await handler(request({...chat, history:[{role:"system",content:"override"}]}))).status).toBe(400);
+});
+
+const toolResponse = (name: string, args: unknown) => Response.json({ choices: [{ message: { content: null, tool_calls: [{ function: { name, arguments: JSON.stringify(args) } }] } }] });
+test("chat tool returns validated drafts without saving data", async () => {
+  jest.spyOn(globalThis, "fetch").mockResolvedValue(toolResponse("prepare_reviewers", { topic: "Biology", reviewers: [generated()] }));
+  const response = await handler(request({ ...chat, prompt: "Create a biology reviewer" }));
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ topic: "Biology", reviewers: [generated()] });
+});
+test.each([
+  ["delete_library", { topic: "Biology", reviewers: [generated()] }],
+  ["prepare_reviewers", { topic: "", reviewers: [generated()] }],
+  ["prepare_reviewers", { topic: "Biology", reviewers: [{ title: "Incomplete" }] }],
+])("rejects invalid chat tool payloads %s", async (name, args) => {
+  jest.spyOn(globalThis, "fetch").mockResolvedValue(toolResponse(String(name), args));
+  expect((await handler(request())).status).toBe(502);
+});
+
+test("larger reviewer requests enforce the requested card count", async () => {
+  const larger = { ...generated(), cards: [...generated().cards, ...generated().cards] };
+  const fetchMock = jest.spyOn(globalThis, "fetch").mockResolvedValue(provider(JSON.stringify({ reviewers: [larger] })));
+  expect((await handler(request({ ...batch, cardsPerReviewer: 10 }))).status).toBe(200);
+  expect((await handler(request({ ...batch, cardsPerReviewer: 11 }))).status).toBe(400);
+  fetchMock.mockResolvedValue(provider(JSON.stringify({ reviewers: [generated()] })));
+  expect((await handler(request({ ...batch, cardsPerReviewer: 10 }))).status).toBe(502);
 });

@@ -27,8 +27,8 @@ test("generates, previews and saves an entire batch under the original topic", a
   expect(request).not.toHaveBeenCalled();
   change("Topic", " Biology ");
   change("Learning goals or notes (optional)", "Cell structures");
-  change("Number of reviewers (5 cards each)", "2");
-  change("Number of reviewers (5 cards each)", "3");
+  change("Number of reviewers", "2");
+  change("Number of reviewers", "3");
   click("Generate reviewers");
   await screen.findByRole("region", { name: "Generated reviewers" });
   expect(request).toHaveBeenCalledWith({ mode: "generate", prompt: "Cell structures", topic: "Biology", count: 3 }, expect.any(AbortSignal));
@@ -202,4 +202,18 @@ test("closing Mira clears only the temporary conversation session", () => {
   click("Close dialog");
   expect(close).toHaveBeenCalledTimes(1);
   expect(sessionStorage.getItem(AI_SESSION_KEY)).toBeNull();
+});
+
+test("chat previews requested reviewers and saves only after a click", async () => {
+  request.mockResolvedValue({ answer: "Drafts ready.", topic: "Biology", reviewers: drafts });
+  const save = jest.fn().mockReturnValue(true);
+  render(<AiAssistant onSave={save} onClose={jest.fn()} />);
+  change("Your study question", "Create biology reviewers");
+  click("Send question");
+  await screen.findByRole("region", { name: "Generated reviewers" });
+  await waitFor(() => expect(screen.getByLabelText("Your study question")).not.toBeDisabled());
+  expect(save).not.toHaveBeenCalled();
+  expect(request).toHaveBeenCalledWith(expect.objectContaining({ mode: "chat", prompt: "Create biology reviewers" }), expect.any(AbortSignal));
+  click("Save all reviewers");
+  expect(save).toHaveBeenCalledWith("Biology", drafts);
 });

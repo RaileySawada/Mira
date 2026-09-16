@@ -129,7 +129,7 @@ The browser suite needs Chrome. Set CHROME_PATH if it is not at the default Wind
 
 ## Online study assistant (Netlify)
 
-Mira's core library, quizzes, settings, and charts work locally. The optional assistant uses a Netlify Function and Pollinations; nothing is sent until the user submits a question or generation request. Generate 1–5 reviewers with 5 cards each, inspect the preview, then save the batch with its topic. Existing topic names are reused. AI may be inaccurate; check material against course sources.
+Mira's core library, quizzes, settings, and charts work locally. The optional assistant uses a Netlify Function and Pollinations; nothing is sent until the user submits a question or generation request. Generate 1–5 reviewers with 5 or 10 cards each, inspect the preview, then save the batch with its topic. You can also ask in chat, for example: "Create two biology reviewers with ten cards each." Mira can call a validated draft-generation tool; nothing is saved until you choose Save all reviewers. Existing topic names are reused. AI may be inaccurate; check material against course sources.
 
 Set `POLLINATIONS_SK` in Netlify's environment variables with Functions scope, then redeploy. Optional server variables are `POLLINATIONS_BASE_URL` (default https://gen.pollinations.ai/v1) and `POLLINATIONS_MODEL` (default openai). Never prefix the secret with VITE_. Local .env files are not deployed. Configure a spending limit on the provider key; the endpoint is anonymous and has a Netlify limit of 10 requests per IP/domain per minute. Origin checks are not authentication.
 
@@ -148,3 +148,7 @@ Run `npm run dev:netlify` and open http://localhost:8888. Netlify Dev starts Vit
 The floating assistant uses the supplied Mira and user avatars. Questions appear as a conversation, with the latest six messages (up to 1,800 characters each) included for follow-up context. Chat stays in memory and is cleared when the assistant closes or the device goes offline. Only submitted chat text and recent conversation context are sent to Pollinations; saved reviewers are not uploaded.
 
 The CLI uses `--offline` to avoid requiring a linked Netlify account for local configuration. This does not block your function from reaching Pollinations: AI still requires internet access. The development-only Sharp override selects the patched image-processing release.
+
+### Voice input
+
+In supported browsers, tap the microphone beside the chat input and allow microphone access. Stop recording, edit the transcript, then press Send. Recording never submits a message automatically. Recognition uses the browser language and may send audio to the browser’s speech service; Mira sends only the submitted text to Pollinations. The microphone is hidden when unsupported, and AI is hidden offline. Closing the assistant stops recording. See [browser speech recognition support](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).

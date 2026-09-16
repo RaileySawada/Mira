@@ -5,6 +5,7 @@ export interface AiRequest {
   prompt: string;
   topic: string;
   count: number;
+  cardsPerReviewer?: number;
   history?: ChatMessage[];
 }
 

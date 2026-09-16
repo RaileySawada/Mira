@@ -19,7 +19,7 @@ export function parseReviewers(value: unknown): GeneratedReviewer[] {
   if (!isRecord(value) || !Array.isArray(value.reviewers) || value.reviewers.length < 1 || value.reviewers.length > 5)
     throw new Error("AI returned an invalid reviewer collection. Please try again.");
   return value.reviewers.map((reviewer: unknown) => {
-    if (!isRecord(reviewer) || !validText(reviewer.title, 150) || typeof reviewer.description !== "string" || reviewer.description.length > 2000 || !Array.isArray(reviewer.cards) || reviewer.cards.length !== 5)
+    if (!isRecord(reviewer) || !validText(reviewer.title, 150) || typeof reviewer.description !== "string" || reviewer.description.length > 2000 || !Array.isArray(reviewer.cards) || (reviewer.cards.length < 5 || reviewer.cards.length > 10))
       throw new Error("AI returned an incomplete reviewer. Please try again.");
     return {
       title: reviewer.title.trim(), description: reviewer.description.trim(),
