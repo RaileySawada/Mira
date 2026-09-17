@@ -9,16 +9,13 @@
   "background_color": "#faf9f6",
   "theme_color": "#8d80b5",
   "lang": "en",
-  "categories": ["education", "productivity"],
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
-      "src": "/icon.png",
-      "sizes": "1254x1254",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon.png",
+      "src": "/logo.png",
       "sizes": "1254x1254",
       "type": "image/png",
       "purpose": "any"

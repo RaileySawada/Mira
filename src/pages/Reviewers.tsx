@@ -9,8 +9,9 @@ import { ViewToggle } from "../components/ViewToggle";
 export function Reviewers({ data, onCreate, onEdit, onDelete, onStudy, onQuiz }: { data: StudyData; onCreate: () => void; onEdit: (r: Reviewer) => void; onDelete: (r: Reviewer) => void; onStudy: (r: Reviewer) => void; onQuiz: (r: Reviewer) => void }) {
   const [search, setSearch] = useState("");
   const [topic, setTopic] = useState("all");
+  const [folder, setFolder] = useState("all");
   const { view, setView, error: layoutError } = useViewPreference("reviewers");
-  const reviewers = data.reviewers.filter(reviewer => (reviewer.title + " " + reviewer.description).toLowerCase().includes(search.toLowerCase()) && (topic === "all" || reviewer.topicId === topic));
+  const reviewers = data.reviewers.filter(reviewer => (reviewer.title + " " + reviewer.description).toLowerCase().includes(search.toLowerCase()) && (topic === "all" || reviewer.topicId === topic) && (folder === "all" || (reviewer.folderId ?? "") === folder));
   return <>
     {layoutError && <p role="status" className="mb-4 text-xs text-stone-500">{layoutError}</p>}
     <PageHeading eyebrow="YOUR PERSONAL LIBRARY" title="Room for every little discovery." description="Collect your knowledge. Find your rhythm. Make it stick." />
@@ -20,6 +21,7 @@ export function Reviewers({ data, onCreate, onEdit, onDelete, onStudy, onQuiz }:
       <ViewToggle value={view} onChange={setView} label="Reviewer layout" />
       <button className="button primary toolbar-create" onClick={onCreate} aria-label="New reviewer"><Icon name="plus" size={16} /><span className="hidden sm:inline">New reviewer</span></button>
     </div>
+    {Boolean(data.folders?.length) && <div className="mb-5 max-w-xs"><SearchSelect label="Filter by folder" value={folder} onChange={setFolder} options={[{ value: "all", label: "All folders" }, { value: "", label: "Unfiled" }, ...(data.folders ?? []).map(item => ({ value: item.id, label: item.name }))]} /></div>}
     {reviewers.length ? <div className={view === "grid" ? "reviewer-collection reviewer-grid" : "reviewer-collection reviewer-list"}>
       {reviewers.map(reviewer => {
         const currentTopic = data.topics.find(item => item.id === reviewer.topicId);

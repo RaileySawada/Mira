@@ -1,7 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Nunito";
+  src: url("../fonts/Nunito-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+}
+
 @theme {
-  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Nunito", "Segoe UI", Arial, sans-serif;
 }
 @layer base {
   body {
@@ -47,10 +55,6 @@
 @layer components {
   .sidebar {
     @apply fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-line bg-sidebar px-5 py-8 lg:flex;
-  }
-  .logo-mark {
-    @apply flex h-9 w-9 items-center justify-center rounded-xl bg-[#8d80b5] pb-1 text-3xl font-medium text-white;
-    font-family: Georgia, serif;
   }
   .nav-item {
     @apply flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] text-stone-500 transition-colors hover:bg-soft;
@@ -467,9 +471,12 @@ body {
 
 .brand-image {
   flex-shrink: 0;
+  filter: grayscale(1) contrast(10) invert(1);
+  mix-blend-mode: multiply;
 }
 :root[data-theme="dark"] .brand-image {
-  filter: invert(1);
+  filter: grayscale(1) contrast(10);
+  mix-blend-mode: screen;
 }
 .mobile-header {
   display: flex;
@@ -483,14 +490,15 @@ body {
 .menu-button {
   display: grid;
   place-items: center;
-  width: 43px;
-  height: 43px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: var(--soft);
-  color: var(--accent-ink);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-stone-600);
 }
+.menu-button:active { background: var(--soft); }
 .mobile-drawer {
   position: fixed;
   inset: 0 auto 0 0;
@@ -555,6 +563,12 @@ body {
   text-align: left;
 }
 .select-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  min-width: min(240px, calc(100vw - 48px));
+  z-index: 40;
   margin-top: 6px;
   padding: 8px;
   border: 1px solid var(--line);
@@ -974,3 +988,114 @@ button:active:not(:disabled) { transform: scale(.97); }
 .voice-button[aria-pressed="true"] { color: var(--accent-ink); background: var(--soft); }
 .voice-notice { margin-top: 8px; color: var(--color-stone-500); font-size: 10px; line-height: 1.5; }
 .chat-log > .generator-results { margin: 12px 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+
+.install-prompt { position: fixed; z-index: 46; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(620px, calc(100% - 24px)); display: flex; align-items: center; gap: 20px; justify-content: space-between; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); box-shadow: 0 8px 40px #0003; }
+.install-prompt strong { font-size: 15px; }
+.install-prompt p { margin-top: 5px; font-size: 12px; line-height: 1.6; color: var(--color-stone-500); }
+.folder-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; align-items: start; }
+.folder-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px; border-radius: 8px; text-align: left; overflow-wrap: anywhere; }
+.folder-link[aria-current="page"] { background: var(--soft); color: var(--accent-ink); }
+.folder-row { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.folder-row > .text-button { margin: 4px 10px; font-size: 11px; }
+.flashcard-practice { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.flashcard-practice .study-card { touch-action: pan-y; }
+.practice-ratings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0 12px; }
+@media (max-width: 640px) {
+  .install-prompt { flex-direction: column; align-items: stretch; gap: 12px; }
+  .install-prompt > div:last-child { justify-content: flex-end; }
+  .folder-layout { grid-template-columns: 1fr; }
+  .study-modal { inset: 0; margin: 0; width: 100%; height: 100dvh; max-height: 100dvh; border: 0; border-radius: 0; }
+  .study-modal > div:first-child { padding-top: max(16px, env(safe-area-inset-top)); }
+  .study-modal .modal-content { display: flex; flex-direction: column; flex: 1; padding: 18px; padding-bottom: max(18px, env(safe-area-inset-bottom)); }
+  .study-modal .flashcard-practice .study-card { flex: 1; min-height: 260px; }
+  .study-modal .modal-content > form { display: flex; flex-direction: column; flex: 1; }
+  .study-modal .modal-content > form .field { flex: 1; display: flex; flex-direction: column; }
+  .study-modal .modal-content > form textarea { flex: 1; min-height: 120px; }
+}
+
+.flashcard-practice .study-card-inner { height: 100%; }
+
+.flashcard-practice .study-card-face { overflow-y: auto; justify-content: safe center; }
+
+/* Dense folder navigation and reviewer rows keep organization lightweight. */
+.folder-layout { grid-template-columns: 220px minmax(0, 1fr); gap: 20px; }
+.folder-navigation { padding: 8px; }
+.folder-row { display: flex; align-items: center; gap: 2px; margin-top: 3px; padding-top: 3px; }
+.folder-link { min-width: 0; gap: 8px; padding: 9px 10px; font-size: 12px; min-height: 38px; }
+.folder-row .folder-link { flex: 1; }
+.folder-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-link > span:last-child { flex-shrink: 0; color: var(--color-stone-500); font-size: 11px; }
+.folder-action { flex-shrink: 0; display: grid; place-items: center; width: 30px; height: 34px; padding: 0; }
+.folder-reviewers { display: grid; gap: 8px; }
+.folder-reviewer { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 12px; }
+.folder-reviewer-info { flex: 1; min-width: 0; }
+.folder-reviewer-info h3 { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.folder-reviewer-info p { margin-top: 4px; font-size: 11px; color: var(--color-stone-500); }
+.folder-reviewer-tools { display: flex; align-items: center; gap: 6px; }
+.folder-reviewer-tools .search-select { width: 150px; min-width: 0; }
+.folder-reviewer-tools .select-trigger { padding: 8px 10px; font-size: 12px; min-height: 36px; }
+.folder-reviewer-tools .button { padding: 8px 10px; white-space: nowrap; }
+@media (max-width: 1100px) {
+  .folder-reviewer { align-items: stretch; flex-direction: column; gap: 10px; }
+  .folder-reviewer-tools .search-select { flex: 1; width: auto; }
+}
+@media (max-width: 640px) {
+  .app-main { padding: 20px 16px; }
+  .page-heading { margin-bottom: 20px; gap: 12px; }
+  .page-heading h1 { font-size: 25px; line-height: 1.25; margin-top: 6px; }
+  .page-heading p:not(.eyebrow) { margin-top: 8px; font-size: 12px; line-height: 1.6; }
+  .page-heading .eyebrow { font-size: 9px; letter-spacing: 1.4px; }
+  .button { min-height: 38px; padding: 7px 11px; gap: 6px; font-size: 12px; line-height: 20px; }
+  .icon-button { min-width: 36px; min-height: 36px; }
+  .field { gap: 6px; }
+  .field input:not([type="color"]), .field select, .field textarea, .input { padding: 7px 10px; font-size: 16px; line-height: 24px; }
+  .select-trigger { min-height: 40px; padding: 8px 10px; font-size: 13px; }
+  .field textarea { min-height: 78px; }
+  .panel:is(.p-5, .p-6, .p-7) { padding: 16px; }
+  .settings-banner, .install-card { padding: 16px; gap: 12px; }
+  .settings-banner h2 { font-size: 18px; }
+  .empty-state { padding: 28px 16px; }
+  .empty-state p { margin-bottom: 12px; font-size: 12px; }
+  .reviewer-card, .topic-card, .quiz-card { padding: 16px; min-height: 0; }
+  .reviewer-card-main h2, .topic-card-main h2 { font-size: 16px; margin-top: 12px; }
+  .reviewer-card-main p { font-size: 12px; line-height: 1.55; }
+  .reviewer-card-actions > div { margin-top: 14px; }
+  .topic-card-actions { padding-top: 14px; }
+  .quiz-daily-card { padding: 16px; margin-bottom: 22px; gap: 14px; }
+  .quiz-card-footer { margin-top: 16px; padding-top: 12px; }
+  .modal-content { padding: 16px; }
+  .mira-modal > div:first-child { padding: 14px 16px; }
+  .mira-modal > div:first-child h2 { font-size: 18px; }
+  .modal-content form.space-y-5 > :not(:last-child) { margin-block-end: 14px; }
+  .documentation-article { padding-inline: 18px; }
+  .documentation-article > section { padding-block: 20px; }
+  .documentation-article p { font-size: 13px; line-height: 1.75; margin-top: 8px; }
+  .folder-layout { grid-template-columns: 1fr; gap: 18px; }
+  .folder-navigation { max-height: 210px; overflow-y: auto; overscroll-behavior: contain; }
+  .folder-action { min-width: 36px; min-height: 38px; }
+  .folder-reviewer { padding: 12px; }
+  .folder-reviewer-tools .button { padding-inline: 9px; }
+  .folder-reviewer-tools .select-trigger { font-size: 12px; }
+  .install-prompt { padding: 14px; }
+  .app-main > footer { margin-top: 32px; padding-top: 16px; }
+  .study-modal > div:first-child { padding-top: max(14px, env(safe-area-inset-top)); }
+}
+
+.folder-navigation { max-height: none; overflow: visible; }
+.folder-search { display: block; margin-bottom: 8px; }
+.folder-search input { width: 100%; min-width: 0; }
+.folder-result-count, .folder-no-results { padding: 6px 8px; font-size: 11px; color: var(--color-stone-500); line-height: 1.6; }
+.folder-pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 6px; font-size: 11px; color: var(--color-stone-500); }
+.folder-pinned { border-block: 1px solid var(--line); margin-top: 6px; padding-block: 6px; }
+.folder-pinned small { display: block; padding: 3px 8px; font-size: 10px; color: var(--color-stone-500); }
+
+/* The mobile folder browser floats above the reviewer list. */
+.folder-picker { position: relative; min-width: 0; }
+.folder-picker-trigger { display: none; }
+.folder-reviewer:focus-within { position: relative; z-index: 41; }
+@media (max-width: 640px) {
+  .folder-picker-trigger { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); text-align: left; }
+  .folder-picker-trigger span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .folder-picker .folder-navigation { display: none; position: absolute; top: calc(100% + 6px); inset-inline: 0; z-index: 50; max-height: min(420px, 60dvh); overflow-y: auto; box-shadow: 0 12px 32px #0003; }
+  .folder-picker .folder-navigation[data-open="true"] { display: block; }
+}

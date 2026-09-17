@@ -5,6 +5,7 @@ export function emptyData(): StudyData {
   return {
     version: 2,
     topics: [],
+    folders: [],
     reviewers: [],
     attempts: [],
     settings: {
@@ -133,7 +134,12 @@ export function validateData(value: unknown): StudyData {
       s.theme !== "system")
   )
     throw new Error("The backup contains invalid settings.");
+  if (value.folders !== undefined && (!Array.isArray(value.folders) || !value.folders.every(folder => record(folder) && string(folder.id) && string(folder.name) && folder.name.trim())))
+    throw new Error("The backup contains an invalid folder.");
   const data = value as unknown as StudyData;
+  const folders = data.folders ?? [];
+  if (!uniqueIds(folders) || !data.reviewers.every(reviewer => reviewer.folderId === undefined || reviewer.folderId === "" || (typeof reviewer.folderId === "string" && folders.some(folder => folder.id === reviewer.folderId))))
+    throw new Error("The backup contains duplicate folders or missing folder references.");
   if (
     !uniqueIds(data.topics) ||
     !uniqueIds(data.reviewers) ||

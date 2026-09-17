@@ -560,12 +560,12 @@ test("production study flows, themes, mobile overlays and offline reload", async
       await evaluate(
         "document.querySelector('link[rel=icon]').getAttribute('href')",
       ),
-    ).toBe("/favicon.png");
+    ).toBe("/logo.png");
     expect(
       await evaluate(
         "document.querySelector('meta[property=\"og:image\"]').content",
       ),
-    ).toBe("/icon.png");
+    ).toBe("/social_card.png");
     expect(await evaluate("document.querySelector('.mobile-header').getBoundingClientRect().height")).toBeLessThanOrEqual(64);
     expect(await evaluate("document.querySelector('.mobile-header .menu-button').getBoundingClientRect().right < document.querySelector('.mobile-header img').getBoundingClientRect().left")).toBe(true);
     await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
@@ -594,6 +594,44 @@ test("production study flows, themes, mobile overlays and offline reload", async
       path.join(profile, "mobile.png"),
       Buffer.from(mobile.data, "base64"),
     );
+
+    await evaluate("document.querySelector('a[href=\"/reviewers\"]').click()");
+    await waitFor("document.querySelector('.reviewer-card')");
+    await click("Study cards");
+    await delay(350);
+    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2")).toBe(true);
+    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().top) < 2")).toBe(true);
+    await click("Close dialog");
+    await click("Take quiz");
+    await delay(350);
+    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2")).toBe(true);
+    await click("Close dialog");
+    await click("Continue");
+    await waitFor("!document.querySelector('dialog[open]')");
+    await evaluate("document.querySelector('a[href=\"/docs\"]').click()");
+    await waitFor("document.body.innerText.includes('Everything you can do with Mira.')");
+    await evaluate("document.querySelector('a[href=\"/folders\"]').click()");
+    await waitFor("document.querySelector('.folder-reviewer')");
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height < 180")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.folder-navigation')).display")).toBe("none");
+    await delay(400);
+    const reviewerTop = await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().top");
+    await click("Browse folders");
+    expect(await evaluate("getComputedStyle(document.querySelector('.folder-navigation')).position")).toBe("absolute");
+    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().top")).toBe(reviewerTop);
+    await click("Browse folders");
+    const reviewerHeight = await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height");
+    await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
+    expect(await evaluate("getComputedStyle(document.querySelector('.folder-reviewer .select-panel')).position")).toBe("absolute");
+    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height")).toBe(reviewerHeight);
+    await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
+    const foldersMobile = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), "mira-folders-mobile.png"), Buffer.from(foldersMobile.data, "base64"));
+    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
 
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("document.querySelector('[aria-label=\"Color theme\"]')");

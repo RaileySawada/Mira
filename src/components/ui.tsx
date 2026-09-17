@@ -14,7 +14,7 @@ export function PageHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="page-heading mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="eyebrow">{eyebrow}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -36,7 +36,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-dashed border-stone-300 bg-surface/50 px-6 py-12 text-center">
+    <div className="empty-state flex flex-col items-center rounded-2xl border border-dashed border-stone-300 bg-surface/50 px-6 py-12 text-center">
       <h3 className="font-semibold">{title}</h3>
       <p className="mt-2 mb-5 max-w-sm text-sm leading-6 text-stone-500">
         {description}
@@ -49,11 +49,13 @@ export function Modal({
   title,
   children,
   footer,
+  className = "",
   onClose,
 }: {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
+  className?: string;
   onClose: () => void;
 }) {
   useScrollLock();
@@ -76,7 +78,7 @@ export function Modal({
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      className="mira-modal"
+      className={"mira-modal " + className}
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-stone-200 bg-page px-6 py-5">
         <h2 className="text-xl font-semibold">{title}</h2>

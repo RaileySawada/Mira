@@ -19,16 +19,14 @@ function offlinePlugin(): Plugin {
         .update(JSON.stringify(assets))
         .update(readFileSync("index.html"))
         .update(readFileSync("public/manifest.webmanifest"))
-        .update(readFileSync("public/icon.png"))
-        .update(readFileSync("public/favicon.png"))
+        .update(readFileSync("public/logo.png"))
         .digest("hex")
         .slice(0, 12);
       const urls = [
         "/",
         "/index.html",
         "/manifest.webmanifest",
-        "/favicon.png",
-        "/icon.png",
+        "/logo.png",
         ...assets.map((name) => "/" + name),
       ];
       this.emitFile({

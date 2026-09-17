@@ -3,7 +3,7 @@ import { PageHeading } from "../components/ui";
 import { Icon } from "../components/Icon";
 import { RouteLink } from "../components/RouteLink";
 
-type DocumentPage = "Guide" | "Terms" | "Privacy" | "About" | "Contribute";
+type DocumentPage = "Docs" | "Guide" | "Terms" | "Privacy" | "About" | "Contribute";
 const documents: Record<
   DocumentPage,
   {
@@ -13,6 +13,22 @@ const documents: Record<
     sections: { title: string; text: string }[];
   }
 > = {
+  Docs: {
+    eyebrow: "THE MIRA HANDBOOK",
+    title: "Everything you can do with Mira.",
+    intro: "A practical reference for your library, study sessions, privacy, and offline use.",
+    sections: [
+      { title: "Library: reviewers, topics and folders", text: "A reviewer is a set of question-and-answer flashcards. Topics label what a reviewer teaches; folders group reviewers for a course, exam, or project. Create and rename folders on the Folders page. Move a reviewer using its folder selector or the reviewer editor. Deleting a folder moves its reviewers to Unfiled without deleting cards. Each reviewer has one topic and at most one folder. You can create topics directly while adding a reviewer." },
+      { title: "Flashcards: keyboard, touch and self-ratings", text: "Open Study cards. Tap the card or press Space to flip it. Swipe left or press Left Arrow for I don’t know; swipe right or press Right Arrow for I know. The two buttons do the same thing. Previous and Next card let you navigate without rating. Rating the last card shows this session’s known and needs-practice totals. These self-ratings are temporary and do not count toward quiz accuracy or streaks. Mobile study and quiz sessions fill the screen, with scrolling for longer content." },
+      { title: "Quizzes and daily review", text: "Written quizzes compare your answer to the saved definition, ignoring letter case and repeated whitespace. Synonyms are not automatically accepted. Check an answer, continue, then finish and save the result. An unfinished quiz is discarded after a leave confirmation. Daily review mixes available cards across your library using the question count and shuffle settings. Multiple-choice quizzes are not available yet; all current quiz grading works offline." },
+      { title: "Progress and activity", text: "Home shows your reviewer count, completed quizzes, question activity and weighted quiz accuracy. Streaks count consecutive local-calendar days with completed quizzes, allowing yesterday as the latest day. Activity lists saved results with search, column sorting and pagination. Grid/list choices on Reviewers, Topics and Quizzes are remembered separately on this device." },
+      { title: "Mira AI: questions and reviewer drafts", text: "Open Ask Mira in the lower-right corner when online. Ask a study question or request reviewer creation directly in chat. You can also use Create reviewers to choose one to five sets with five or ten cards each. Expand drafts to check questions and answers before saving. Generated content can be inaccurate; verify it against your course material. Only submitted questions, notes, topics and recent chat context go through the Netlify function to Pollinations. Your complete saved library is not sent automatically. On disconnect the assistant hides and requests stop; its open conversation returns when reconnected." },
+      { title: "Voice input", text: "Supported browsers show a microphone beside the message input. Allow microphone access, speak, then press Stop. Recognition resumes after pauses until stopped. Provisional text may change while the browser confirms words. Review and edit the transcript before Send; recording never sends automatically. Speech uses your browser language and may use the browser’s online speech service. Permission errors or unsupported browsers do not prevent typing. Closing the assistant stops recording." },
+      { title: "Install and offline availability", text: "When your browser offers installation, Mira shows a bottom prompt once per tab session. Choose Install Mira or Not now. On iPhone and iPad, follow the Share menu and Add to Home Screen instructions instead. Installed apps do not show this prompt. Allow the production app to finish loading online before studying offline. Your library, folders, quizzes, charts and settings work offline; AI and speech require connectivity. Installation availability is controlled by the browser. If the prompt is unavailable, check your browser’s install menu or the guide." },
+      { title: "Storage, backups and session memory", text: "Mira has no login or automatic cloud synchronization. LocalStorage holds your library, folders, results and settings. Export JSON in Settings for a backup; import replaces this device’s library after confirmation and accepts older backups without folders. Maximum import size is 5 MB. Device-specific layout choices and temporary AI conversations are not part of a library export. Chat messages use sessionStorage for the current tab and are cleared when you close the assistant or start a new conversation. Unsent inputs and unsaved generated drafts remain in memory only. Keep backups before clearing browser data, and use one tab for edits." },
+      { title: "Preferences, accessibility and troubleshooting", text: "Settings controls your name, daily goal, quiz length, shuffle and daily-review shortcut. Light, dark and system themes save immediately. Other settings save with Save preferences. Reduced-motion preferences disable decorative transitions. Searchable selectors support arrow keys, Enter and Escape. If storage fails, Mira shows an error instead of claiming your work was saved. Export before clearing data. For bugs or suggestions, open Contribute to visit the repository and issue tracker." },
+    ],
+  },
   Guide: {
     eyebrow: "A GOOD PLACE TO START",
     title: "A little guidance goes a long way.",
@@ -55,7 +71,7 @@ const documents: Record<
     sections: [
       {
         title: "What stays on your device",
-        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no account is required. Optional AI requests send only the topic, notes, or question you explicitly submit and recent chat messages for follow-up context to our Netlify function and then Pollinations. AI replies stay in memory until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
+        text: "Your chosen name, topics, flashcards, completed quiz results, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no account is required. Optional AI requests send only the topic, notes, or question you explicitly submit and recent chat messages for follow-up context to our Netlify function and then Pollinations. AI messages are kept in this tab’s sessionStorage until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
       },
       {
         title: "Storage and offline files",
@@ -203,7 +219,7 @@ export function Documentation({ page }: { page: Page }) {
       )}
       <div className="grid gap-8 xl:grid-cols-[210px_1fr]">
         <nav className="documentation-tabs" aria-label="Documentation">
-          {(["Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
+          {(["Docs", "Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
             (item) => (
               <RouteLink
                 key={item}
@@ -221,7 +237,7 @@ export function Documentation({ page }: { page: Page }) {
             ),
           )}
         </nav>
-        <article className="panel max-w-3xl divide-y divide-stone-200 px-6 sm:px-9">
+        <article className="documentation-article panel max-w-3xl divide-y divide-stone-200 px-6 sm:px-9">
           {document.sections.map((section) => (
             <section className="py-7" key={section.title}>
               <h2 className="text-base font-semibold">{section.title}</h2>

@@ -3,6 +3,7 @@ export interface Topic {
   name: string;
   color: string;
 }
+export interface Folder { id: string; name: string; }
 export interface Card {
   id: string;
   question: string;
@@ -13,6 +14,7 @@ export interface Reviewer {
   title: string;
   description: string;
   topicId: string;
+  folderId?: string;
   cards: Card[];
   updatedAt: string;
 }
@@ -37,6 +39,7 @@ export interface Settings {
 export interface StudyData {
   version: 2;
   topics: Topic[];
+  folders?: Folder[];
   reviewers: Reviewer[];
   attempts: Attempt[];
   settings: Settings;
@@ -45,6 +48,8 @@ export type Page =
   | "Home"
   | "Reviewers"
   | "Topics"
+  | "Folders"
+  | "Docs"
   | "Quizzes"
   | "Activity"
   | "Settings"

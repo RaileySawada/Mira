@@ -5,6 +5,8 @@ export const routes: Record<Page, string> = {
   Home: "/",
   Reviewers: "/reviewers",
   Topics: "/topics",
+  Folders: "/folders",
+  Docs: "/docs",
   Quizzes: "/quizzes",
   Activity: "/activity",
   Settings: "/settings",

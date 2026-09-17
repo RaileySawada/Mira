@@ -1,3 +1,4 @@
+import { FlashcardPractice } from "./FlashcardPractice";
 import { confirmAction } from "../../components/confirmAction";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
@@ -22,7 +23,6 @@ export function StudySession({
 }) {
   const save = useActionFeedback();
   const [index, setIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
   const [answer, setAnswer] = useState("");
   const [answers, setAnswers] = useState<
     { answer: string; correct: boolean }[]
@@ -58,7 +58,7 @@ export function StudySession({
     }
   }
   return (
-    <Modal title={session.title} onClose={close}>
+    <Modal title={session.title} onClose={close} className="study-modal">
       {complete ? (
         <div>
           <div className="py-5 text-center">
@@ -94,11 +94,10 @@ export function StudySession({
         </div>
       ) : (
         <>
+          {session.mode !== "cards" && <>
           <div className="mb-4 flex justify-between text-xs text-stone-500">
             <span>
-              {session.mode === "cards"
-                ? "FLASHCARD PRACTICE"
-                : session.mode === "daily"
+              {session.mode === "daily"
                   ? "DAILY REVIEW"
                   : "WRITTEN QUIZ"}
             </span>
@@ -114,58 +113,9 @@ export function StudySession({
               }}
             />
           </div>
+          </>}
           {session.mode === "cards" ? (
-            <>
-              <button
-                className={`study-card ${flipped ? "is-flipped" : ""}`}
-                aria-pressed={flipped}
-                aria-label={`${flipped ? "Answer" : "Question"}: ${flipped ? card.answer : card.question}. Click to ${flipped ? "see question" : "reveal answer"}`}
-                onClick={() => setFlipped(!flipped)}
-              >
-                <span className="study-card-inner">
-                  <span className="study-card-face study-card-front">
-                    <span className="eyebrow mb-6">QUESTION</span>
-                    <span className="study-card-copy">{card.question}</span>
-                    <span className="study-card-hint">Tap to reveal answer</span>
-                  </span>
-                  <span className="study-card-face study-card-back">
-                    <span className="eyebrow mb-6">ANSWER</span>
-                    <span className="study-card-copy">{card.answer}</span>
-                    <span className="study-card-hint">Tap to see question</span>
-                  </span>
-                </span>
-              </button>
-              <div className="mt-5 flex justify-between">
-                <button
-                  className="button secondary"
-                  disabled={index === 0}
-                  onClick={() => {
-                    setIndex(index - 1);
-                    setFlipped(false);
-                  }}
-                >
-                  Previous
-                </button>
-                <button
-                  className="button primary"
-                  onClick={() => {
-                    if (index === session.cards.length - 1) onClose();
-                    else {
-                      setIndex(index + 1);
-                      setFlipped(false);
-                    }
-                  }}
-                >
-                  {index === session.cards.length - 1
-                    ? "Finish practice"
-                    : "Next card"}
-                </button>
-              </div>
-              <p className="mt-5 text-center text-xs leading-5 text-stone-400">
-                Flashcards are for practice. Take a quiz to record your accuracy
-                and streak.
-              </p>
-            </>
+            <FlashcardPractice cards={session.cards} onClose={onClose} />
           ) : (
             <>
               <h3 className="mb-6 whitespace-pre-wrap text-xl leading-8">

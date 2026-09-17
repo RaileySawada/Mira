@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="./public/icon.png" width="82" alt="Mira logo" />
+  <img src="./public/logo.png" width="82" alt="Mira logo" />
 
   <h1>Mira</h1>
 
@@ -72,7 +72,7 @@ npm test
 
 PWA caching is enabled only in production. Serve the generated `dist` directory at the domain root over HTTPS (localhost also works). Open it online once, allow the service worker to install, then test offline. A new release becomes active after old app tabs are closed.
 
-Before publishing, set `og:url` and a canonical URL in `index.html`, and change the social image metadata to the absolute URL of `/icon.png` on your deployment. No domain is assumed in the source.
+Before publishing, set `og:url` and a canonical URL in `index.html`, and change the social image metadata to the absolute URL of `/social_card.png` on your deployment. No domain is assumed in the source.
 
 ## License
 
@@ -101,7 +101,7 @@ In-app documentation is available at /guide, /privacy, /terms, and /about.
 
 Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, while the existing localStorage key stays unchanged. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
 
-The mobile header opens a keyboard-accessible navigation drawer. The supplied public/icon.png and public/favicon.png power app branding, install icons, and social metadata.
+The mobile header opens a keyboard-accessible navigation drawer. The supplied `public/logo.png` powers app branding and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
 
 ## Contributing
 
@@ -152,3 +152,11 @@ The CLI uses `--offline` to avoid requiring a linked Netlify account for local c
 ### Voice input
 
 In supported browsers, tap the microphone beside the chat input and allow microphone access. Stop recording, edit the transcript, then press Send. Recording never submits a message automatically. Recognition uses the browser language and may send audio to the browser’s speech service; Mira sends only the submitted text to Pollinations. The microphone is hidden when unsupported, and AI is hidden offline. Closing the assistant stops recording. See [browser speech recognition support](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).
+
+## Study controls, folders, and installation
+
+- Flashcards: tap or Space to flip; Left Arrow/swipe left marks “I don’t know”; Right Arrow/swipe right marks “I know”. Session self-ratings do not change quiz accuracy or streaks.
+- Mobile flashcards and written quizzes use the full viewport height. Multiple choice is deferred; quizzes still use written answers offline.
+- Folders organize reviewers independently of topics. Create, rename, assign, move, and delete folders from the Folders page. Deleting a folder preserves reviewers in Unfiled. Folder data is included in JSON backups; older backups remain supported.
+- A bottom install prompt appears once per tab session when native installation is offered. iPhone/iPad receive manual Add to Home Screen instructions. Installed standalone apps do not show the prompt. Browser policy determines native installation availability.
+- Visit Docs at /docs for the complete in-app handbook, including data storage, AI, voice, offline behavior, and troubleshooting.

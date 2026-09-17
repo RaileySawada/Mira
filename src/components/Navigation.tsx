@@ -7,9 +7,11 @@ const pages: Page[] = [
   "Home",
   "Reviewers",
   "Topics",
+  "Folders",
   "Quizzes",
   "Activity",
   "Settings",
+  "Docs",
 ];
 
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
@@ -21,7 +23,7 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
       aria-label="Mira home"
     >
       <img
-        src="/icon.png"
+        src="/logo.png"
         alt=""
         width={48}
         height={48}
@@ -108,7 +110,7 @@ export function MobileHeader({ page }: { page: Page }) {
             setOpen(true);
           }}
         >
-          <Icon name="menu" size={23} />
+          <Icon name="menu" size={20} />
         </button>
           <Brand />
           <span className="text-xs text-stone-400">{page}</span>

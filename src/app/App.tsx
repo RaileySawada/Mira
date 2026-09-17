@@ -1,3 +1,5 @@
+import { InstallPrompt } from "../components/InstallPrompt";
+import { Folders } from "../pages/Folders";
 import { confirmAction } from "../components/confirmAction";
 import { OnlineAssistant } from "../features/ai/OnlineAssistant";
 import { useEffect, useState } from "react";
@@ -72,6 +74,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-page text-ink">
       <Sidebar page={page} />
+      <InstallPrompt />
       <div className="flex min-h-dvh flex-col lg:ml-60">
         <MobileHeader page={page} />
         <header className="hidden min-h-12 items-center justify-between border-b border-line px-9 lg:flex">
@@ -88,7 +91,7 @@ export default function App() {
             })}
           </span>
         </header>
-        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10">
+        <main className="app-main mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10">
           <OnlineAssistant data={data} update={update} />
           <div key={page} className="page-content min-w-0 flex-1">
           {(error || recoveryError) && (
@@ -150,6 +153,7 @@ export default function App() {
               onQuiz={(r) => start(r, "quiz")}
             />
           )}
+          {page === "Folders" && <Folders data={data} update={update} onEdit={setEditor} onStudy={r => start(r, "cards")} />}
           {page === "Topics" && <Topics data={data} update={update} />}
           {page === "Quizzes" && (
             <Quizzes
@@ -163,6 +167,7 @@ export default function App() {
             <Settings data={data} update={update} onThemeChange={changeTheme} />
           )}
           {[
+            "Docs",
             "Guide",
             "Contribute",
             "Privacy",
@@ -175,7 +180,7 @@ export default function App() {
             <span>A little wiser, every day.</span>
             <nav className="flex flex-wrap gap-4" aria-label="Footer">
               {(
-                ["Guide", "Contribute", "Privacy", "Terms", "About"] as const
+                ["Docs", "Guide", "Contribute", "Privacy", "Terms", "About"] as const
               ).map((item) => (
                 <RouteLink
                   key={item}
@@ -193,6 +198,7 @@ export default function App() {
         <ReviewerEditor
           reviewer={editor === "new" ? undefined : editor}
           topics={data.topics}
+          folders={data.folders}
           onSave={saveReviewer}
           onClose={() => setEditor(null)}
         />

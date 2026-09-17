@@ -1,18 +1,20 @@
 import { useActionFeedback } from "../../hooks/useActionFeedback";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useId, useState } from "react";
-import type { Card, Reviewer, Topic } from "../../types/study";
+import type { Card, Reviewer, Topic, Folder } from "../../types/study";
 import { SearchSelect } from "../../components/SearchSelect";
 import { Icon } from "../../components/Icon";
 import { Modal } from "../../components/ui";
 export function ReviewerEditor({
   reviewer,
   topics,
+  folders = [],
   onSave,
   onClose,
 }: {
   reviewer?: Reviewer;
   topics: Topic[];
+  folders?: Folder[];
   onSave: (reviewer: Reviewer, topic?: Topic) => boolean;
   onClose: () => void;
 }) {
@@ -21,6 +23,7 @@ export function ReviewerEditor({
   const [title, setTitle] = useState(reviewer?.title || "");
   const [description, setDescription] = useState(reviewer?.description || "");
   const [topicId, setTopicId] = useState(reviewer?.topicId || "");
+  const [folderId, setFolderId] = useState(reviewer?.folderId ?? "");
   const [addingTopic, setAddingTopic] = useState(false);
   const [topicName, setTopicName] = useState("");
   const [topicColor, setTopicColor] = useState("#8d80b5");
@@ -80,6 +83,7 @@ export function ReviewerEditor({
                 title: title.trim(),
                 description: description.trim(),
                 topicId: selectedTopicId,
+                ...(folderId ? { folderId } : reviewer?.folderId ? { folderId: "" } : {}),
                 cards: cards.map((c) => ({
                   ...c,
                   question: c.question.trim(),
@@ -113,6 +117,7 @@ export function ReviewerEditor({
             rows={2}
           />
         </label>
+        <div className="field"><span>Folder</span><SearchSelect label="Folder" value={folderId} onChange={setFolderId} options={[{ value: "", label: "No folder" }, ...folders.map(folder => ({ value: folder.id, label: folder.name }))]} /></div>
         <div className="field">
           <span>Topic</span>
           <SearchSelect
