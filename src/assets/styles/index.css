@@ -1241,8 +1241,20 @@ button:active:not(:disabled) { transform: scale(.97); }
 /* The study desk leads; charts remain below the next useful action. */
 .mira-welcome { margin-bottom: 24px; }
 .mira-welcome-scene { position: relative; isolation: isolate; display: flex; align-items: center; gap: 20px; padding: 12px 28px 12px 12px; min-height: 170px; }
-.mira-welcome-scene::before { content: ""; position: absolute; z-index: -1; inset: 46px 0 0; border-radius: 14px; background: var(--soft); }
-.mira-welcome-scene > img { align-self: flex-end; width: 160px; height: 160px; flex-shrink: 0; object-fit: contain; }
+.mira-welcome-scene::before {
+  content: ""; position: absolute; z-index: -1; inset: 62px 0 0; border-radius: 14px;
+  background:
+    radial-gradient(ellipse 75% 55% at 18% 112%, color-mix(in srgb, var(--accent-ink) 16%, var(--soft)) 98%, transparent 100%),
+    radial-gradient(ellipse 85% 65% at 95% 125%, color-mix(in srgb, var(--accent-ink) 9%, var(--soft)) 98%, transparent 100%),
+    var(--soft);
+}
+/* A contact shadow grounds the character without adding animated effects. */
+.mira-welcome-scene::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  left: 37px; bottom: 19px; width: 110px; height: 16px; border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent-ink) 32%, transparent), transparent 72%);
+}
+.mira-welcome-scene > img { transform: translateY(-12px); align-self: flex-end; width: 160px; height: 160px; flex-shrink: 0; object-fit: contain; }
 .mira-speech { position: relative; flex: 1; min-width: 0; max-width: 640px; padding: 18px 22px; border-radius: 16px; background: var(--surface); box-shadow: 0 3px 12px #00000008; }
 .mira-speech::before { content: ""; position: absolute; left: -9px; top: 50%; width: 18px; height: 18px; background: var(--surface); transform: translateY(-50%) rotate(45deg); border-radius: 3px; }
 .mira-speech-name { position: relative; color: var(--accent-ink); font-size: 13px; font-weight: 800; margin-bottom: 5px; }
@@ -1284,8 +1296,9 @@ progress::-webkit-progress-value { background: #8d80b5; }
 .quiz-option-letter { color: var(--color-stone-500); font-size: 12px; }
 @media (max-width: 640px) {
   .mira-welcome-scene { gap: 12px; min-height: 136px; padding: 8px 12px 10px 0; }
-  .mira-welcome-scene::before { inset: 34px 0 0; border-radius: 10px; }
-  .mira-welcome-scene > img { width: 98px; height: 116px; }
+  .mira-welcome-scene::before { inset: 46px 0 0; border-radius: 10px; }
+  .mira-welcome-scene::after { left: 13px; bottom: 25px; width: 72px; height: 12px; }
+  .mira-welcome-scene > img { width: 98px; height: 116px; transform: translateY(-8px); }
   .mira-speech { padding: 13px 14px; border-radius: 13px; }
   .mira-speech-name { font-size: 12px; margin-bottom: 3px; }
   .mira-speech h2 { font-size: 13px; line-height: 1.55; }
