@@ -300,6 +300,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "JSON.parse(localStorage.getItem('mira.study.v1')).attempts[0].correct",
       ),
     ).toBe(1);
+    await click("Keep learning");
     await click("Back to learning");
 
     await evaluate("document.querySelector('a[href=\"/topics\"]').click()");
@@ -336,6 +337,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await waitFor(
       "document.body.innerText.includes('Your backup has been imported.')",
     );
+    await click("Keep learning");
     await waitFor("document.querySelector('button[aria-label=\"Import JSON\"]').dataset.state === 'idle'");
     expect(
       await evaluate(
@@ -764,6 +766,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
       await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
       await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
     });
+    await click("Keep learning");
     await sampleWork("ai-open-idle", () => delay(2000));
     await writeFile(path.join(tmpdir(), "mira-performance.json"), JSON.stringify(performanceSamples, null, 2));
     await click("Create reviewers");

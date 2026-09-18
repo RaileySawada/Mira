@@ -51,6 +51,7 @@ test("daily review saves a result into the application library", async () => {
   expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).attempts[0]).toEqual(
     expect.objectContaining({ correct: 1, mode: "daily" }),
   );
+  await user.click(await screen.findByRole("button", { name: "Keep learning" }));
   await user.click(await screen.findByRole("button", { name: "Back to learning" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });

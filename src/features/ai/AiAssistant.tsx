@@ -162,8 +162,8 @@ export default function AiAssistant({ onClose, onSave, onGuidance, online = true
           setDrafts(parseReviewers(result));
           setSavedTopic(result.topic);
         }
-        guidanceReceived.current?.();
         await revealAnswer(result.answer as string, pending.signal);
+        if (!pending.signal.aborted) guidanceReceived.current?.();
       }
       if (pending.signal.aborted) return;
       setSucceeded(true);

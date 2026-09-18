@@ -59,4 +59,4 @@ Calendar changes must preserve local-day grouping, weighted accuracy, month/year
 
 For flashcard motion, check touch cancellation, duplicate input during exit, reduced motion, centered entrances and unchanged modal scroll dimensions during rightward drags. Avoid per-frame React state updates and keep the original raster brand assets intact.
 
-Expression and badge source images live in `public/emoticons` and `public/achievements`. After changing them, run `node scripts/generate-study-art.mjs` to regenerate the lightweight copies used offline. Greeting messages and badge requirements live in `src/features/home/miraMessages.ts` and `src/features/achievements/achievements.ts`; keep messages grounded in recorded activity and test milestone boundaries.
+Expression and badge source images live in `public/emoticons` and `public/new-rewards`. After changing them, run `node scripts/generate-study-art.mjs` to regenerate the lightweight copies used offline. Greeting messages and badge requirements live in `src/features/home/miraMessages.ts` and `src/features/achievements/achievements.ts`; keep messages grounded in recorded activity and test milestone boundaries.

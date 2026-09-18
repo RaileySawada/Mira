@@ -1,3 +1,4 @@
+import { AchievementCelebration } from "../features/achievements/AchievementCelebration";
 import { FocusTimer } from "../features/achievements/FocusTimer";
 import { Achievements } from "../pages/Achievements";
 import { PolicyConsent } from "../features/consent/PolicyConsent";
@@ -27,7 +28,7 @@ import { prepareCards } from "../utils/stats";
 import { downloadJson, STORAGE_KEY } from "../services/storage";
 
 export default function App() {
-  const { data, update, error, needsRecovery, allowRecovery } = useStudyData();
+  const { data, update, rewards, dismissRewards, error, needsRecovery, allowRecovery } = useStudyData();
   const page = usePage();
   const [accepted, setAccepted] = useState(hasPolicyConsent);
   useEffect(() => {
@@ -230,6 +231,7 @@ export default function App() {
           }
         />
       )}
+      <AchievementCelebration badges={rewards} onClose={dismissRewards} />
     </div>
   );
 }
