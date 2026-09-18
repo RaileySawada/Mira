@@ -32,7 +32,7 @@ npm run dev
 - **Topics:** organize reviewers with named, color-coded topics.
 - **Study:** flip flashcards or take scored written-answer quizzes.
 - **Quizzes:** daily practice across your library and quizzes for individual reviewers.
-- **Activity:** completed quiz history.
+- **Activity:** monthly calendar, activity indicators, daily summaries and searchable quiz history.
 - **Settings:** name, daily goal, quiz length, shuffle, daily review, JSON import/export, and local data reset.
 - **PWA:** installable with a production service worker that caches the app for offline use.
 
@@ -54,7 +54,7 @@ src/
   features/reviewers/   Reviewer editor
   features/study/       Flashcards and quiz sessions
   hooks/                Local data state
-  pages/                Home, Reviewers, Topics, Quizzes, Activity, Settings
+  pages/                Home, Reviewers, Topics, Folders, Quizzes, Activity, Settings, Documentation
   services/             Persistence, backup validation, PWA registration
   types/                Shared data interfaces
   utils/                Statistics and question preparation
@@ -101,7 +101,7 @@ In-app documentation is available at /guide, /privacy, /terms, and /about.
 
 Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, while the existing localStorage key stays unchanged. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
 
-The mobile header opens a keyboard-accessible navigation drawer. The cropped transparent `public/brand/logo.png` powers navigation; the original `public/logo.png` remains the source artwork. Separate files in `public/icons/` serve the favicon and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
+The mobile header opens a keyboard-accessible navigation drawer. The cropped transparent `public/brand/mark.png` powers navigation, with text beside it in the sidebar; the original `public/logo.png` remains the source artwork. Separate files in `public/icons/` serve the favicon and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
 
 ## Contributing
 
@@ -145,7 +145,7 @@ Implementation references: [shadcn charts](https://ui.shadcn.com/docs/components
 
 Run `npm run dev:netlify` and open http://localhost:8888. Netlify Dev starts Vite on port 5174 and runs the serverless AI function through port 8888. Keep `POLLINATIONS_SK` in your local `.env` (never commit it). Plain `npm run dev` starts only Vite and does not serve AI functions.
 
-The floating assistant uses the supplied Mira and user avatars. Questions appear as a conversation, with the latest six messages (up to 1,800 characters each) included for follow-up context. Chat stays in memory and is cleared when the assistant closes or the device goes offline. Only submitted chat text and recent conversation context are sent to Pollinations; saved reviewers are not uploaded.
+The floating assistant uses the supplied Mira and user avatars. Questions appear as a conversation, with the latest six messages (up to 1,800 characters each) included for follow-up context. Chat is kept in this tab’s sessionStorage while the assistant remains open and is cleared when it closes or a new conversation starts. On disconnect the assistant hides and requests stop; the open conversation returns after reconnecting. Only submitted chat text and recent conversation context are sent to Pollinations; saved reviewers are not uploaded.
 
 The CLI uses `--offline` to avoid requiring a linked Netlify account for local configuration. This does not block your function from reaching Pollinations: AI still requires internet access. The development-only Sharp override selects the patched image-processing release.
 
@@ -174,3 +174,11 @@ In supported browsers, tap the microphone beside the chat input and allow microp
 | `public/social_card.png` | Social sharing preview |
 
 Raster assets are derived directly from `public/logo.png` by `scripts/generate-brand-assets.mjs`. Run `node scripts/generate-brand-assets.mjs` to regenerate the committed assets using the installed Sharp tooling. Runtime branding needs no image-processing library or network request. The service worker precaches the app branding and install icons.
+
+### First visit, policies and activity calendar
+
+Before entering Mira, users review the Terms and Privacy tabs and explicitly accept both. `mira.policy-consent` stores the policy version and acceptance timestamp in localStorage, independently of library exports. Missing, malformed or outdated records show the gate again. Failed storage keeps the gate open with an error. AI and installation prompts mount only after acceptance. Shared document content lives in `src/config/documents.ts`; update `POLICY_VERSION` in `src/features/consent/policy.ts` when policies materially change. This is a local acknowledgment, not authentication.
+
+Activity starts with a month calendar using local device dates. One completed quiz/daily review is slightly active, two to four is active, and five or more is super active. Selecting a date opens completed sessions, question totals, weighted accuracy and individual scores. Empty days and adjacent-month dates are selectable. The searchable, sortable history remains below the calendar. Temporary flashcard self-ratings and time online are not activity events.
+
+Cards follow horizontal drags, settle back on short/cancelled gestures, and hand off to a subtle centered reveal after rating. Reduced motion skips these animations. The card viewport clips transforms to prevent page overflow while allowing long text to scroll. Edit and delete actions use labeled pencil/trash buttons.

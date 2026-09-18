@@ -83,7 +83,7 @@ export function Folders({ data, update, onEdit, onStudy }: {
           <div className="folder-reviewer-info"><h3>{reviewer.title}</h3><p>{reviewer.cards.length} cards</p></div>
           <div className="folder-reviewer-tools">
           <SearchSelect label={"Move " + reviewer.title + " to folder"} value={reviewer.folderId ?? ""} onChange={folderId => persist({ ...data, reviewers: data.reviewers.map(r => r.id === reviewer.id ? { ...r, folderId } : r) })} options={[{ value: "", label: "Unfiled" }, ...folders.map(folder => ({ value: folder.id, label: folder.name }))]} />
-          <button className="button secondary" onClick={() => onEdit(reviewer)} aria-label="Edit reviewer">Edit</button><button className="button primary" disabled={!reviewer.cards.length} onClick={() => onStudy(reviewer)}>Study cards</button></div>
+          <button className="row-icon-action" onClick={() => onEdit(reviewer)} aria-label="Edit reviewer" title="Edit reviewer"><Pencil size={16} aria-hidden="true" /></button><button className="button primary" disabled={!reviewer.cards.length} onClick={() => onStudy(reviewer)}>Study cards</button></div>
         </article>)}</div> : <EmptyState title="This folder is ready for your notes" description="Move reviewers here from Unfiled, or choose this folder when creating or editing a reviewer." />}
       </section>
     </div>

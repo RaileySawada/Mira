@@ -56,6 +56,10 @@ test("drag follows the finger, snaps back below threshold, and commits only afte
   fireEvent.keyDown(card, { key: "ArrowRight" });
   act(() => pending.onfinish?.());
   expect(screen.getByText("2 / 2")).toBeVisible();
+  expect(card.animate).toHaveBeenLastCalledWith(
+    [{ transform: "scale(.985)", opacity: .45 }, { transform: "scale(1)", opacity: 1 }],
+    expect.objectContaining({ duration: 280 }),
+  );
   expect(card.style.transform).toBe("");
   expect(card).toHaveAttribute("aria-pressed", "false");
 });

@@ -1,4 +1,5 @@
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useEffectEvent, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import type { Card } from "../../types/study";
 
 export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: () => void }) {
@@ -22,6 +23,15 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
   }
   function move(next: number) { if (busy.current) return; resetDrag(); setIndex(next); setFlipped(false); }
   useEffect(() => () => { animation.current?.cancel(); }, []);
+  useLayoutEffect(() => {
+    if (finished || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const entrance = cardElement.current?.animate?.([
+      { transform: "scale(.985)", opacity: .45 },
+      { transform: "scale(1)", opacity: 1 },
+    ], { duration: 280, easing: "cubic-bezier(.16,1,.3,1)" });
+    animation.current = entrance ?? null;
+    return () => entrance?.cancel();
+  }, [index, finished]);
   function settle() {
     if (busy.current) return;
     const element = cardElement.current;
@@ -41,13 +51,15 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
     animation.current = element.animate([
       { transform: element.style.transform || "none", opacity: 1 },
       { transform: "translateX(" + distance + "px) rotate(" + (known ? 20 : -20) + "deg)", opacity: 0 },
-    ], { duration: 240, easing: "cubic-bezier(.4,0,1,1)" });
+    ], { duration: 240, easing: "cubic-bezier(.4,0,1,1)", fill: "forwards" });
     if (!animation.current) { busy.current = false; resetDrag(); finishRating(known); return; }
     animation.current.onfinish = () => {
+      const exit = animation.current;
       animation.current = null;
       busy.current = false;
       resetDrag();
-      finishRating(known);
+      flushSync(() => finishRating(known));
+      exit?.cancel();
     };
   }
   function finishRating(known: boolean) {
@@ -109,7 +121,7 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
       }}>
       <span className="swipe-label swipe-unknown" aria-hidden="true">Practice again</span>
       <span className="swipe-label swipe-known" aria-hidden="true">I know this</span>
-      <span className="study-card-inner">
+      <span key={index} className="study-card-inner">
         <span className="study-card-face study-card-front"><span className="eyebrow mb-6">QUESTION</span><span className="study-card-copy">{card.question}</span><span className="study-card-hint">Tap or press Space to reveal</span></span>
         <span className="study-card-face study-card-back"><span className="eyebrow mb-6">ANSWER</span><span className="study-card-copy">{card.answer}</span><span className="study-card-hint">Tap or press Space to flip</span></span>
       </span>

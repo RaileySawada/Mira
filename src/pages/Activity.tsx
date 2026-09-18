@@ -1,3 +1,4 @@
+import { ActivityCalendar } from "../features/activity/ActivityCalendar";
 import { useMemo, useState } from "react";
 import { Icon } from "../components/Icon";
 import { EmptyState, PageHeading } from "../components/ui";
@@ -36,6 +37,8 @@ export function Activity({ data }: { data: StudyData }) {
   function changeSearch(value: string) { setSearch(value); setPage(1); }
   return <>
     <PageHeading eyebrow="LOOK HOW FAR YOU’VE COME" title="Your learning story." description="Every completed quiz, every small win. All in one place." />
+    <ActivityCalendar attempts={data.attempts} />
+    <h2 className="section-title mb-4">Result history</h2>
     {data.attempts.length ? <section className="activity-table panel">
       <div className="data-table-toolbar">
         <label className="data-table-search"><Icon name="search" size={16} /><span className="sr-only">Search activity</span><input value={search} onChange={event => changeSearch(event.target.value)} placeholder="Search results…" /></label>

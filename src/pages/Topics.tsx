@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { useViewPreference } from "../hooks/useViewPreference";
 import { confirmAction } from "../components/confirmAction";
 import { useActionFeedback } from "../hooks/useActionFeedback";
@@ -24,9 +25,9 @@ export function Topics({ data, update }: { data: StudyData; update: (d: StudyDat
         return <article key={topic.id} className="panel topic-card">
           <span className="topic-color" style={{ backgroundColor: topic.color }} aria-hidden="true" />
           <div className="topic-card-main"><h2>{topic.name}</h2><p>{count} reviewer{count === 1 ? "" : "s"}</p></div>
-          <div className="topic-card-actions"><button onClick={() => open(topic)}>Edit topic</button><button onClick={async () => {
+          <div className="topic-card-actions"><button className="row-icon-action" aria-label="Edit topic" title="Edit topic" onClick={() => open(topic)}><Pencil size={16} aria-hidden="true" /></button><button className="row-icon-action" aria-label="Delete" title="Delete topic" onClick={async () => {
             if (await confirmAction("Delete “" + topic.name + "”? Its reviewers will move to Uncategorized.")) update({ ...data, topics: data.topics.filter(item => item.id !== topic.id), reviewers: data.reviewers.map(reviewer => reviewer.topicId === topic.id ? { ...reviewer, topicId: "" } : reviewer) });
-          }}>Delete</button></div>
+          }}><Trash2 size={16} aria-hidden="true" /></button></div>
         </article>;
       })}
     </div> : <EmptyState title="So much to be curious about" description="Biology, literature, that new language… create a topic and start connecting the dots." />}

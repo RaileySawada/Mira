@@ -145,6 +145,17 @@ test("production study flows, themes, mobile overlays and offline reload", async
     });
     await send("Page.navigate", { url: "http://127.0.0.1:4179" });
     await waitFor("document.querySelector('h1')");
+    expect(await evaluate("document.body.innerText.includes('Welcome to Mira.')")).toBe(true);
+    expect(await evaluate("document.querySelector('.consent-card button[type=submit]')?.disabled ?? document.querySelector('.consent-card form button').disabled")).toBe(true);
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    const consentShot = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), "mira-consent-mobile.png"), Buffer.from(consentShot.data, "base64"));
+    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
+    await click("Privacy policy");
+    await evaluate("document.querySelectorAll('.consent-card input[type=checkbox]').forEach(input => input.click())");
+    await click("Agree & continue");
+    await waitFor("document.querySelector('.sidebar')");
     expect(await evaluate("document.body.innerText")).toMatch(
       /Your next chapter/,
     );
@@ -163,7 +174,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     expect(await evaluate("performance.getEntriesByType('resource').some(entry => entry.name.includes('/.netlify/functions/'))")).toBe(false);
     await evaluate("Array.from(document.links).find(a => a.pathname === '/activity').click()");
     await waitFor("location.pathname === '/activity'");
-    expect(await evaluate("Math.abs(innerHeight - document.querySelector('footer').getBoundingClientRect().bottom) <= 42")).toBe(true);
+    expect(await evaluate("document.querySelector('footer').getBoundingClientRect().bottom >= innerHeight - 42")).toBe(true);
     await evaluate("Array.from(document.links).find(a => a.pathname === '/').click()");
     await waitFor("location.pathname === '/'");
     await evaluate("window.scrollTo(0, 250)");
@@ -601,6 +612,18 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await waitFor("document.querySelector('.quiz-card')");
     await click("List view");
     expect(await evaluate("getComputedStyle(document.querySelector('.quiz-list .quiz-card')).flexDirection")).toBe("row");
+    await evaluate("document.querySelector('a[href=\"/activity\"]').click()");
+    await waitFor("document.querySelector('.activity-calendar')");
+    await delay(400);
+    expect(await evaluate("document.querySelectorAll('.calendar-day').length")).toBe(42);
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    const calendarShot = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), "mira-calendar-mobile.png"), Buffer.from(calendarShot.data, "base64"));
+    await evaluate("document.querySelector('.calendar-day:not([data-level=\"0\"])').click()");
+    await waitFor("document.querySelector('dialog[open] .day-summary-stats')");
+    expect(await evaluate("document.querySelector('dialog[open]').getBoundingClientRect().width <= innerWidth")).toBe(true);
+    await click("Close dialog");
+
     expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
 
     await evaluate("Array.from(document.links).find(a => a.pathname === '/about').click()");

@@ -1,3 +1,5 @@
+import { PolicyConsent } from "../features/consent/PolicyConsent";
+import { hasPolicyConsent } from "../features/consent/policy";
 import { InstallPrompt } from "../components/InstallPrompt";
 import { Folders } from "../pages/Folders";
 import { confirmAction } from "../components/confirmAction";
@@ -25,6 +27,12 @@ import { downloadJson, STORAGE_KEY } from "../services/storage";
 export default function App() {
   const { data, update, error, needsRecovery, allowRecovery } = useStudyData();
   const page = usePage();
+  const [accepted, setAccepted] = useState(hasPolicyConsent);
+  useEffect(() => {
+    const refresh = () => setAccepted(hasPolicyConsent());
+    window.addEventListener("storage", refresh);
+    return () => window.removeEventListener("storage", refresh);
+  }, []);
   const [recoveryError, setRecoveryError] = useState("");
   const changeTheme = useTheme(data.settings.theme, (theme) =>
     update({ ...data, settings: { ...data.settings, theme } }),
@@ -71,6 +79,7 @@ export default function App() {
         : [...data.reviewers, reviewer],
     });
   }
+  if (!accepted) return <PolicyConsent onAccept={() => setAccepted(true)} />;
   return (
     <div className="min-h-screen bg-page text-ink">
       <Sidebar page={page} />

@@ -1,9 +1,12 @@
+import { CONSENT_KEY, POLICY_VERSION } from "../src/features/consent/policy";
 import { confirmAction as confirm } from "../src/components/confirmAction";
 import { waitFor, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../src/app/App";
 import { saveData, STORAGE_KEY } from "../src/services/storage";
 import { library, reviewer } from "./fixtures";
+
+beforeEach(() => { localStorage.setItem(CONSENT_KEY, JSON.stringify({ version: POLICY_VERSION, acceptedAt: new Date().toISOString() })); });
 
 function openPage(path = "/") {
   history.replaceState(null, "", path);

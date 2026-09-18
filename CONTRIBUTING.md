@@ -50,3 +50,11 @@ Be considerate in reviews. Discuss the code, explain your reasoning, and make ro
 
 By submitting a contribution, you agree that it can be distributed under this repository's MIT License. Only contribute material you have permission to share.
 
+
+## Policies, calendar and motion regressions
+
+Keep `src/config/documents.ts` accurate across Docs, Guide, Contribute, Privacy, Terms and About. The first-visit screen renders the same policy content. Material policy changes require a new `POLICY_VERSION`; never pre-accept terms in production code or include another user’s consent in an export. Tests for signed-off app flows can seed consent explicitly, while first-visit tests must begin without it.
+
+Calendar changes must preserve local-day grouping, weighted accuracy, month/year navigation, empty days and the documented activity thresholds. Do not imply that temporary flashcard ratings or browsing time are recorded. Test day summaries on narrow screens and with long titles.
+
+For flashcard motion, check touch cancellation, duplicate input during exit, reduced motion, centered entrances and unchanged modal scroll dimensions during rightward drags. Avoid per-frame React state updates and keep the original raster brand assets intact.
