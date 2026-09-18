@@ -1237,3 +1237,74 @@ button:active:not(:disabled) { transform: scale(.97); }
  .calendar-toolbar h2 { font-size: 16px; white-space: nowrap; }
  .calendar-controls .row-icon-action { width: 28px; padding: 5px; }
 }
+
+/* The study desk leads; charts remain below the next useful action. */
+.mira-welcome { margin-bottom: 24px; }
+.mira-welcome-scene { position: relative; isolation: isolate; display: flex; align-items: center; gap: 20px; padding: 12px 28px 12px 12px; min-height: 170px; }
+.mira-welcome-scene::before { content: ""; position: absolute; z-index: -1; inset: 46px 0 0; border-radius: 14px; background: var(--soft); }
+.mira-welcome-scene > img { align-self: flex-end; width: 160px; height: 160px; flex-shrink: 0; object-fit: contain; }
+.mira-speech { position: relative; flex: 1; min-width: 0; max-width: 640px; padding: 18px 22px; border-radius: 16px; background: var(--surface); box-shadow: 0 3px 12px #00000008; }
+.mira-speech::before { content: ""; position: absolute; left: -9px; top: 50%; width: 18px; height: 18px; background: var(--surface); transform: translateY(-50%) rotate(45deg); border-radius: 3px; }
+.mira-speech-name { position: relative; color: var(--accent-ink); font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+.mira-speech h2 { position: relative; margin: 0; font-size: 17px; font-weight: 500; line-height: 1.6; text-wrap: pretty; color: var(--ink); }
+.mira-welcome-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 4px 0; }
+.mira-welcome-progress { color: var(--color-stone-500); font-size: 13px; line-height: 1.6; }
+.mira-welcome-progress strong { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
+.mira-welcome-progress span { display: block; margin-top: 2px; font-size: 12px; }
+.mira-welcome-footer .button { flex-shrink: 0; }
+.current-study p:not(.mira-welcome-label) { color: var(--color-stone-500); font-size: 13px; line-height: 1.6; }
+.mira-welcome-label { color: var(--accent-ink); font-size: 10px; font-weight: 700; letter-spacing: .13em; }
+.current-study { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; padding: 24px; }
+.current-study > div { min-width: 0; }
+.current-study h2 { font-size: 21px; font-weight: 700; margin: 8px 0; overflow-wrap: anywhere; }
+.current-study .button { flex-shrink: 0; }
+.achievement-summary { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; font-size: 14px; }
+.achievement-summary progress { max-width: 240px; }
+.achievement-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.achievement-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 24px 18px; }
+.achievement-card img { object-fit: contain; margin-bottom: 14px; }
+.achievement-card.locked img { filter: grayscale(1); opacity: .4; }
+.achievement-card h2 { font-size: 17px; font-weight: 700; margin: 8px 0; }
+.achievement-card p { color: var(--color-stone-500); font-size: 12px; min-height: 40px; }
+.achievement-state { color: var(--accent-ink); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.locked .achievement-state { color: var(--color-stone-500); }
+.achievement-card progress { margin: 18px 0 8px; }
+.achievement-card small { color: var(--color-stone-500); font-size: 11px; }
+.achievement-grid progress, .achievement-summary progress { width: 100%; height: 6px; accent-color: #8d80b5; border: 0; border-radius: 8px; overflow: hidden; }
+progress::-webkit-progress-bar { background: var(--line); }
+progress::-webkit-progress-value { background: #8d80b5; }
+.quiz-mode-picker { display: flex; gap: 8px; margin-bottom: 20px; }
+.quiz-mode-picker button { flex: 1; padding: 12px; font-size: 12px; border: 1px solid var(--line); border-radius: 10px; }
+.quiz-mode-picker button[aria-pressed="true"] { background: var(--soft); border-color: #8d80b5; }
+.quiz-mode-picker button:disabled { opacity: .45; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-option { display: flex; align-items: center; gap: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-size: 14px; overflow-wrap: anywhere; }
+.quiz-option.selected { background: var(--soft); border-color: #8d80b5; }
+.quiz-option input { accent-color: #8d80b5; flex-shrink: 0; }
+.quiz-option-letter { color: var(--color-stone-500); font-size: 12px; }
+@media (max-width: 640px) {
+  .mira-welcome-scene { gap: 12px; min-height: 136px; padding: 8px 12px 10px 0; }
+  .mira-welcome-scene::before { inset: 34px 0 0; border-radius: 10px; }
+  .mira-welcome-scene > img { width: 98px; height: 116px; }
+  .mira-speech { padding: 13px 14px; border-radius: 13px; }
+  .mira-speech-name { font-size: 12px; margin-bottom: 3px; }
+  .mira-speech h2 { font-size: 13px; line-height: 1.55; }
+  .mira-welcome-footer { gap: 12px; align-items: center; }
+  .mira-welcome-progress strong { font-size: 12px; }
+  .mira-welcome-progress span { font-size: 11px; }
+  .mira-welcome-footer .button { padding: 8px 12px; font-size: 11px; min-height: 38px; }
+  .current-study { align-items: stretch; flex-direction: column; gap: 16px; padding: 18px; }
+  .current-study h2 { font-size: 19px; }
+  .achievement-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  .achievement-card { padding: 16px 10px; }
+  .achievement-card img { width: 88px; height: 88px; }
+  .achievement-card h2 { font-size: 14px; }
+  .achievement-summary { flex-wrap: wrap; gap: 12px; }
+}
+
+.achievement-card .achievement-detail { font-size: 11px; line-height: 1.6; margin-top: 8px; min-height: 0; }
+.focus-timer { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px; margin-top: 24px; }
+.focus-timer > div { flex: 1 1 220px; }
+.focus-timer h2 { font-weight: 700; }
+.focus-timer p { font-size: 12px; color: var(--color-stone-500); line-height: 1.6; }
+.focus-timer [role="timer"] { font-size: 25px; font-variant-numeric: tabular-nums; }

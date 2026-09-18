@@ -1,3 +1,5 @@
+import { FocusTimer } from "../features/achievements/FocusTimer";
+import { Achievements } from "../pages/Achievements";
 import { PolicyConsent } from "../features/consent/PolicyConsent";
 import { hasPolicyConsent } from "../features/consent/policy";
 import { InstallPrompt } from "../components/InstallPrompt";
@@ -48,13 +50,16 @@ export default function App() {
       data.settings.shuffle,
       mode === "cards" ? reviewer.cards.length : data.settings.quizSize,
     );
-    if (cards.length)
+    if (cards.length) {
+      if (!update({ ...data, lastStudy: { reviewerId: reviewer.id, startedAt: new Date().toISOString() } })) return;
       setSession({
         title: reviewer.title,
         reviewerId: reviewer.id,
         mode,
         cards,
+        answerPool: reviewer.cards,
       });
+    }
   }
   function daily() {
     const cards = prepareCards(
@@ -68,6 +73,7 @@ export default function App() {
         reviewerId: "",
         mode: "daily",
         cards,
+        answerPool: data.reviewers.flatMap(r => r.cards),
       });
   }
   function saveReviewer(reviewer: Reviewer, topic?: Topic) {
@@ -171,6 +177,7 @@ export default function App() {
               onDaily={daily}
             />
           )}
+          {page === "Achievements" && <Achievements data={data} />}
           {page === "Activity" && <Activity data={data} />}
           {page === "Settings" && (
             <Settings data={data} update={update} onThemeChange={changeTheme} />
@@ -185,6 +192,7 @@ export default function App() {
             "Not found",
           ].includes(page) && <Documentation page={page} />}
           </div>
+          <FocusTimer visible={page === "Achievements"} onComplete={() => update({ ...data, milestones: { ...data.milestones, focusCompleted: true } })} />
           <footer className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
             <span>A little wiser, every day.</span>
             <nav className="flex flex-wrap gap-4" aria-label="Footer">
@@ -216,6 +224,7 @@ export default function App() {
         <StudySession
           session={session}
           onClose={() => setSession(null)}
+          onPracticeComplete={() => update({ ...data, milestones: { ...data.milestones, studyDates: [...(data.milestones?.studyDates ?? []), new Date().toISOString()] } })}
           onComplete={(attempt) =>
             update({ ...data, attempts: [...data.attempts, attempt] })
           }

@@ -83,7 +83,8 @@ export function SearchSelect({
       setPosition({
         width, maxHeight: height,
         left: Math.max(viewportLeft + 12, Math.min(rect.left, viewportLeft + viewportWidth - width - 12)),
-        top: Math.max(viewportTop + 12, Math.min(upwards ? rect.top - height - 6 : rect.bottom + 6, viewportTop + viewportHeight - height - 12)),
+        top: upwards ? "auto" : rect.bottom + 6,
+        bottom: upwards ? window.innerHeight - rect.top + 6 : "auto",
       });
     }
     place();

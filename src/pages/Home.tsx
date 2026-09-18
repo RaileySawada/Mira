@@ -1,3 +1,4 @@
+import { miraGreeting } from "../features/home/miraMessages";
 import { lazy, Suspense } from "react";
 import type { Page, Reviewer, StudyData } from "../types/study";
 import { dayKey, percentage, streak } from "../utils/stats";
@@ -18,6 +19,9 @@ export function Home({
   onStudy: (reviewer: Reviewer) => void;
   onDaily: () => void;
 }) {
+  const greeting = miraGreeting(data);
+  const current = data.reviewers.find(r => r.id === data.lastStudy?.reviewerId);
+  const folder = data.folders?.find(f => f.id === current?.folderId);
   const today = data.attempts.filter(
     (a) => dayKey(a.date) === dayKey(new Date()),
   );
@@ -61,71 +65,30 @@ export function Home({
           </button>
         }
       />
-      <section className="relative mb-7 overflow-hidden rounded-2xl border border-line bg-sage p-6 sm:p-8">
-        <div className="relative z-10 max-w-[65%] sm:max-w-[70%]">
-          <span className="inline-flex items-center gap-2 text-xs font-semibold text-accent-ink">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#788962]" /> YOUR
-            DAILY DOSE OF GROWTH
-          </span>
-          <h2 className="mt-4 text-2xl font-medium tracking-tight sm:text-3xl">
-            Small steps. Big possibilities.
-          </h2>
-          <p className="mt-3 max-w-md text-sm leading-6 text-stone-600">
-            {dailyDone
-              ? "Daily review, done. Look at you showing up for yourself."
-              : data.settings.autoDaily
-                ? "A fresh daily review is ready when you are. Let’s turn what you’re learning into what you know."
-                : "Pick up your flashcards and give your curiosity a little space to grow."}
-          </p>
-          <button
-            className="button dark mt-5"
-            onClick={
-              data.settings.autoDaily ? onDaily : () => navigate("Reviewers")
-            }
-            disabled={data.settings.autoDaily && cards === 0}
-          >
-            {data.settings.autoDaily
-              ? dailyDone
-                ? "Practice again"
-                : "Start daily review"
-              : "Explore reviewers"}
-          </button>
-          {cards === 0 && (
-            <p className="mt-3 text-xs text-stone-500">
-              Add your first reviewer to begin.
-            </p>
-          )}
-        </div>
-        <div className="book-art" aria-hidden="true">
-          <div className="book book-back" />
-          <div className="book book-front">
-            <span>MIRA</span>
-
-            <small>
-              a little wiser
-              <br />
-              every day.
-            </small>
+      <section className="mira-welcome" aria-labelledby="mira-greeting">
+        <div className="mira-welcome-scene">
+          <img src={"/expressions/" + greeting.mood + ".webp"} alt={"Mira looks " + greeting.mood} width={160} height={160} fetchPriority="high" />
+          <div className="mira-speech">
+            <p className="mira-speech-name">Mira</p>
+            <h2 id="mira-greeting">{greeting.text}</h2>
           </div>
-          <span className="art-dot" />
+        </div>
+        <div className="mira-welcome-footer">
+          <p className="mira-welcome-progress">
+            {today.length ? <><strong>{today.length} {today.length === 1 ? "quiz" : "quizzes"} completed today</strong><span>{studied} {studied === 1 ? "question" : "questions"} practiced</span></> : cards === 0 ? "Add your first reviewer to begin." : "A fresh page for today. Start whenever you’re ready."}
+          </p>
+          <button className="button secondary" onClick={data.settings.autoDaily ? onDaily : () => navigate("Reviewers")} disabled={data.settings.autoDaily && cards === 0}>
+            {data.settings.autoDaily ? dailyDone ? "Practice again" : "Start daily review" : "Explore reviewers"}
+          </button>
         </div>
       </section>
-      <div className="mb-7 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <div className="panel p-5" key={stat.label}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-stone-500">{stat.label}</p>
-            </div>
-            <p className="mt-3 text-3xl font-semibold tracking-tight">
-              {stat.value}
-            </p>
-            <p className="mt-2 text-[11px] text-stone-400">{stat.note}</p>
-          </div>
-        ))}
-      </div>
-      <Suspense fallback={<div className="mb-8 h-72" role="status">Loading charts…</div>}>
-        <StudyCharts attempts={data.attempts} />
-      </Suspense>
+      <section className="panel current-study">
+        <div><p className="mira-welcome-label">{current ? "PICK UP WHERE YOU LEFT OFF" : "YOUR STUDY DESK"}</p>
+          <h2>{current?.title ?? "What would you like to learn?"}</h2>
+          <p>{current ? (folder?.name ?? "Unfiled") + " / " + (data.topics.find(t => t.id === current.topicId)?.name ?? "Uncategorized") + " · " + current.cards.length + " cards" : "Open a reviewer to keep your current study set and its folder here."}</p>
+        </div>
+        <button className="button primary" onClick={() => current ? onStudy(current) : navigate("Reviewers")}>{current ? "Continue studying" : "Choose a reviewer"}</button>
+      </section>
       <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
         <section>
           <div className="mb-4 flex items-center justify-between">
@@ -189,7 +152,7 @@ export function Home({
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
             <div
-              className="h-full rounded-full bg-[#9caa83]"
+              className="h-full rounded-full bg-[#8d80b5]"
               style={{
                 width: `${Math.min(100, (studied / data.settings.dailyGoal) * 100)}%`,
               }}
@@ -210,6 +173,23 @@ export function Home({
           </div>
         </section>
       </div>
+      <div className="mt-8">      <div className="mb-7 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div className="panel p-5" key={stat.label}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-stone-500">{stat.label}</p>
+            </div>
+            <p className="mt-3 text-3xl font-semibold tracking-tight">
+              {stat.value}
+            </p>
+            <p className="mt-2 text-[11px] text-stone-400">{stat.note}</p>
+          </div>
+        ))}
+      </div>
+      <Suspense fallback={<div className="mb-8 h-72" role="status">Loading charts…</div>}>
+        <StudyCharts attempts={data.attempts} />
+      </Suspense>
+</div>
     </>
   );
 }

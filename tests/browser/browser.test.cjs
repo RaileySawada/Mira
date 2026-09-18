@@ -767,6 +767,10 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await sampleWork("ai-open-idle", () => delay(2000));
     await writeFile(path.join(tmpdir(), "mira-performance.json"), JSON.stringify(performanceSamples, null, 2));
     await click("Create reviewers");
+    await click("Cards per reviewer");
+    expect(await evaluate("(() => { const p = document.querySelector('.ai-panel .select-panel').getBoundingClientRect(); const t = document.querySelector('button[aria-label=\"Cards per reviewer\"]').getBoundingClientRect(); return Math.min(Math.abs(p.bottom - t.top), Math.abs(p.top - t.bottom)) < 9; })()")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-panel .select-panel input').getBoundingClientRect().height >= 40")).toBe(true);
+    await click("Cards per reviewer");
     await fill(".ai-panel input", "AI Biology");
     await click("Generate reviewers");
     await waitFor("document.body.innerText.includes('Ready to review')");

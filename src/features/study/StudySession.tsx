@@ -1,8 +1,10 @@
+import { FAST_ANSWER_MS } from "../achievements/achievements";
+import { makeChoices } from "./choices";
 import { FlashcardPractice } from "./FlashcardPractice";
 import { confirmAction } from "../../components/confirmAction";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Attempt, Card } from "../../types/study";
 import { Modal } from "../../components/ui";
 import { normalizeAnswer } from "../../utils/stats";
@@ -11,18 +13,27 @@ export interface Session {
   reviewerId: string;
   mode: "cards" | "quiz" | "daily";
   cards: Card[];
+  answerPool?: Card[];
 }
 export function StudySession({
   session,
   onClose,
   onComplete,
+  onPracticeComplete,
 }: {
   session: Session;
   onClose: () => void;
   onComplete: (a: Attempt) => boolean;
+  onPracticeComplete?: () => boolean;
 }) {
+  const questionStarted = useRef(0);
+  const fastCorrect = useRef(false);
   const save = useActionFeedback();
+  const [choices] = useState(() => session.mode === "cards" ? [] : session.cards.map(card => makeChoices(card, session.answerPool ?? session.cards)));
+  const canChoose = choices.every(options => options.length >= 2);
+  const [difficulty, setDifficulty] = useState<"normal" | "hard">(canChoose ? "normal" : "hard");
   const [index, setIndex] = useState(0);
+  useEffect(() => { questionStarted.current = performance.now(); }, [index]);
   const [answer, setAnswer] = useState("");
   const [answers, setAnswers] = useState<
     { answer: string; correct: boolean }[]
@@ -50,6 +61,8 @@ export function StudySession({
           correct: score,
           total: session.cards.length,
           mode: session.mode === "daily" ? "daily" : "quiz",
+          difficulty,
+          fastCorrect: fastCorrect.current,
         }), () => setComplete(true));
     } else {
       setIndex(index + 1);
@@ -95,11 +108,16 @@ export function StudySession({
       ) : (
         <>
           {session.mode !== "cards" && <>
+          {index === 0 && !checked && <div className="quiz-mode-picker" aria-label="Quiz difficulty">
+            <button type="button" disabled={!canChoose} aria-pressed={difficulty === "normal"} onClick={() => { setDifficulty("normal"); setAnswer(""); }}>Normal · Multiple choice</button>
+            <button type="button" aria-pressed={difficulty === "hard"} onClick={() => { setDifficulty("hard"); setAnswer(""); }}>Hard · Written recall</button>
+          </div>}
+          {!canChoose && index === 0 && !checked && <p className="mb-4 text-xs text-stone-500">Add at least two different answers to this reviewer to unlock multiple choice. You can practice written recall now.</p>}
           <div className="mb-4 flex justify-between text-xs text-stone-500">
             <span>
               {session.mode === "daily"
                   ? "DAILY REVIEW"
-                  : "WRITTEN QUIZ"}
+                  : difficulty === "normal" ? "MULTIPLE CHOICE" : "WRITTEN QUIZ"}
             </span>
             <span>
               {index + 1} / {session.cards.length}
@@ -115,7 +133,7 @@ export function StudySession({
           </div>
           </>}
           {session.mode === "cards" ? (
-            <FlashcardPractice cards={session.cards} onClose={onClose} />
+            <FlashcardPractice cards={session.cards} onClose={onClose} onComplete={onPracticeComplete} />
           ) : (
             <>
               <h3 className="mb-6 whitespace-pre-wrap text-xl leading-8">
@@ -129,6 +147,7 @@ export function StudySession({
                     return;
                   }
                   if (!answer.trim()) return;
+                  if (normalizeAnswer(answer) === normalizeAnswer(card.answer) && performance.now() - questionStarted.current <= FAST_ANSWER_MS) fastCorrect.current = true;
                   setAnswers([
                     ...answers,
                     {
@@ -141,7 +160,13 @@ export function StudySession({
                   setChecked(true);
                 }}
               >
-                <label className="field">
+                {difficulty === "normal" ? <fieldset className="quiz-options" disabled={checked}>
+                  <legend className="mb-3 text-sm">Choose your answer</legend>
+                  {choices[index].map((option, i) => <label key={option} className={"quiz-option " + (answer === option ? "selected" : "")}>
+                    <input type="radio" name="quiz-answer" value={option} checked={answer === option} onChange={() => setAnswer(option)} required />
+                    <span className="quiz-option-letter" aria-hidden="true">{String.fromCharCode(65 + i)}</span><span>{option}</span>
+                  </label>)}
+                </fieldset> : <label className="field">
                   Your answer
                   <textarea
                     autoFocus
@@ -152,7 +177,7 @@ export function StudySession({
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="Take a breath. You've got this."
                   />
-                </label>
+                </label>}
                 {checked && (
                   <div
                     className={`mt-4 rounded-xl p-4 text-sm ${answers[index].correct ? "bg-green-50 text-green-800" : "bg-orange-50 text-orange-800"}`}
@@ -179,9 +204,7 @@ export function StudySession({
                 </ProcessButton>
               </form>
               <p className="mt-4 text-xs leading-5 text-stone-400">
-                Answers match your saved definition, ignoring letter case and
-                extra spaces. Use short, specific answers for the fairest
-                results.
+                {difficulty === "normal" ? "Options come from saved definitions in your study set. Everything works offline." : "Answers match your saved definition, ignoring letter case and extra spaces. Use short, specific answers for the fairest results."}
               </p>
             </>
           )}

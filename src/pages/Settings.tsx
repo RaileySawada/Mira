@@ -35,7 +35,7 @@ export function Settings({
         if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a backup smaller than 5 MB.");
         const imported = validateData(JSON.parse(await file.text()));
         if (!await confirmAction(`Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`)) return null;
-        if (!update(imported)) return false;
+        if (!update({ ...imported, milestones: { ...imported.milestones, importedReviewer: imported.reviewers.length > 0 || imported.milestones?.importedReviewer === true } })) return false;
         setSettings(imported.settings);
         setMessage("Your backup has been imported. Welcome back.");
         return true;

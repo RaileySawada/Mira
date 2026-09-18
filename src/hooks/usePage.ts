@@ -9,6 +9,7 @@ export const routes: Record<Page, string> = {
   Docs: "/docs",
   Quizzes: "/quizzes",
   Activity: "/activity",
+  Achievements: "/achievements",
   Settings: "/settings",
   Guide: "/guide",
   Terms: "/terms",

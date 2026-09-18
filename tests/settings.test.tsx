@@ -72,7 +72,7 @@ test("imports a validated backup and resets the file input", async () => {
   );
   await userEvent.upload(screen.getByLabelText("Import Mira backup"), backup());
   expect(await screen.findByRole("status")).toHaveTextContent("imported");
-  expect(update).toHaveBeenCalledWith(library());
+  expect(update).toHaveBeenCalledWith({ ...library(), milestones: { importedReviewer: true } });
   expect(screen.getByLabelText("Import Mira backup")).toHaveValue("");
 });
 test("cancelled imports and failed saves preserve the library", async () => {

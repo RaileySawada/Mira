@@ -10,6 +10,7 @@ const pages: Page[] = [
   "Folders",
   "Quizzes",
   "Activity",
+  "Achievements",
   "Settings",
   "Docs",
 ];

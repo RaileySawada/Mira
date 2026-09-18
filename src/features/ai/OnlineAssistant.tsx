@@ -22,7 +22,7 @@ function AssistantLauncher({ data, update, online }: { data: StudyData; update: 
       <img src={miraAvatar} alt="" /><span>Ask Mira</span>
     </button>}
     {open && <Suspense fallback={<p role="status">Opening your assistant…</p>}>
-      <AiAssistant online={online} onClose={() => { setOpen(false); requestAnimationFrame(() => trigger.current?.focus()); }} onSave={(topic, drafts) => update(addGeneratedReviewers(data, topic, drafts))} />
+      <AiAssistant onGuidance={() => { update({ ...data, milestones: { ...data.milestones, askedMira: true } }); }} online={online} onClose={() => { setOpen(false); requestAnimationFrame(() => trigger.current?.focus()); }} onSave={(topic, drafts) => update(addGeneratedReviewers(data, topic, drafts))} />
     </Suspense>}
   </>;
 }

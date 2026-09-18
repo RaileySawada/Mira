@@ -32,7 +32,7 @@ export function Quizzes({ data, onQuiz, onDaily }: { data: StudyData; onQuiz: (r
             <p>{Math.min(reviewer.cards.length, data.settings.quizSize)} questions</p>
           </div>
           <div className="quiz-card-footer">
-            <span>Written recall</span>
+            <span>Normal or hard</span>
             <button className="button secondary" onClick={() => onQuiz(reviewer)}>Start quiz →</button>
           </div>
         </article>

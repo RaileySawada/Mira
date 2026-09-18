@@ -22,6 +22,7 @@ test.each([
   "/topics",
   "/quizzes",
   "/activity",
+  "/achievements",
   "/settings",
   "/guide",
   "/privacy",
@@ -41,6 +42,7 @@ test("daily review saves a result into the application library", async () => {
   const user = userEvent.setup();
   openPage();
   await user.click(screen.getByRole("button", { name: "Start daily review" }));
+  await user.click(screen.getByRole("button", { name: "Hard · Written recall" }));
   await user.type(screen.getByLabelText("Your answer"), "Mitochondria");
   await user.click(screen.getByRole("button", { name: "Check answer" }));
   await user.click(
@@ -59,7 +61,7 @@ test("reviewer page starts flashcards and individual quizzes", async () => {
   expect(screen.getByText("FLASHCARD PRACTICE")).toBeVisible();
   await user.click(screen.getByLabelText("Close dialog"));
   await user.click(screen.getByRole("button", { name: "Take quiz" }));
-  expect(screen.getByText("WRITTEN QUIZ")).toBeVisible();
+  expect(screen.getByText("MULTIPLE CHOICE")).toBeVisible();
   await user.click(screen.getByLabelText("Close dialog"));
 });
 test("application creates and edits reviewers and confirms deletion", async () => {

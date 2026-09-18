@@ -16,6 +16,7 @@ function offlinePlugin(): Plugin {
         (name) => !name.endsWith(".map"),
       );
       const branding = ["/brand/logo.png", "/brand/mark.png", "/icons/favicon-64.png", "/icons/favicon-32.png", "/icons/apple-touch-icon.png", "/icons/pwa-192.png", "/icons/pwa-512.png", "/icons/pwa-maskable-512.png"];
+      branding.push(...["normal", "happy", "sad", "amazed", "thinking"].map(name => "/expressions/" + name + ".webp"), ...Array.from({ length: 10 }, (_, i) => "/rewards/" + (i + 1) + ".webp"));
       const version = createHash("sha256")
         .update(JSON.stringify(assets))
         .update(readFileSync("index.html"))

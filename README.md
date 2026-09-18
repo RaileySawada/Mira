@@ -182,3 +182,9 @@ Before entering Mira, users review the Terms and Privacy tabs and explicitly acc
 Activity starts with a month calendar using local device dates. One completed quiz/daily review is slightly active, two to four is active, and five or more is super active. Selecting a date opens completed sessions, question totals, weighted accuracy and individual scores. Empty days and adjacent-month dates are selectable. The searchable, sortable history remains below the calendar. Temporary flashcard self-ratings and time online are not activity events.
 
 Cards follow horizontal drags, settle back on short/cancelled gestures, and hand off to a subtle centered reveal after rating. Reduced motion skips these animations. The card viewport clips transforms to prevent page overflow while allowing long text to scroll. Edit and delete actions use labeled pencil/trash buttons.
+
+### Study dashboard and rewards
+
+Home shows the last opened reviewer and its folder before charts, with five Mira expressions and ten messages per expression. Normal quizzes use up to four distinct saved definitions as offline answer choices; Hard quizzes use written recall. A set needs two distinct definitions for Normal mode. Achievements tracks ten milestones and preserves earned badge IDs in local storage and JSON exports. Optimized WebP expressions and badges are precached for offline use; original PNG artwork stays in `public/emoticons` and `public/achievements`.
+
+Badge missions now match the text in all ten original images. Quiz Master counts scores of 80% or above; Fast Learner requires a correct response within 10 seconds in a saved quiz; Night Owl uses midnight–5:59 a.m. local time. The Achievements page includes a 25-minute focus timer (pauses when hidden; save after completion). Bookworm records a successful reviewer import, and Helper records a successful AI guidance response. Legacy mismatched badge IDs are recalculated from available evidence.

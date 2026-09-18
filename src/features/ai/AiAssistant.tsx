@@ -14,11 +14,14 @@ import { isRecord, parseReviewers, validText, type ChatMessage, type GeneratedRe
 
 type Mode = "chat" | "generate";
 
-export default function AiAssistant({ onClose, onSave, online = true }: {
+export default function AiAssistant({ onClose, onSave, onGuidance, online = true }: {
   online?: boolean;
   onClose: () => void;
+  onGuidance?: () => void;
   onSave: (topic: string, reviewers: GeneratedReviewer[]) => boolean;
 }) {
+  const guidanceReceived = useRef(onGuidance);
+  useEffect(() => { guidanceReceived.current = onGuidance; }, [onGuidance]);
   const saving = useActionFeedback();
   const [mode, setMode] = useState<Mode>("chat");
   const [topic, setTopic] = useState("");
@@ -159,6 +162,7 @@ export default function AiAssistant({ onClose, onSave, online = true }: {
           setDrafts(parseReviewers(result));
           setSavedTopic(result.topic);
         }
+        guidanceReceived.current?.();
         await revealAnswer(result.answer as string, pending.signal);
       }
       if (pending.signal.aborted) return;

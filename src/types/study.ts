@@ -26,6 +26,8 @@ export interface Attempt {
   correct: number;
   total: number;
   mode: "quiz" | "daily";
+  difficulty?: "normal" | "hard";
+  fastCorrect?: boolean;
 }
 export type Theme = "light" | "dark" | "system";
 export interface Settings {
@@ -38,6 +40,10 @@ export interface Settings {
 }
 export interface StudyData {
   version: 2;
+  lastStudy?: { reviewerId: string; startedAt: string };
+  earnedBadges?: string[];
+  achievementVersion?: 2;
+  milestones?: { studyDates?: string[]; importedReviewer?: boolean; focusCompleted?: boolean; askedMira?: boolean };
   topics: Topic[];
   folders?: Folder[];
   reviewers: Reviewer[];
@@ -51,6 +57,7 @@ export type Page =
   | "Folders"
   | "Docs"
   | "Quizzes"
+  | "Achievements"
   | "Activity"
   | "Settings"
   | "Guide"

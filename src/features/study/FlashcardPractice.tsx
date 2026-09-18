@@ -2,7 +2,14 @@ import { useEffect, useLayoutEffect, useEffectEvent, useRef, useState } from "re
 import { flushSync } from "react-dom";
 import type { Card } from "../../types/study";
 
-export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: () => void }) {
+export function FlashcardPractice({ cards, onClose, onComplete }: { cards: Card[]; onClose: () => void; onComplete?: () => boolean }) {
+  const saved = useRef(false);
+  function savePractice() {
+    if (saved.current) return true;
+    const success = onComplete?.() ?? true;
+    if (success) saved.current = true;
+    return success;
+  }
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [ratings, setRatings] = useState<Record<number, boolean>>({});
@@ -64,7 +71,7 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
   }
   function finishRating(known: boolean) {
     setRatings(current => ({ ...current, [index]: known }));
-    if (index === cards.length - 1) setFinished(true);
+    if (index === cards.length - 1) { if (savePractice()) setFinished(true); }
     else move(index + 1);
   }
   const keyPressed = useEffectEvent((event: KeyboardEvent) => {
@@ -129,6 +136,6 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
     </div>
     <div className="practice-ratings"><button className="button secondary" onClick={() => rate(false)}>← I don’t know</button><button className="button primary" onClick={() => rate(true)}>I know →</button></div>
     <p className="text-center text-xs text-stone-500">Swipe left or right, or use the arrow keys. Tap or Space flips the card.</p>
-    <div className="mt-4 flex justify-between"><button className="text-button" disabled={index === 0} onClick={() => move(index - 1)}>Previous</button><button className="text-button" onClick={() => { if (!busy.current) { if (index === cards.length - 1) onClose(); else move(index + 1); } }}>{index === cards.length - 1 ? "Finish practice" : "Next card"}</button></div>
+    <div className="mt-4 flex justify-between"><button className="text-button" disabled={index === 0} onClick={() => move(index - 1)}>Previous</button><button className="text-button" onClick={() => { if (!busy.current) { if (index === cards.length - 1) { if (savePractice()) onClose(); } else move(index + 1); } }}>{index === cards.length - 1 ? "Finish practice" : "Next card"}</button></div>
   </div>;
 }

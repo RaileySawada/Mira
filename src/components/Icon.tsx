@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import {
+  Trophy,
   Menu,
   House,
   BookOpen,
@@ -48,6 +49,7 @@ const icons: Record<string, LucideIcon> = {
   Docs: FileText,
   Quizzes: ClipboardCheck,
   Activity: ChartNoAxesCombined,
+  Achievements: Trophy,
   Settings: Settings2,
   plus: Plus,
   arrow: ArrowRight,

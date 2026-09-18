@@ -121,6 +121,20 @@ export function validateData(value: unknown): StudyData {
     )
   )
     throw new Error("The backup contains an invalid quiz result.");
+  if (value.lastStudy !== undefined && (!record(value.lastStudy) || !string(value.lastStudy.reviewerId) || !date(value.lastStudy.startedAt)))
+    throw new Error("The backup contains invalid study history.");
+  if (value.earnedBadges !== undefined && (!Array.isArray(value.earnedBadges) || !value.earnedBadges.every(id => typeof id === "string" && /^badge-(?:[1-9]|10)$/.test(id))))
+    throw new Error("The backup contains invalid achievements.");
+  if (value.attempts.some(a => a.difficulty !== undefined && a.difficulty !== "normal" && a.difficulty !== "hard"))
+    throw new Error("The backup contains an invalid quiz difficulty.");
+  if (value.achievementVersion !== undefined && value.achievementVersion !== 2) throw new Error("Invalid achievement version.");
+  if (value.milestones !== undefined) {
+    const m = value.milestones;
+    if (!record(m) || (m.studyDates !== undefined && (!Array.isArray(m.studyDates) || !m.studyDates.every(date))) ||
+      ["importedReviewer", "focusCompleted", "askedMira"].some(key => m[key] !== undefined && typeof m[key] !== "boolean"))
+      throw new Error("Invalid achievement milestones.");
+  }
+  if (value.attempts.some(a => a.fastCorrect !== undefined && typeof a.fastCorrect !== "boolean")) throw new Error("Invalid answer timing milestone.");
   const s = value.settings;
   if (
     !string(s.name) ||

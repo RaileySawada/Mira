@@ -1,18 +1,20 @@
+import { withAchievements } from "../features/achievements/achievements";
 import { useState } from "react";
 import { readData, saveData } from "../services/storage";
 import type { StudyData } from "../types/study";
 
 export function useStudyData() {
   const [initial] = useState(readData);
-  const [data, setData] = useState(initial.data);
+  const [data, setData] = useState(() => withAchievements(initial.data));
   const [error, setError] = useState(initial.error);
   const [needsRecovery, setNeedsRecovery] = useState(Boolean(initial.error));
 
   function update(next: StudyData) {
     if (needsRecovery) return false;
     try {
-      saveData(next);
-      setData(next);
+      const saved = withAchievements(next);
+      saveData(saved);
+      setData(saved);
       setError("");
       setNeedsRecovery(false);
       return true;

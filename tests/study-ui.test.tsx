@@ -126,6 +126,7 @@ test("quiz grades answers and saves only the complete result", async () => {
       onComplete={complete}
     />,
   );
+  await user.click(screen.getByRole("button", { name: "Hard · Written recall" }));
   await user.type(screen.getByLabelText("Your answer"), " mitochondria ");
   await user.click(screen.getByRole("button", { name: "Check answer" }));
   expect(screen.getByText(/That’s right/)).toBeVisible();
