@@ -16,8 +16,8 @@ export function Reviewers({ data, onCreate, onEdit, onDelete, onStudy, onQuiz }:
     {layoutError && <p role="status" className="mb-4 text-xs text-stone-500">{layoutError}</p>}
     <PageHeading eyebrow="YOUR PERSONAL LIBRARY" title="Room for every little discovery." description="Collect your knowledge. Find your rhythm. Make it stick." />
     <div className="reviewer-toolbar mb-6 flex items-start gap-2 sm:gap-3">
-      <label className="relative min-w-0 flex-1"><Icon name="search" style={{ position: "absolute", left: 13, top: 12, color: "#a8a29e" }} size={18} /><input className="input w-full pl-10" aria-label="Search reviewers" placeholder="Find a reviewer…" value={search} onChange={event => setSearch(event.target.value)} /></label>
-      <SearchSelect label="Filter by topic" className="toolbar-filter w-[38%] max-w-56 shrink-0" value={topic} onChange={setTopic} options={[{ value: "all", label: "All topics" }, { value: "", label: "Uncategorized" }, ...data.topics.map(item => ({ value: item.id, label: item.name }))]} />
+      <label className="relative min-w-0 flex-1"><Icon name="search" style={{ position: "absolute", left: 13, top: 12, color: "#a8a29e" }} size={18} /><input className="input w-full pl-10" aria-label="Search reviewers" placeholder="Search…" value={search} onChange={event => setSearch(event.target.value)} /></label>
+      <SearchSelect label="Filter by topic" triggerIcon={<Icon name="Topics" size={18} />} className="toolbar-filter w-[38%] max-w-56 shrink-0" value={topic} onChange={setTopic} options={[{ value: "all", label: "All topics" }, { value: "", label: "Uncategorized" }, ...data.topics.map(item => ({ value: item.id, label: item.name }))]} />
       <ViewToggle value={view} onChange={setView} label="Reviewer layout" />
       <button className="button primary toolbar-create" onClick={onCreate} aria-label="New reviewer"><Icon name="plus" size={16} /><span className="hidden sm:inline">New reviewer</span></button>
     </div>

@@ -155,7 +155,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
       await evaluate(
         "document.querySelector('a[aria-label=\"Mira home\"]').textContent.trim()",
       ),
-    ).toBe("");
+    ).toBe("mira");
     await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
     await delay(1500);
     await sampleWork("home-idle", () => delay(2000));
@@ -553,14 +553,14 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await waitFor("document.body.innerText.includes('Your next chapter')");
     expect(
       await evaluate(
-        "document.querySelector('.mobile-header img').naturalWidth",
+        "document.querySelector('.mobile-header img').getAttribute('src')",
       ),
-    ).toBe(1254);
+    ).toBe("/brand/mark.png");
     expect(
       await evaluate(
         "document.querySelector('link[rel=icon]').getAttribute('href')",
       ),
-    ).toBe("/logo.png");
+    ).toBe("/icons/favicon-64.png");
     expect(
       await evaluate(
         "document.querySelector('meta[property=\"og:image\"]').content",
@@ -572,10 +572,37 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("Array.from(document.links).find(a => a.pathname === '/reviewers').click()");
     await waitFor("document.querySelector('.reviewer-toolbar')");
     expect(await evaluate("new Set([...document.querySelector('.reviewer-toolbar').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
+    await delay(400);
     await evaluate("document.querySelector('button[aria-label=\"Filter by topic\"]').focus(); document.querySelector('button[aria-label=\"Filter by topic\"]').click()");
     expect(await evaluate("document.activeElement.getAttribute('aria-label')")).toBe("Filter by topic");
     expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
     expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().left >= 0")).toBe(true);
+    expect(await evaluate("document.querySelector('.select-panel').matches(':popover-open')")).toBe(true);
+    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8")).toBe(true);
+    expect(await evaluate("document.querySelector('.select-panel input').getBoundingClientRect().width >= 240")).toBe(true);
+    expect(await evaluate("document.querySelector('.reviewer-toolbar input').getBoundingClientRect().width >= 90")).toBe(true);
+    const dropdownShot = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), "mira-topic-dropdown-mobile.png"), Buffer.from(dropdownShot.data, "base64"));
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 420, deviceScaleFactor: 1, mobile: true });
+    await delay(100);
+    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8")).toBe(true);
+    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
+    await click("Filter by topic");
+    await click("List view");
+    expect(await evaluate("document.querySelector('.reviewer-list .reviewer-card').getBoundingClientRect().height < 210")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.reviewer-list .reviewer-card')).borderRadius")).toBe("0px");
+    const listShot = await send("Page.captureScreenshot", { format: "png" });
+    await writeFile(path.join(tmpdir(), "mira-reviewers-list-mobile.png"), Buffer.from(listShot.data, "base64"));
+    await evaluate("document.querySelector('a[href=\"/topics\"]').click()");
+    await waitFor("document.querySelector('.topic-card')");
+    await click("List view");
+    expect(await evaluate("document.querySelector('.topic-list .topic-card').getBoundingClientRect().height < 110")).toBe(true);
+    await evaluate("document.querySelector('a[href=\"/quizzes\"]').click()");
+    await waitFor("document.querySelector('.quiz-card')");
+    await click("List view");
+    expect(await evaluate("getComputedStyle(document.querySelector('.quiz-list .quiz-card')).flexDirection")).toBe("row");
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+
     await evaluate("Array.from(document.links).find(a => a.pathname === '/about').click()");
     await waitFor("document.querySelector('.documentation-tabs')");
     expect(await evaluate("new Set([...document.querySelector('.documentation-tabs').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
@@ -601,6 +628,12 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await delay(350);
     expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2")).toBe(true);
     expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().top) < 2")).toBe(true);
+    const scrollBounds = await evaluate("[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]");
+    await evaluate("(() => { const card = document.querySelector('.study-card'); for (const [type, x] of [['touchstart',100],['touchmove',280]]) { const event = new Event(type, { bubbles: true }); Object.defineProperty(event, 'touches', { value: [{ clientX:x, clientY:300 }] }); card.dispatchEvent(event); } })()");
+    expect(await evaluate("document.querySelector('.study-card').style.transform.includes('180px')")).toBe(true);
+    expect(await evaluate("[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]")).toEqual(scrollBounds);
+    await evaluate("document.querySelector('.study-card').dispatchEvent(new Event('touchcancel', { bubbles: true }))");
+
     await click("Close dialog");
     await click("Take quiz");
     await delay(350);
@@ -624,7 +657,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await click("Browse folders");
     const reviewerHeight = await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height");
     await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
-    expect(await evaluate("getComputedStyle(document.querySelector('.folder-reviewer .select-panel')).position")).toBe("absolute");
+    expect(await evaluate("getComputedStyle(document.querySelector('.folder-reviewer .select-panel')).position")).toBe("fixed");
     expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height")).toBe(reviewerHeight);
     await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
     const foldersMobile = await send("Page.captureScreenshot", { format: "png" });

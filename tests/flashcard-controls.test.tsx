@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { StudySession } from "../src/features/study/StudySession";
 import { reviewer } from "./fixtures";
 
@@ -33,4 +33,29 @@ test("horizontal swipes rate, vertical gestures do not, and taps flip", () => {
   fireEvent.touchStart(card, { touches: [{ clientX: 100, clientY: 200 }] });
   fireEvent.touchEnd(card, { changedTouches: [{ clientX: 220, clientY: 205 }] });
   expect(screen.getByText("1 known · 1 to practice")).toBeVisible();
+});
+
+
+test("drag follows the finger, snaps back below threshold, and commits only after exit", () => {
+  practice();
+  const card = screen.getByRole("button", { name: /Question:/ });
+  const pending = { cancel: jest.fn(), onfinish: null as (() => void) | null };
+  jest.spyOn(card, "animate").mockReturnValue(pending as unknown as Animation);
+  fireEvent.touchStart(card, { touches: [{ clientX: 150, clientY: 200 }] });
+  fireEvent.touchMove(card, { touches: [{ clientX: 175, clientY: 202 }] });
+  expect(card.style.transform).toContain("translateX(25px)");
+  fireEvent.touchEnd(card, { changedTouches: [{ clientX: 175, clientY: 202 }] });
+  expect(card.style.transform).toBe("");
+  expect(screen.getByText("1 / 2")).toBeVisible();
+  fireEvent.touchStart(card, { touches: [{ clientX: 150, clientY: 200 }] });
+  fireEvent.touchMove(card, { touches: [{ clientX: 50, clientY: 205 }] });
+  expect(card.style.transform).toContain("translateX(-100px)");
+  expect(card.style.getPropertyValue("--swipe-unknown")).toBe("1");
+  fireEvent.touchEnd(card, { changedTouches: [{ clientX: 50, clientY: 205 }] });
+  expect(screen.getByText("1 / 2")).toBeVisible();
+  fireEvent.keyDown(card, { key: "ArrowRight" });
+  act(() => pending.onfinish?.());
+  expect(screen.getByText("2 / 2")).toBeVisible();
+  expect(card.style.transform).toBe("");
+  expect(card).toHaveAttribute("aria-pressed", "false");
 });

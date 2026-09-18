@@ -15,18 +15,19 @@ function offlinePlugin(): Plugin {
       const assets = Object.keys(bundle).filter(
         (name) => !name.endsWith(".map"),
       );
+      const branding = ["/brand/logo.png", "/brand/mark.png", "/icons/favicon-64.png", "/icons/favicon-32.png", "/icons/apple-touch-icon.png", "/icons/pwa-192.png", "/icons/pwa-512.png", "/icons/pwa-maskable-512.png"];
       const version = createHash("sha256")
         .update(JSON.stringify(assets))
         .update(readFileSync("index.html"))
         .update(readFileSync("public/manifest.webmanifest"))
-        .update(readFileSync("public/logo.png"))
+        .update(Buffer.concat(branding.map(path => readFileSync("public" + path))))
         .digest("hex")
         .slice(0, 12);
       const urls = [
         "/",
         "/index.html",
         "/manifest.webmanifest",
-        "/logo.png",
+        ...branding,
         ...assets.map((name) => "/" + name),
       ];
       this.emitFile({

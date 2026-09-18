@@ -14,7 +14,7 @@ const pages: Page[] = [
   "Docs",
 ];
 
-function Brand({ onNavigate }: { onNavigate?: () => void }) {
+function Brand({ onNavigate, showName = true }: { onNavigate?: () => void; showName?: boolean }) {
   return (
     <RouteLink
       page="Home"
@@ -23,12 +23,13 @@ function Brand({ onNavigate }: { onNavigate?: () => void }) {
       aria-label="Mira home"
     >
       <img
-        src="/logo.png"
+        src="/brand/mark.png"
         alt=""
-        width={48}
-        height={48}
-        className="brand-image h-12 w-12 object-contain"
+        width={44}
+        height={44}
+        className="brand-image"
       />
+      {showName && <span className="brand-name" aria-hidden="true">mira</span>}
     </RouteLink>
   );
 }
@@ -112,7 +113,7 @@ export function MobileHeader({ page }: { page: Page }) {
         >
           <Icon name="menu" size={20} />
         </button>
-          <Brand />
+          <Brand showName={false} />
           <span className="text-xs text-stone-400">{page}</span>
         </div>
       </header>

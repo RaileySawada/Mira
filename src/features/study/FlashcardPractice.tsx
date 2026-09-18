@@ -7,17 +7,56 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
   const [ratings, setRatings] = useState<Record<number, boolean>>({});
   const [finished, setFinished] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const cardElement = useRef<HTMLButtonElement>(null);
+  const animation = useRef<Animation | null>(null);
+  const busy = useRef(false);
   const gesture = useRef<{ x: number; y: number } | null>(null);
   const lastSwipe = useRef(0);
   const card = cards[index];
-  function move(next: number) { setIndex(next); setFlipped(false); }
+  function resetDrag() {
+    const element = cardElement.current;
+    if (!element) return;
+    element.style.transform = "";
+    element.style.removeProperty("--swipe-known");
+    element.style.removeProperty("--swipe-unknown");
+  }
+  function move(next: number) { if (busy.current) return; resetDrag(); setIndex(next); setFlipped(false); }
+  useEffect(() => () => { animation.current?.cancel(); }, []);
+  function settle() {
+    if (busy.current) return;
+    const element = cardElement.current;
+    if (!element) return;
+    const from = element.style.transform || "none";
+    resetDrag();
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      animation.current = element.animate?.([{ transform: from }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.9,.3,1.15)" });
+  }
   function rate(known: boolean) {
+    if (busy.current) return;
+    const element = cardElement.current;
+    if (!element?.animate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finishRating(known); return; }
+    animation.current?.cancel();
+    busy.current = true;
+    const distance = (window.innerWidth + element.offsetWidth) * (known ? 1 : -1);
+    animation.current = element.animate([
+      { transform: element.style.transform || "none", opacity: 1 },
+      { transform: "translateX(" + distance + "px) rotate(" + (known ? 20 : -20) + "deg)", opacity: 0 },
+    ], { duration: 240, easing: "cubic-bezier(.4,0,1,1)" });
+    if (!animation.current) { busy.current = false; resetDrag(); finishRating(known); return; }
+    animation.current.onfinish = () => {
+      animation.current = null;
+      busy.current = false;
+      resetDrag();
+      finishRating(known);
+    };
+  }
+  function finishRating(known: boolean) {
     setRatings(current => ({ ...current, [index]: known }));
     if (index === cards.length - 1) setFinished(true);
     else move(index + 1);
   }
   const keyPressed = useEffectEvent((event: KeyboardEvent) => {
-    if (finished || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (busy.current || finished || event.repeat || event.altKey || event.ctrlKey || event.metaKey) return;
     const target = event.target;
     if (target instanceof HTMLElement && (target.matches("input, textarea, select") || target.isContentEditable)) return;
     const dialog = root.current?.closest("dialog");
@@ -39,11 +78,24 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
   </div>;
   return <div ref={root} className="flashcard-practice">
     <div className="mb-4 flex justify-between text-xs text-stone-500"><span>FLASHCARD PRACTICE</span><span>{index + 1} / {cards.length}</span></div>
-    <button className={"study-card " + (flipped ? "is-flipped" : "")} aria-pressed={flipped}
+    <div className="study-card-stage">
+    <button ref={cardElement} className={"study-card " + (flipped ? "is-flipped" : "")} aria-pressed={flipped}
       aria-label={(flipped ? "Answer: " + card.answer : "Question: " + card.question) + ". Click to " + (flipped ? "see question" : "reveal answer")}
-      onClick={() => { if (Date.now() - lastSwipe.current > 350) setFlipped(value => !value); }}
-      onTouchStart={event => { if (event.touches.length === 1) gesture.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }; else gesture.current = null; }}
-      onTouchCancel={() => { gesture.current = null; }}
+      onClick={() => { if (!busy.current && Date.now() - lastSwipe.current > 350) setFlipped(value => !value); }}
+      onTouchStart={event => { if (!busy.current) animation.current?.cancel(); if (!busy.current && event.touches.length === 1) gesture.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }; else { gesture.current = null; settle(); } }}
+      onTouchMove={event => {
+        const start = gesture.current;
+        const element = cardElement.current;
+        if (!start || !element || busy.current || event.touches.length !== 1) return;
+        const dx = event.touches[0].clientX - start.x;
+        const dy = event.touches[0].clientY - start.y;
+        if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        lastSwipe.current = Date.now();
+        element.style.transform = "translateX(" + dx + "px) rotate(" + Math.max(-14, Math.min(14, dx / 18)) + "deg)";
+        element.style.setProperty("--swipe-known", String(Math.min(1, Math.max(0, dx / 65))));
+        element.style.setProperty("--swipe-unknown", String(Math.min(1, Math.max(0, -dx / 65))));
+      }}
+      onTouchCancel={() => { gesture.current = null; settle(); }}
       onTouchEnd={event => {
         const start = gesture.current;
         gesture.current = null;
@@ -53,15 +105,18 @@ export function FlashcardPractice({ cards, onClose }: { cards: Card[]; onClose: 
         if (Math.abs(dx) >= 65 && Math.abs(dx) > Math.abs(dy) * 1.5) {
           lastSwipe.current = Date.now();
           rate(dx > 0);
-        }
+        } else settle();
       }}>
+      <span className="swipe-label swipe-unknown" aria-hidden="true">Practice again</span>
+      <span className="swipe-label swipe-known" aria-hidden="true">I know this</span>
       <span className="study-card-inner">
         <span className="study-card-face study-card-front"><span className="eyebrow mb-6">QUESTION</span><span className="study-card-copy">{card.question}</span><span className="study-card-hint">Tap or press Space to reveal</span></span>
         <span className="study-card-face study-card-back"><span className="eyebrow mb-6">ANSWER</span><span className="study-card-copy">{card.answer}</span><span className="study-card-hint">Tap or press Space to flip</span></span>
       </span>
     </button>
+    </div>
     <div className="practice-ratings"><button className="button secondary" onClick={() => rate(false)}>← I don’t know</button><button className="button primary" onClick={() => rate(true)}>I know →</button></div>
     <p className="text-center text-xs text-stone-500">Swipe left or right, or use the arrow keys. Tap or Space flips the card.</p>
-    <div className="mt-4 flex justify-between"><button className="text-button" disabled={index === 0} onClick={() => move(index - 1)}>Previous</button><button className="text-button" onClick={() => index === cards.length - 1 ? onClose() : move(index + 1)}>{index === cards.length - 1 ? "Finish practice" : "Next card"}</button></div>
+    <div className="mt-4 flex justify-between"><button className="text-button" disabled={index === 0} onClick={() => move(index - 1)}>Previous</button><button className="text-button" onClick={() => { if (!busy.current) { if (index === cards.length - 1) onClose(); else move(index + 1); } }}>{index === cards.length - 1 ? "Finish practice" : "Next card"}</button></div>
   </div>;
 }

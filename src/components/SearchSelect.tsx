@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { ChevronDown, Check, Search } from "lucide-react";
 export interface SelectOption {
   value: string;
@@ -11,6 +12,7 @@ export function SearchSelect({
   onChange,
   disabled = false,
   className = "",
+  triggerIcon,
 }: {
   label: string;
   value: string;
@@ -18,9 +20,13 @@ export function SearchSelect({
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  triggerIcon?: ReactNode;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const [position, setPosition] = useState<CSSProperties>({});
   const trigger = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -55,11 +61,52 @@ export function SearchSelect({
     document.addEventListener("pointerdown", outside);
     return () => document.removeEventListener("pointerdown", outside);
   }, [open]);
+  useLayoutEffect(() => {
+    if (!open || disabled) return;
+    const dropdown = panel.current;
+    // The top layer escapes transformed page wrappers and modal scroll containers.
+    dropdown?.showPopover?.();
+    function place(event?: Event) {
+      if (event?.target instanceof Node && dropdown?.contains(event.target)) return;
+      const rect = trigger.current?.getBoundingClientRect();
+      if (!rect) return;
+      const viewport = window.visualViewport;
+      const viewportTop = viewport?.offsetTop ?? 0;
+      const viewportLeft = viewport?.offsetLeft ?? 0;
+      const viewportWidth = viewport?.width ?? window.innerWidth;
+      const viewportHeight = viewport?.height ?? window.innerHeight;
+      const width = Math.min(Math.max(rect.width, 280), viewportWidth - 24);
+      const below = viewportTop + viewportHeight - rect.bottom - 18;
+      const above = rect.top - viewportTop - 18;
+      const upwards = below < 220 && above > below;
+      const height = Math.min(viewportHeight - 24, Math.max(80, Math.min(320, upwards ? above : below)));
+      setPosition({
+        width, maxHeight: height,
+        left: Math.max(viewportLeft + 12, Math.min(rect.left, viewportLeft + viewportWidth - width - 12)),
+        top: Math.max(viewportTop + 12, Math.min(upwards ? rect.top - height - 6 : rect.bottom + 6, viewportTop + viewportHeight - height - 12)),
+      });
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    window.visualViewport?.addEventListener("resize", place);
+    window.visualViewport?.addEventListener("scroll", place);
+    return () => {
+      dropdown?.hidePopover?.();
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+      window.visualViewport?.removeEventListener("resize", place);
+      window.visualViewport?.removeEventListener("scroll", place);
+    };
+  }, [open, disabled]);
   useEffect(() => {
-    if (open)
-      document
-        .getElementById(`${id}-option-${active}`)
-        ?.scrollIntoView({ block: "nearest" });
+    const option = document.getElementById(id + "-option-" + active);
+    const menu = list.current;
+    if (!open || !option || !menu) return;
+    // Scroll only the options, never the entire page to the selected option.
+    if (option.offsetTop < menu.scrollTop) menu.scrollTop = option.offsetTop;
+    else if (option.offsetTop + option.offsetHeight > menu.scrollTop + menu.clientHeight)
+      menu.scrollTop = option.offsetTop + option.offsetHeight - menu.clientHeight;
   }, [active, open, id]);
   return (
     <div
@@ -89,6 +136,7 @@ export function SearchSelect({
           }
         }}
       >
+        {triggerIcon && <span className="select-trigger-icon">{triggerIcon}</span>}
         <span className="truncate">
           {options.find((option) => option.value === value)?.label ||
             "Select an option"}
@@ -96,7 +144,7 @@ export function SearchSelect({
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && !disabled && (
-        <div className="select-panel">
+        <div ref={panel} popover="manual" className="select-panel" style={position}>
           <div className="relative">
             <Search
               size={15}
@@ -145,10 +193,11 @@ export function SearchSelect({
             />
           </div>
           <ul
+            ref={list}
             id={`${id}-list`}
             role="listbox"
             aria-label={label}
-            className="mt-2 max-h-44 overflow-y-auto overscroll-contain"
+            className="select-options"
           >
             {filtered.map((option, index) => (
               <li

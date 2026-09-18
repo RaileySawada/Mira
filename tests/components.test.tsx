@@ -152,8 +152,8 @@ test("desktop navigation uses the supplied logo and active page", () => {
     "aria-current",
     "page",
   );
-  expect(screen.getByLabelText("Mira home").textContent).toBe("");
-  expect(container.querySelector("img")).toHaveAttribute("src", "/logo.png");
+  expect(screen.getByLabelText("Mira home").textContent).toBe("mira");
+  expect(container.querySelector("img")).toHaveAttribute("src", "/brand/mark.png");
 });
 test("mobile menu opens, closes, navigates, and responds to desktop resize", async () => {
   const user = userEvent.setup();

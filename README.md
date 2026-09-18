@@ -101,7 +101,7 @@ In-app documentation is available at /guide, /privacy, /terms, and /about.
 
 Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, while the existing localStorage key stays unchanged. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
 
-The mobile header opens a keyboard-accessible navigation drawer. The supplied `public/logo.png` powers app branding and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
+The mobile header opens a keyboard-accessible navigation drawer. The cropped transparent `public/brand/logo.png` powers navigation; the original `public/logo.png` remains the source artwork. Separate files in `public/icons/` serve the favicon and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
 
 ## Contributing
 
@@ -160,3 +160,17 @@ In supported browsers, tap the microphone beside the chat input and allow microp
 - Folders organize reviewers independently of topics. Create, rename, assign, move, and delete folders from the Folders page. Deleting a folder preserves reviewers in Unfiled. Folder data is included in JSON backups; older backups remain supported.
 - A bottom install prompt appears once per tab session when native installation is offered. iPhone/iPad receive manual Add to Home Screen instructions. Installed standalone apps do not show the prompt. Browser policy determines native installation availability.
 - Visit Docs at /docs for the complete in-app handbook, including data storage, AI, voice, offline behavior, and troubleshooting.
+
+### Branding assets
+
+| Asset | Use |
+| --- | --- |
+| `public/brand/logo.png` | Original transparent cat and wordmark; black in light mode, white in dark mode |
+| `public/brand/mark.png` | Original cat artwork without the wordmark |
+| `public/icons/favicon-64.png`, `favicon-32.png` | Rounded browser tab icons |
+| `public/icons/apple-touch-icon.png` | 180 × 180 Apple home-screen icon |
+| `public/icons/pwa-192.png`, `pwa-512.png` | Standard PWA icons |
+| `public/icons/pwa-maskable-512.png` | Full-background icon with a padded mark for launcher masks |
+| `public/social_card.png` | Social sharing preview |
+
+Raster assets are derived directly from `public/logo.png` by `scripts/generate-brand-assets.mjs`. Run `node scripts/generate-brand-assets.mjs` to regenerate the committed assets using the installed Sharp tooling. Runtime branding needs no image-processing library or network request. The service worker precaches the app branding and install icons.
