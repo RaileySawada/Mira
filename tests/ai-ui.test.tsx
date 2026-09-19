@@ -237,3 +237,27 @@ test("idle conversations survive network blips with unsent text intact", async (
     expect(request).not.toHaveBeenCalled();
   } finally { jest.useRealTimers(); }
 });
+
+test("launcher introduction collapses once and stays collapsed across data updates", () => {
+ jest.useFakeTimers();
+ try {
+   const data=library(), update=jest.fn();
+   const view=render(<OnlineAssistant data={data} update={update}/>);
+   expect(screen.getByRole("button",{name:"AI study assistant"})).toHaveClass("is-introducing");
+   act(()=>jest.advanceTimersByTime(3500));
+   expect(screen.getByRole("button",{name:"AI study assistant"})).not.toHaveClass("is-introducing");
+   view.rerender(<OnlineAssistant data={{...data,settings:{...data.settings,name:"Mira"}}} update={update}/>);
+   expect(screen.getByRole("button",{name:"AI study assistant"})).not.toHaveClass("is-introducing");
+   view.unmount();expect(jest.getTimerCount()).toBe(0);
+ } finally { jest.useRealTimers(); }
+});
+
+test("chat submits the current saved name and study overview", async () => {
+ request.mockResolvedValue({answer:"Hello Mira!"});
+ const data=library();data.settings.name="Mira";
+ render(<AiAssistant studyData={data} onSave={jest.fn()} onClose={jest.fn()}/>);
+ change("Your study question","What should I study?");click("Send question");
+ await waitFor(()=>expect(request).toHaveBeenCalled());
+ expect(request.mock.calls[0][0].overview?.name).toBe("Mira");
+ expect(request.mock.calls[0][0].overview?.reviewers).toContain("Cell biology");
+});

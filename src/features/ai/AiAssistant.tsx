@@ -1,3 +1,5 @@
+import { buildStudyOverview } from "./studyOverview";
+import type { StudyData } from "../../types/study";
 import { SearchSelect } from "../../components/SearchSelect";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import { MarkdownMessage } from "./MarkdownMessage";
@@ -14,8 +16,9 @@ import { isRecord, parseReviewers, validText, type ChatMessage, type GeneratedRe
 
 type Mode = "chat" | "generate";
 
-export default function AiAssistant({ onClose, onSave, onGuidance, online = true }: {
+export default function AiAssistant({ onClose, onSave, onGuidance, studyData, online = true }: {
   online?: boolean;
+  studyData?: StudyData;
   onClose: () => void;
   onGuidance?: () => void;
   onSave: (topic: string, reviewers: GeneratedReviewer[]) => boolean;
@@ -145,6 +148,7 @@ export default function AiAssistant({ onClose, onSave, onGuidance, online = true
         prompt: question || "General overview",
         topic: topic.trim(),
         count,
+        ...(mode === "chat" && studyData ? { overview: buildStudyOverview(studyData) } : {}),
         ...(mode === "generate" && cardsPerReviewer !== 5 ? { cardsPerReviewer } : {}),
         ...(mode === "chat" ? { history: messages.slice(-6).map(message => ({ ...message, content: message.content.slice(0, 1800) })) } : {}),
       }, pending.signal);
@@ -229,7 +233,7 @@ export default function AiAssistant({ onClose, onSave, onGuidance, online = true
           </form>
           {voice.supported && <p className="voice-notice" role="status">{voice.listening ? "Listening… Stop to edit your words before sending." : "Voice input may use your browser’s online speech service. Review the text before sending."}</p>}
           {voice.error && <p className="ai-inline-error" role="alert">{voice.error}</p>}
-          <div className="chat-composer-meta"><span>Mira can make mistakes. Check important answers.</span>{busy && <button type="button" onClick={cancelRequest}>Stop generating</button>}</div>
+          <div className="chat-composer-meta"><span>{studyData ? "Sending shares your saved name and study overview with Pollinations. " : ""}Mira can make mistakes. Check important answers.</span>{busy && <button type="button" onClick={cancelRequest}>Stop generating</button>}</div>
         </div>
       </section> : <section className="ai-generator-workspace">
         <div className="generator-intro"><span className="chat-eyebrow">CREATE A STUDY SET</span><h3>Make a review set in one go.</h3><p>Create up to five reviewers with five or ten flashcards each. You can inspect every card before saving.</p></div>

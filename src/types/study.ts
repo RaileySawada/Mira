@@ -34,7 +34,8 @@ export interface Settings {
   theme: Theme;
   name: string;
   dailyGoal: number;
-  quizSize: number;
+  quizSize: number; // Legacy quiz preference retained for older backups.
+  dailyQuizSize?: number;
   autoDaily: boolean;
   shuffle: boolean;
 }

@@ -4,7 +4,7 @@ import { FlashcardPractice } from "./FlashcardPractice";
 import { confirmAction } from "../../components/confirmAction";
 import { ProcessButton } from "../../components/ProcessButton";
 import { useActionFeedback } from "../../hooks/useActionFeedback";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Attempt, Card } from "../../types/study";
 import { Modal } from "../../components/ui";
 import { normalizeAnswer } from "../../utils/stats";
@@ -29,8 +29,8 @@ export function StudySession({
   const questionStarted = useRef(0);
   const fastCorrect = useRef(false);
   const save = useActionFeedback();
-  const [choices] = useState(() => session.mode === "cards" ? [] : session.cards.map(card => makeChoices(card, session.answerPool ?? session.cards)));
-  const canChoose = choices.every(options => options.length >= 2);
+  const [choicePool] = useState(() => session.mode === "cards" ? [] : [...new Map((session.answerPool ?? session.cards).map(card => [normalizeAnswer(card.answer), card])).values()]);
+  const canChoose = choicePool.length >= 2;
   const [difficulty, setDifficulty] = useState<"normal" | "hard">(canChoose ? "normal" : "hard");
   const [index, setIndex] = useState(0);
   useEffect(() => { questionStarted.current = performance.now(); }, [index]);
@@ -42,6 +42,7 @@ export function StudySession({
   const [complete, setComplete] = useState(false);
   const [attemptId] = useState(() => crypto.randomUUID());
   const card = session.cards[index];
+  const choices = useMemo(() => makeChoices(card, Array.from({ length: Math.min(4, choicePool.length) }, (_, offset) => choicePool[(index * 3 + offset) % choicePool.length])), [card, choicePool, index]);
   const score = answers.filter((a) => a.correct).length;
   async function close() {
     if (
@@ -162,7 +163,7 @@ export function StudySession({
               >
                 {difficulty === "normal" ? <fieldset className="quiz-options" disabled={checked}>
                   <legend className="mb-3 text-sm">Choose your answer</legend>
-                  {choices[index].map((option, i) => <label key={option} className={"quiz-option " + (answer === option ? "selected" : "")}>
+                  {choices.map((option, i) => <label key={option} className={"quiz-option " + (answer === option ? "selected" : "")}>
                     <input type="radio" name="quiz-answer" value={option} checked={answer === option} onChange={() => setAnswer(option)} required />
                     <span className="quiz-option-letter" aria-hidden="true">{String.fromCharCode(65 + i)}</span><span>{option}</span>
                   </label>)}

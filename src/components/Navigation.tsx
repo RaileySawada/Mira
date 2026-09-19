@@ -1,3 +1,5 @@
+import { OnlineCount } from "./OnlineCount";
+import type { PresenceState } from "../types/presence";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useScrollLock } from "../hooks/useScrollLock";
 import type { Page } from "../types/study";
@@ -64,12 +66,13 @@ function NavigationLinks({
     </>
   );
 }
-export function Sidebar({ page }: { page: Page }) {
+export function Sidebar({ page, presence }: { page: Page; presence?: PresenceState }) {
   return (
     <aside className="sidebar">
       <div className="mb-6 px-3">
         <Brand />
       </div>
+      <div className="mb-4 px-3"><OnlineCount presence={presence} /></div>
       <NavigationLinks page={page} />
       <div className="mt-auto pt-8">
         <div className="rounded-xl border border-line bg-soft p-4">
@@ -87,7 +90,7 @@ export function Sidebar({ page }: { page: Page }) {
     </aside>
   );
 }
-export function MobileHeader({ page }: { page: Page }) {
+export function MobileHeader({ page, presence }: { page: Page; presence?: PresenceState }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const opened = useRef(false);
@@ -117,6 +120,7 @@ export function MobileHeader({ page }: { page: Page }) {
           <Brand showName={false} />
           <span className="text-xs text-stone-400">{page}</span>
         </div>
+        <OnlineCount presence={presence} />
       </header>
       {open && <MobileDrawer page={page} onClose={close} />}
     </>

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { achievements, withAchievements } from "../src/features/achievements/achievements";
-import { messages, miraGreeting } from "../src/features/home/miraMessages";
+import { messages, homeMessages } from "../src/features/home/miraMessages";
 import { makeChoices } from "../src/features/study/choices";
 import { StudySession } from "../src/features/study/StudySession";
 import { Achievements } from "../src/pages/Achievements";
@@ -34,13 +34,12 @@ test("single-definition sets explain the hard-mode fallback", () => {
  expect(screen.getByRole("button",{name:"Normal · Multiple choice"})).toBeDisabled();
  expect(screen.getByLabelText("Your answer")).toBeVisible();
 });
-test("each expression has ten unique messages and reacts to today's actual results", () => {
+test("greetings reflect the library and start with a personalized salutation", () => {
  Object.values(messages).forEach(items => expect(new Set(items).size).toBe(10));
- const data = library(); expect(miraGreeting(data).mood).toBe("normal");
- for(const [correct,mood] of [[0,"sad"],[5,"thinking"],[8,"happy"],[10,"amazed"]] as const){
- data.attempts=[attempt({correct,total:10})]; expect(miraGreeting(data).mood).toBe(mood);
- }
- data.attempts=[attempt({correct:8,total:10})]; expect(miraGreeting(data).mood).toBe("happy");
+ const data = library(); data.settings.name = "Mira";
+ const sequence = homeMessages(data, new Date("2026-09-19T09:00:00"));
+ expect(sequence[0].text).toContain("Good morning, Mira!");
+ expect(sequence.some(item => item.text.includes("1 reviewer") && item.text.includes("2 flashcards"))).toBe(true);
 });
 test("historical streak badges remain earned and persisted library badges survive deletion", () => {
  let data=library(); data.attempts=Array.from({length:7},(_,i)=>attempt({id:String(i),date:"2025-01-"+String(i+1).padStart(2,"0")+"T12:00:00",correct:5,total:5}));

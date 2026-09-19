@@ -1,3 +1,4 @@
+import { dailyQuizSize } from "../utils/quiz";
 import { useViewPreference } from "../hooks/useViewPreference";
 import type { Reviewer, StudyData } from "../types/study";
 import { EmptyState, PageHeading } from "../components/ui";
@@ -19,7 +20,7 @@ export function Quizzes({ data, onQuiz, onDaily }: { data: StudyData; onQuiz: (r
       </div>
       <div className="quiz-daily-action">
         <button disabled={!available.length} className="button primary" onClick={onDaily}>{done ? "Practice again" : "Begin daily review"}</button>
-        <small>{Math.min(data.settings.quizSize, available.reduce((total, reviewer) => total + reviewer.cards.length, 0))} questions · Mixed practice</small>
+        <small>{Math.min(dailyQuizSize(data.settings), available.reduce((total, reviewer) => total + reviewer.cards.length, 0))} questions · Mixed practice</small>
       </div>
     </section>
     <div className="collection-heading"><h2 className="section-title">Choose your focus</h2>{available.length > 0 && <ViewToggle value={view} onChange={setView} label="Quiz layout" />}</div>
@@ -29,7 +30,7 @@ export function Quizzes({ data, onQuiz, onDaily }: { data: StudyData; onQuiz: (r
           <div className="quiz-card-main">
             <span className="quiz-topic">{data.topics.find(topic => topic.id === reviewer.topicId)?.name ?? "Uncategorized"}</span>
             <h3>{reviewer.title}</h3>
-            <p>{Math.min(reviewer.cards.length, data.settings.quizSize)} questions</p>
+            <p>{reviewer.cards.length} questions</p>
           </div>
           <div className="quiz-card-footer">
             <span>Normal or hard</span>

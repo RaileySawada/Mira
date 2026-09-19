@@ -1,5 +1,6 @@
-import { miraGreeting } from "../features/home/miraMessages";
-import { lazy, Suspense } from "react";
+import { MiraInteraction } from "../features/home/MiraInteraction";
+import { homeMessages } from "../features/home/miraMessages";
+import { lazy, Suspense, useMemo, useState } from "react";
 import type { Page, Reviewer, StudyData } from "../types/study";
 import { dayKey, percentage, streak } from "../utils/stats";
 import { EmptyState, PageHeading } from "../components/ui";
@@ -19,7 +20,8 @@ export function Home({
   onStudy: (reviewer: Reviewer) => void;
   onDaily: () => void;
 }) {
-  const greeting = miraGreeting(data);
+  const [messageVariant] = useState(() => Math.floor(Math.random() * 100000));
+  const greetings = useMemo(() => homeMessages(data, new Date(), messageVariant), [data, messageVariant]);
   const current = data.reviewers.find(r => r.id === data.lastStudy?.reviewerId);
   const folder = data.folders?.find(f => f.id === current?.folderId);
   const today = data.attempts.filter(
@@ -66,13 +68,7 @@ export function Home({
         }
       />
       <section className="mira-welcome" aria-labelledby="mira-greeting">
-        <div className="mira-welcome-scene">
-          <img src={"/expressions/" + greeting.mood + ".webp"} alt={"Mira looks " + greeting.mood} width={160} height={160} fetchPriority="high" />
-          <div className="mira-speech">
-            <p className="mira-speech-name">Mira</p>
-            <h2 id="mira-greeting">{greeting.text}</h2>
-          </div>
-        </div>
+        <MiraInteraction key={JSON.stringify(greetings)} messages={greetings} />
         <div className="mira-welcome-footer">
           <p className="mira-welcome-progress">
             {today.length ? <><strong>{today.length} {today.length === 1 ? "quiz" : "quizzes"} completed today</strong><span>{studied} {studied === 1 ? "question" : "questions"} practiced</span></> : cards === 0 ? "Add your first reviewer to begin." : "A fresh page for today. Start whenever you’re ready."}

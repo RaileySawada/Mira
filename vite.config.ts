@@ -1,5 +1,5 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import type { Plugin } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import { createHash } from "node:crypto";
@@ -57,7 +57,14 @@ self.addEventListener("fetch", event => {
     },
   };
 }
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  // Only Firebase web-app configuration is public; never expose server secrets.
+  const publicValue = (key: string) => env["VITE_FIREBASE_" + key] || env["FIREBASE_" + key] || "";
+  const firebase = { apiKey: publicValue("API_KEY"), authDomain: publicValue("AUTH_DOMAIN"), projectId: publicValue("PROJECT_ID"), appId: publicValue("APP_ID"), databaseURL: publicValue("DATABASE_URL") };
+  return {
+  define: { __MIRA_FIREBASE_CONFIG__: JSON.stringify(firebase) },
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   plugins: [react(), tailwindcss(), offlinePlugin()],
+};
 });

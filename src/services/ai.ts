@@ -1,3 +1,4 @@
+import type { StudyOverview } from "../features/ai/studyOverview";
 import { isRecord, type ChatMessage } from "../features/ai/schema";
 
 export interface AiRequest {
@@ -7,6 +8,7 @@ export interface AiRequest {
   count: number;
   cardsPerReviewer?: number;
   history?: ChatMessage[];
+  overview?: StudyOverview;
 }
 
 export async function requestAi(input: AiRequest, signal: AbortSignal): Promise<unknown> {

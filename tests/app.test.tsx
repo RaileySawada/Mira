@@ -13,6 +13,7 @@ function openPage(path = "/") {
   const data = library();
   data.settings.shuffle = false;
   data.settings.quizSize = 1;
+  data.settings.dailyQuizSize = 1;
   saveData(data);
   return render(<App />);
 }
@@ -144,4 +145,12 @@ test("cards without a topic stay usable", async () => {
   saveData(data);
   render(<App />);
   expect(screen.getByRole("button", { name: /Uncategorized/ })).toBeVisible();
+});
+
+test("reviewer quizzes include all cards even when the daily question limit is small", async () => {
+ const user=userEvent.setup();history.replaceState(null,"","/reviewers");
+ const data=library();data.settings.dailyQuizSize=1;data.settings.quizSize=1;
+ data.reviewers[0].cards=Array.from({length:15},(_,i)=>({id:"card-"+i,question:"Question "+i,answer:"Answer "+i}));saveData(data);
+ render(<App/>);await user.click(screen.getByRole("button",{name:"Take quiz"}));
+ expect(screen.getByText("1 / 15")).toBeVisible();
 });

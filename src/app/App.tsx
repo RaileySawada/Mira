@@ -1,3 +1,5 @@
+import { usePresence } from "../hooks/usePresence";
+import { dailyQuizSize } from "../utils/quiz";
 import { AchievementCelebration } from "../features/achievements/AchievementCelebration";
 import { FocusTimer } from "../features/achievements/FocusTimer";
 import { Achievements } from "../pages/Achievements";
@@ -31,6 +33,7 @@ export default function App() {
   const { data, update, rewards, dismissRewards, error, needsRecovery, allowRecovery } = useStudyData();
   const page = usePage();
   const [accepted, setAccepted] = useState(hasPolicyConsent);
+  const presence = usePresence(accepted);
   useEffect(() => {
     const refresh = () => setAccepted(hasPolicyConsent());
     window.addEventListener("storage", refresh);
@@ -49,7 +52,7 @@ export default function App() {
     const cards = prepareCards(
       reviewer.cards,
       data.settings.shuffle,
-      mode === "cards" ? reviewer.cards.length : data.settings.quizSize,
+      reviewer.cards.length,
     );
     if (cards.length) {
       if (!update({ ...data, lastStudy: { reviewerId: reviewer.id, startedAt: new Date().toISOString() } })) return;
@@ -66,7 +69,7 @@ export default function App() {
     const cards = prepareCards(
       data.reviewers.flatMap((r) => r.cards),
       data.settings.shuffle,
-      data.settings.quizSize,
+      dailyQuizSize(data.settings),
     );
     if (cards.length)
       setSession({
@@ -89,10 +92,10 @@ export default function App() {
   if (!accepted) return <PolicyConsent onAccept={() => setAccepted(true)} />;
   return (
     <div className="min-h-screen bg-page text-ink">
-      <Sidebar page={page} />
+      <Sidebar page={page} presence={presence} />
       <InstallPrompt />
       <div className="flex min-h-dvh flex-col lg:ml-60">
-        <MobileHeader page={page} />
+        <MobileHeader page={page} presence={presence} />
         <header className="hidden min-h-12 items-center justify-between border-b border-line px-9 lg:flex">
           <div className="flex items-center gap-2 text-xs text-stone-400">
             <span>Your workspace</span>

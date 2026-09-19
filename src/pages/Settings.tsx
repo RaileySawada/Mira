@@ -1,3 +1,4 @@
+import { dailyQuizSize } from "../utils/quiz";
 import { confirmAction } from "../components/confirmAction";
 import { ProcessButton } from "../components/ProcessButton";
 import { useActionFeedback } from "../hooks/useActionFeedback";
@@ -143,22 +144,22 @@ export function Settings({
                 </span>
               </label>
               <label className="field">
-                Questions per quiz
+                Daily review questions
                 <input
                   required
                   type="number"
                   min={1}
                   max={100}
-                  value={settings.quizSize}
+                  value={dailyQuizSize(settings)}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
-                      quizSize: Number(e.target.value),
+                      dailyQuizSize: Number(e.target.value),
                     })
                   }
                 />
                 <span className="text-[11px] font-normal text-stone-400">
-                  Up to 100, or your available cards.
+                  Up to 100 available cards. Reviewer quizzes always use every card.
                 </span>
               </label>
             </div>

@@ -1,3 +1,5 @@
+import { buildStudyOverview } from "../../src/features/ai/studyOverview";
+import { library } from "../fixtures";
 import handler, { config } from "../../netlify/functions/ai";
 import { generated } from "../ai-fixtures";
 
@@ -23,7 +25,7 @@ test("restricts methods, origins, media types and request sizes", async () => {
   expect((await handler(request(chat, { headers: { origin: "https://other.example" } }))).status).toBe(403);
   expect((await handler(request(chat, { headers: { origin } }))).status).toBe(415);
   expect((await handler(request(chat, { headers: { origin, "content-type": "text/plain" } }))).status).toBe(415);
-  expect((await handler(request("x".repeat(16001)))).status).toBe(413);
+  expect((await handler(request("x".repeat(32001)))).status).toBe(413);
   expect((await handler(request("invalid json"))).status).toBe(400);
 });
 test.each([null, {}, { mode: "unknown", prompt: "hello" }, { ...batch, count: 1.5 }, { ...batch, count: 0 }, { ...batch, count: 6 }, { ...batch, topic: "" }])("validates requests %p", async value => {
@@ -115,4 +117,15 @@ test("larger reviewer requests enforce the requested card count", async () => {
   expect((await handler(request({ ...batch, cardsPerReviewer: 11 }))).status).toBe(400);
   fetchMock.mockResolvedValue(provider(JSON.stringify({ reviewers: [generated()] })));
   expect((await handler(request({ ...batch, cardsPerReviewer: 10 }))).status).toBe(502);
+});
+
+test("passes the approved study overview as data, not system instructions", async () => {
+ const data=library();data.settings.name="Mira";const overview=buildStudyOverview(data);
+ const fetchMock=jest.spyOn(globalThis,"fetch").mockResolvedValue(provider("Hello Mira!"));
+ expect((await handler(request({...chat,overview}))).status).toBe(200);
+ const body=JSON.parse(String(fetchMock.mock.calls[0][1]!.body));
+ expect(body.messages[1]).toEqual({role:"user",content:JSON.stringify({saved_study_overview:overview})});
+ expect(body.messages[2].content).toBe(chat.prompt);
+ expect(body.messages[0].content).toContain("untrusted data");
+ expect((await handler(request({...chat,overview:{...overview,name:42}}))).status).toBe(400);
 });

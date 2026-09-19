@@ -26,7 +26,7 @@ test("saves all study defaults without reverting the active theme", async () => 
     { target: { value: "20" } },
   );
   fireEvent.change(
-    screen.getByRole("spinbutton", { name: /Questions per quiz/ }),
+    screen.getByRole("spinbutton", { name: /Daily review questions/ }),
     { target: { value: "5" } },
   );
   for (const checkbox of screen.getAllByRole("checkbox"))
@@ -42,7 +42,7 @@ test("saves all study defaults without reverting the active theme", async () => 
       settings: expect.objectContaining({
         name: "Mira",
         dailyGoal: 20,
-        quizSize: 5,
+        dailyQuizSize: 5,
         autoDaily: false,
         shuffle: false,
         theme: "dark",

@@ -12,6 +12,7 @@ export function emptyData(): StudyData {
       name: "",
       dailyGoal: 10,
       quizSize: 10,
+      dailyQuizSize: 20,
       autoDaily: true,
       shuffle: true,
       theme: "system",
@@ -140,6 +141,7 @@ export function validateData(value: unknown): StudyData {
     !string(s.name) ||
     !integer(s.dailyGoal, 1, 200) ||
     !integer(s.quizSize, 1, 100) ||
+    (s.dailyQuizSize !== undefined && !integer(s.dailyQuizSize, 1, 100)) ||
     typeof s.autoDaily !== "boolean" ||
     typeof s.shuffle !== "boolean" ||
     (s.theme !== undefined &&
