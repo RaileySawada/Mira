@@ -12,25 +12,35 @@ export function startPresence(notify: (state: PresenceState) => void): () => voi
   const { auth, database } = presenceClients();
   let stopped = false;
   let connected = false;
+  let failed = false;
+  let readReady = false;
   let generation = 0;
   let count = 0;
   let ownRef: ReturnType<typeof ref> | undefined;
   const unsubscribe: (() => void)[] = [];
   const reportError = () => {
-    if (!stopped) notify({ status: "unavailable", count: null, message: "Live count unavailable. Check Firebase Anonymous sign-in, database URL and presence rules." });
+    if (stopped || failed) return;
+    failed = true;
+    generation++;
+    connected = false;
+    unsubscribe.forEach(stop => stop());
+    goOffline(database);
+    notify({ status: "unavailable", count: null, message: "Live count unavailable. Check Firebase Anonymous sign-in, database URL and presence rules, then reload." });
   };
   notify({ status: "connecting", count: null });
   async function connect() {
     await auth.authStateReady();
-    if (stopped) return;
+    if (stopped || failed) return;
     const user = auth.currentUser ?? (await signInAnonymously(auth)).user;
     if (stopped) return;
     goOnline(database);
     unsubscribe.push(onValue(ref(database, "presence"), snapshot => {
+      readReady = true;
       count = countConnections(snapshot.val());
-      if (connected && !stopped) notify({ status: "online", count });
+      if (connected && !stopped && !failed) notify({ status: "online", count });
     }, reportError));
     unsubscribe.push(onValue(ref(database, ".info/connected"), snapshot => {
+      if (stopped || failed) return;
       const connection = ++generation;
       connected = false;
       if (!snapshot.val()) {
@@ -42,11 +52,11 @@ export function startPresence(notify: (state: PresenceState) => void): () => voi
       // Register cleanup on the server BEFORE marking this connection online.
       void (async () => {
         await onDisconnect(node).remove();
-        if (stopped || connection !== generation) return;
+        if (stopped || failed || connection !== generation) return;
         await set(node, true);
         if (stopped || connection !== generation) { await remove(node); return; }
         connected = true;
-        notify({ status: "online", count });
+        if (readReady) notify({ status: "online", count });
       })().catch(reportError);
     }, reportError));
   }
