@@ -1158,18 +1158,24 @@ test("production study flows, themes, mobile overlays and offline reload", async
     ).toBe(3);
     await evaluate("window.fetch = window.originalFetch");
     await waitFor("navigator.serviceWorker.controller !== null");
+
+    const offlineNavigatorScript = await send(
+      "Page.addScriptToEvaluateOnNewDocument",
+      {
+        source: `Object.defineProperty(Navigator.prototype, "onLine", {
+          configurable: true,
+          get: () => false,
+        });`,
+      },
+    );
+
     await send("Network.emulateNetworkConditions", {
       offline: true,
       latency: 0,
       downloadThroughput: 0,
       uploadThroughput: 0,
     });
-    await send("Network.overrideNetworkState", {
-      offline: true,
-      latency: 0,
-      downloadThroughput: 0,
-      uploadThroughput: 0,
-    });
+
     await send("Page.reload");
     await waitFor("document.querySelector('h1')");
     await waitFor("navigator.onLine === false");
@@ -1208,12 +1214,20 @@ test("production study flows, themes, mobile overlays and offline reload", async
       downloadThroughput: -1,
       uploadThroughput: -1,
     });
-    await send("Network.overrideNetworkState", {
-      offline: false,
-      latency: 0,
-      downloadThroughput: -1,
-      uploadThroughput: -1,
+
+    await send("Page.removeScriptToEvaluateOnNewDocument", {
+      identifier: offlineNavigatorScript.identifier,
     });
+
+    await evaluate(`(() => {
+      Object.defineProperty(Navigator.prototype, "onLine", {
+        configurable: true,
+        get: () => true,
+      });
+      window.dispatchEvent(new Event("online"));
+      return true;
+    })()`);
+
     await waitFor("navigator.onLine === true");
     await waitFor(
       "Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))",
