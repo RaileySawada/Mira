@@ -1,3 +1,4 @@
+import { AssistantSkeleton } from "./AssistantSkeleton";
 import { navigate } from "../../hooks/usePage";
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import { useOnline } from "../../hooks/useOnline";
@@ -93,7 +94,7 @@ function AssistantLauncher({
         </button>
       )}
       {(open || pageMode) && (
-        <Suspense fallback={<p role="status">Opening your assistant…</p>}>
+        <Suspense fallback={<AssistantSkeleton pageMode={pageMode} />}>
           <AiAssistant
             key={importedNotes}
             presentation={pageMode ? "page" : "floating"}
