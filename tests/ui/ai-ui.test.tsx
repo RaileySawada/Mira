@@ -14,7 +14,7 @@ import { library } from "../support/fixtures";
 import { generated } from "../support/ai-fixtures";
 import { saveAiSession } from "../../src/services/aiSession";
 import { AI_SESSION_KEY } from "../../src/config/storage";
-
+import { setMedia } from "../support/setup";
 
 jest.mock("../../src/services/ai", () => ({ requestAi: jest.fn() }));
 const request = jest.mocked(requestAi);
@@ -428,32 +428,100 @@ test("chat submits the current saved name and study overview", async () => {
   );
 });
 
-test.each([false, true])("current reviewer context requires explicit opt-in: %s", async (enabled) => {
- request.mockResolvedValue({answer:"A helpful explanation."});
- const data=library();data.lastStudy={reviewerId:data.reviewers[0].id,startedAt:new Date().toISOString()};
- render(<AiAssistant studyData={data} onSave={jest.fn()} onClose={jest.fn()}/>);
- const checkbox=screen.getByRole("checkbox",{name:/Use current reviewer as context/});
- expect(checkbox).not.toBeChecked();
- if(enabled) fireEvent.click(checkbox);
- change("Your study question","Explain the current card");click("Send question");
- await waitFor(()=>expect(request).toHaveBeenCalled());
- const sent=request.mock.calls[0][0];
- if(enabled) expect(sent.reviewerContext?.cards[0].question).toBe(data.reviewers[0].cards[0].question);
- else expect(sent.reviewerContext).toBeUndefined();
+test.each([false, true])(
+  "current reviewer context requires explicit opt-in: %s",
+  async (enabled) => {
+    request.mockResolvedValue({ answer: "A helpful explanation." });
+    const data = library();
+    data.lastStudy = {
+      reviewerId: data.reviewers[0].id,
+      startedAt: new Date().toISOString(),
+    };
+    render(
+      <AiAssistant studyData={data} onSave={jest.fn()} onClose={jest.fn()} />,
+    );
+    const checkbox = screen.getByRole("checkbox", {
+      name: /Use current reviewer as context/,
+    });
+    expect(checkbox).not.toBeChecked();
+    if (enabled) fireEvent.click(checkbox);
+    change("Your study question", "Explain the current card");
+    click("Send question");
+    await waitFor(() => expect(request).toHaveBeenCalled());
+    const sent = request.mock.calls[0][0];
+    if (enabled)
+      expect(sent.reviewerContext?.cards[0].question).toBe(
+        data.reviewers[0].cards[0].question,
+      );
+    else expect(sent.reviewerContext).toBeUndefined();
+  },
+);
+
+test("page presentation uses the line logo and desktop Enter sends while Shift+Enter does not", async () => {
+  request.mockResolvedValue({ answer: "Let’s study." });
+  const view = render(
+    <AiAssistant presentation="page" onSave={jest.fn()} onClose={jest.fn()} />,
+  );
+  expect(view.container.querySelector(".ai-page")).toBeInTheDocument();
+  expect(view.container.querySelector(".mira-line-logo")).toHaveAttribute(
+    "src",
+    "/brand/mark.png",
+  );
+  change("Your study question", "Explain cells");
+  const input = screen.getByLabelText("Your study question");
+  fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
+  expect(request).not.toHaveBeenCalled();
+  fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+  expect(request).not.toHaveBeenCalled();
+  fireEvent.keyDown(input, { key: "Enter" });
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  expect(request.mock.calls[0][0].prompt).toBe("Explain cells");
 });
 
-test("page presentation uses the line logo and Enter sends while Shift+Enter does not", async () => {
- request.mockResolvedValue({answer:"Let’s study."});
- const view=render(<AiAssistant presentation="page" onSave={jest.fn()} onClose={jest.fn()}/>);
- expect(view.container.querySelector(".ai-page")).toBeInTheDocument();
- expect(view.container.querySelector(".mira-line-logo")).toHaveAttribute("src","/brand/mark.png");
- change("Your study question","Explain cells");
- const input=screen.getByLabelText("Your study question");
- fireEvent.keyDown(input,{key:"Enter",shiftKey:true});
- expect(request).not.toHaveBeenCalled();
- fireEvent.keyDown(input,{key:"Enter",isComposing:true});
- expect(request).not.toHaveBeenCalled();
- fireEvent.keyDown(input,{key:"Enter"});
- await waitFor(()=>expect(request).toHaveBeenCalledTimes(1));
- expect(request.mock.calls[0][0].prompt).toBe("Explain cells");
+test("mobile Enter keeps composing and requires the send button", async () => {
+  setMedia("(max-width: 640px)", true);
+  request.mockResolvedValue({
+    answer: "Mitochondria make usable cellular energy.",
+  });
+  render(
+    <AiAssistant presentation="page" onSave={jest.fn()} onClose={jest.fn()} />,
+  );
+  change("Your study question", "Explain mitochondria");
+  const input = screen.getByLabelText("Your study question");
+  expect(input).toHaveAttribute("enterkeyhint", "enter");
+  fireEvent.keyDown(input, { key: "Enter" });
+  expect(request).not.toHaveBeenCalled();
+  fireEvent.change(input, {
+    target: { value: "Explain mitochondria\nwith a simple example" },
+  });
+  expect(input).toHaveValue("Explain mitochondria\nwith a simple example");
+  click("Send question");
+  await waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+  expect(request.mock.calls[0][0].prompt).toBe(
+    "Explain mitochondria\nwith a simple example",
+  );
+});
+
+test("chat input only becomes internally scrollable after reaching its growth limit", () => {
+  render(
+    <AiAssistant presentation="page" onSave={jest.fn()} onClose={jest.fn()} />,
+  );
+  const input = screen.getByLabelText(
+    "Your study question",
+  ) as HTMLTextAreaElement;
+  expect(input.style.overflowY).toBe("hidden");
+  Object.defineProperty(input, "scrollHeight", {
+    configurable: true,
+    value: 220,
+  });
+  fireEvent.change(input, { target: { value: "A long study question" } });
+  expect(input.style.height).toBe("160px");
+  expect(input.style.overflowY).toBe("auto");
+  Object.defineProperty(input, "scrollHeight", {
+    configurable: true,
+    value: 60,
+  });
+  fireEvent.change(input, { target: { value: "Short again" } });
+  expect(input.style.height).toBe("60px");
+  expect(input.style.overflowY).toBe("hidden");
 });

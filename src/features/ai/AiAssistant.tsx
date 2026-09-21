@@ -81,7 +81,11 @@ export default function AiAssistant({
     const section = wrap?.parentElement;
     if (!wrap || !section) return;
     // Reserve the actual composer height so the last message stays readable.
-    const measure = () => section.style.setProperty("--composer-height", wrap.getBoundingClientRect().height + "px");
+    const measure = () =>
+      section.style.setProperty(
+        "--composer-height",
+        wrap.getBoundingClientRect().height + "px",
+      );
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(wrap);
@@ -94,8 +98,11 @@ export default function AiAssistant({
   useLayoutEffect(() => {
     const input = composerInput.current;
     if (!input) return;
+
     input.style.height = "auto";
-    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    const nextHeight = Math.min(input.scrollHeight, 160);
+    input.style.height = `${nextHeight}px`;
+    input.style.overflowY = input.scrollHeight > 160 ? "auto" : "hidden";
   }, [prompt, mode]);
   const conversation = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -603,9 +610,13 @@ export default function AiAssistant({
                   maxLength={3000}
                   disabled={busy || voice.listening}
                   onKeyDown={(event) => {
+                    const isMobile =
+                      window.matchMedia("(max-width: 640px)").matches;
+
                     if (
                       event.key === "Enter" &&
                       !event.shiftKey &&
+                      !isMobile &&
                       !event.nativeEvent.isComposing
                     ) {
                       event.preventDefault();
@@ -613,8 +624,10 @@ export default function AiAssistant({
                         event.currentTarget.form?.requestSubmit();
                     }
                   }}
+                  enterKeyHint="enter"
                   placeholder="Message Mira…"
                   rows={1}
+                  style={{ overflowY: "hidden" }}
                 />
               </label>
               {voice.supported && (
