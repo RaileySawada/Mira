@@ -1527,17 +1527,32 @@ input, textarea, .chat-bubble, .markdown-message { user-select:text; -webkit-use
   mask:url('/brand/mark.png') center / contain no-repeat;
   -webkit-mask:url('/brand/mark.png') center / contain no-repeat;
 }
-/* Keep the composer at the viewport edge while messages use page scrolling. */
-.ai-page .ai-chat-main { padding-bottom:var(--composer-height, 240px); }
+/* Keep the composer in document flow, at the bottom of short conversations. */
+.ai-page .ai-chat-main { padding-bottom:0; gap:24px; }
 .ai-page .chat-composer-wrap {
-  position:fixed;
-  inset:auto 0 0;
+  position:static;
   width:100%;
   max-width:900px;
+  margin-top:auto;
   margin-inline:auto;
   box-sizing:border-box;
-  padding-bottom:max(16px, env(safe-area-inset-bottom));
+  background:transparent;
+  padding-bottom:max(24px, env(safe-area-inset-bottom));
 }
-@media(min-width:1024px) {
-  .ai-page .chat-composer-wrap { left:240px; width:calc(100% - 240px); }
+.mira-scroll-bottom {
+  position:fixed;
+  right:24px;
+  bottom:max(24px, env(safe-area-inset-bottom));
+  z-index:30;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:var(--surface);
+  color:var(--ink);
+  box-shadow:0 4px 20px #0003;
+  cursor:pointer;
 }
+.mira-scroll-bottom:hover { background:var(--soft); }
+.mira-scroll-bottom:focus-visible { outline:2px solid var(--accent-ink); outline-offset:3px; }

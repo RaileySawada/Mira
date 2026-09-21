@@ -1,0 +1,72 @@
+/* Theme-colored light moves across a fine mesh, fading behind the conversation. */
+.ai-page::before { content: none; }
+.mira-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+}
+.mira-ambient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--accent-ink) 22%, transparent) .7px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(90deg, #000, transparent 34%, transparent 66%, #000);
+}
+.mira-ambient-palette {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 2s ease;
+  --mood-tint: var(--accent-ink);
+  --ambient-color: color-mix(in srgb, var(--accent-ink) 78%, var(--mood-tint));
+}
+.mira-ambient-palette[data-active="true"] { opacity: 1; }
+.mira-ambient-palette[data-tone="thinking"] { --mood-tint: #779ae2; }
+.mira-ambient-palette[data-tone="happy"] { --mood-tint: #da9ac4; }
+.mira-ambient-palette[data-tone="amazed"] { --mood-tint: #dfb681; }
+.mira-ambient-palette[data-tone="sad"] { --mood-tint: #89afc9; }
+.mira-ambient-palette span {
+  position: absolute;
+  inset: -15%;
+  background:
+    radial-gradient(ellipse at 8% 70%, color-mix(in srgb, var(--ambient-color) 20%, transparent), transparent 38%),
+    radial-gradient(ellipse at 94% 20%, color-mix(in srgb, var(--ambient-color) 14%, transparent), transparent 34%);
+  animation: mira-mesh-breathe 18s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+/* A second, sparse lattice catches the light at the edges. Only transforms animate. */
+.mira-ambient-palette span + span {
+  inset: -48px;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--ambient-color) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ambient-color) 10%, transparent) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at 0% 80%, #000, transparent 40%), radial-gradient(ellipse at 100% 20%, #000, transparent 36%);
+  animation: mira-mesh-drift 28s ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+.mira-ambient-palette[data-active="true"] span { animation-play-state: running; }
+.mira-ambient[data-paused="true"] span { animation-play-state: paused; }
+@keyframes mira-mesh-breathe {
+  from { transform: translate(-2%, 3%) scale(1); opacity: .65; }
+  to { transform: translate(3%, -3%) scale(1.08); opacity: 1; }
+}
+@keyframes mira-mesh-drift {
+  from { transform: translate(0, 0); opacity: .45; }
+  to { transform: translate(24px, -24px); opacity: .9; }
+}
+[data-theme="dark"] .mira-ambient-palette[data-active="true"] { opacity: .65; }
+@media (min-width: 1024px) { .mira-ambient { left: 240px; } }
+@media (max-width: 640px) {
+  .mira-ambient::before { background-size: 20px 20px; }
+  .mira-ambient-palette span + span { background-size: 56px 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mira-ambient-palette { transition: none; }
+  .mira-ambient-palette span { animation: none; }
+}

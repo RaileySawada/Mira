@@ -1,3 +1,5 @@
+import { MiraAmbient } from "./MiraAmbient";
+import { ambientMood } from "./ambientMood";
 import type { AiMode as Mode } from "../../types/ai";
 import { AbuseChallenge } from "./AbuseChallenge";
 import { buildReviewerContext } from "./reviewerContext";
@@ -17,7 +19,7 @@ import {
   type SubmitEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { ArrowUp, Mic, Square, RotateCcw, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Mic, Square, RotateCcw, X } from "lucide-react";
 import miraAvatar from "../../assets/images/profile_pictures/mira.png";
 import userAvatar from "../../assets/images/profile_pictures/user.png";
 import { requestAi } from "../../services/ai";
@@ -74,26 +76,6 @@ export default function AiAssistant({
   const [typingAnswer, setTypingAnswer] = useState("");
   const [drafts, setDrafts] = useState<GeneratedReviewer[]>([]);
   const [savedTopic, setSavedTopic] = useState("");
-  const composerWrap = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (presentation !== "page" || mode !== "chat") return;
-    const wrap = composerWrap.current;
-    const section = wrap?.parentElement;
-    if (!wrap || !section) return;
-    // Reserve the actual composer height so the last message stays readable.
-    const measure = () =>
-      section.style.setProperty(
-        "--composer-height",
-        wrap.getBoundingClientRect().height + "px",
-      );
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(wrap);
-    return () => {
-      observer.disconnect();
-      section.style.removeProperty("--composer-height");
-    };
-  }, [presentation, mode]);
   const composerInput = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const input = composerInput.current;
@@ -117,6 +99,7 @@ export default function AiAssistant({
     closeButton.current?.focus();
   }, []);
   const followConversation = useRef(true);
+  const [showScrollDown, setShowScrollDown] = useState(false);
   useEffect(() => {
     if (presentation !== "page") return;
     const trackScroll = () => {
@@ -125,9 +108,18 @@ export default function AiAssistant({
           window.scrollY -
           window.innerHeight <
         180;
+      setShowScrollDown(!followConversation.current);
     };
     window.addEventListener("scroll", trackScroll, { passive: true });
-    return () => window.removeEventListener("scroll", trackScroll);
+    window.addEventListener("resize", trackScroll);
+    const observer = new ResizeObserver(trackScroll);
+    observer.observe(document.documentElement);
+    trackScroll();
+    return () => {
+      window.removeEventListener("scroll", trackScroll);
+      window.removeEventListener("resize", trackScroll);
+      observer.disconnect();
+    };
   }, [presentation]);
   useEffect(() => {
     if (presentation === "page") {
@@ -425,6 +417,7 @@ export default function AiAssistant({
         }
       }}
     >
+      {presentation === "page" && <MiraAmbient mood={ambientMood(busy, Boolean(error), messages.findLast(message => message.role === "assistant")?.content ?? "", drafts.length > 0)} />}
       <header className="ai-chat-header">
         {presentation !== "page" && (
           <div className="ai-identity">
@@ -575,7 +568,7 @@ export default function AiAssistant({
               </div>
             )}
           </div>
-          <div ref={composerWrap} className="chat-composer-wrap">
+          <div className="chat-composer-wrap">
             {currentReviewer && (
               <label className="mb-2 block text-xs">
                 <input
@@ -782,6 +775,16 @@ export default function AiAssistant({
           )}
           {reviewerPreview}
         </section>
+      )}
+      {presentation === "page" && showScrollDown && (
+        <button type="button" className="mira-scroll-bottom" aria-label="Scroll to bottom"
+          onClick={() => {
+            followConversation.current = true;
+            window.scrollTo({ top: document.documentElement.scrollHeight,
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+          }}>
+          <ArrowDown size={20} aria-hidden="true" />
+        </button>
       )}
     </aside>
   );
