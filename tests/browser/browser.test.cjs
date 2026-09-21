@@ -1314,7 +1314,9 @@ test("production study flows, themes, mobile overlays and offline reload", async
       ),
     ).toBe(true);
     await evaluate("document.querySelector('.mira-scroll-bottom').click()");
-    await waitFor("document.documentElement.scrollHeight - scrollY - innerHeight < 2");
+    await waitFor(
+      "document.documentElement.scrollHeight - scrollY - innerHeight < 2",
+    );
     await waitFor("!document.querySelector('.mira-scroll-bottom')");
     expect(
       await evaluate(

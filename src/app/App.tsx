@@ -63,7 +63,7 @@ export default function App() {
   const [editor, setEditor] = useState<Reviewer | "new" | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   useEffect(() => {
-    document.title = `${page} · Mira — A little wiser, every day`;
+    document.title = page === "Mira" ? "Mira" : `${page} | Mira`;
   }, [page]);
   async function start(reviewer: Reviewer, mode: "cards" | "quiz") {
     const cards = prepareCards(
