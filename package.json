@@ -10,11 +10,12 @@
     "preview": "vite preview",
     "test": "jest --runInBand && npm run test:server",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --runInBand --coverage && npm run test:server -- --coverage",
+    "test:coverage": "jest --runInBand --coverage",
+    "test:server": "jest --config jest.server.config.cjs --runInBand",
+    "test:server:coverage": "jest --config jest.server.config.cjs --runInBand --coverage",
     "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:browser": "npm run build && jest --config jest.browser.config.cjs --runInBand",
-    "test:all": "npm run test:types && npm run test:coverage && npm run test:browser",
-    "test:server": "jest --config jest.server.config.cjs --runInBand",
+    "test:all": "npm run test:types && npm run test:coverage && npm run test:server:coverage && npm run test:browser",
     "dev:netlify": "netlify dev --offline"
   },
   "dependencies": {

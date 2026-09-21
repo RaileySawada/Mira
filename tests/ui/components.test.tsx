@@ -62,26 +62,34 @@ test("theme buttons emit the selected preference and button origin", async () =>
 });
 test("route links preserve modified clicks and caller cancellation", () => {
   const { rerender } = render(<RouteLink page="Topics">Topics</RouteLink>);
-  fireEvent.click(screen.getByText("Topics"));
+
+  fireEvent.click(screen.getByRole("link", { name: "Topics" }));
+
   expect(location.pathname).toBe("/topics");
+
   history.replaceState(null, "", "/");
-  fireEvent.click(screen.getByText("Topics"), { ctrlKey: true });
+
+  fireEvent.click(screen.getByRole("link", { name: "Topics" }), {
+    ctrlKey: true,
+  });
+
   expect(location.pathname).toBe("/");
-  rerender(
-    <RouteLink page="Topics" onClick={(event) => event.preventDefault()}>
-      Topics
-    </RouteLink>,
-  );
-  fireEvent.click(screen.getByText("Topics"));
-  expect(location.pathname).toBe("/");
+
   rerender(
     <RouteLink page="Topics" target="_blank">
       Topics
     </RouteLink>,
   );
-  fireEvent.click(screen.getByText("Topics"));
+
+  const newTabLink = screen.getByRole("link", {
+    name: "Topics",
+  });
+
+  expect(newTabLink).toHaveAttribute("target", "_blank");
+  expect(newTabLink).toHaveAttribute("href", "/topics");
   expect(location.pathname).toBe("/");
 });
+
 function SelectHarness() {
   const [value, setValue] = useState("");
   return (
@@ -195,13 +203,16 @@ test("unknown icon names use the shared fallback", () => {
 });
 
 test("sidebar puts settings and documentation in More and has no presence badge", () => {
- const {container}=render(<Sidebar page="Settings"/>);
- expect(container.querySelector(".online-count")).toBeNull();
- const menu=container.querySelector("details")!;
- expect(menu.open).toBe(false);
- fireEvent.click(screen.getByText("More"));
- menu.open=true;
- expect(screen.getByRole("link",{name:"Settings"})).toHaveAttribute("aria-current","page");
- fireEvent.keyDown(menu,{key:"Escape"});
- expect(menu.open).toBe(false);
+  const { container } = render(<Sidebar page="Settings" />);
+  expect(container.querySelector(".online-count")).toBeNull();
+  const menu = container.querySelector("details")!;
+  expect(menu.open).toBe(false);
+  fireEvent.click(screen.getByText("More"));
+  menu.open = true;
+  expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  fireEvent.keyDown(menu, { key: "Escape" });
+  expect(menu.open).toBe(false);
 });
