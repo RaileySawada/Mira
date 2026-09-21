@@ -15,7 +15,7 @@ export function ReviewerEditor({
   reviewer?: Reviewer;
   topics: Topic[];
   folders?: Folder[];
-  onSave: (reviewer: Reviewer, topic?: Topic) => boolean;
+  onSave: (reviewer: Reviewer, topic?: Topic) => boolean | Promise<boolean>;
   onClose: () => void;
 }) {
   const formId = useId();
@@ -44,7 +44,13 @@ export function ReviewerEditor({
           <button type="button" className="button secondary" onClick={onClose}>
             Cancel
           </button>
-          <ProcessButton type="submit" form={formId} label="Save reviewer" state={save.state} successLabel="Saved" />
+          <ProcessButton
+            type="submit"
+            form={formId}
+            label="Save reviewer"
+            state={save.state}
+            successLabel="Saved"
+          />
         </div>
       }
     >
@@ -77,25 +83,48 @@ export function ReviewerEditor({
               selectedTopicId = newTopic.id;
             }
           }
-          void save.run(() => onSave(
-              {
-                id: reviewer?.id || crypto.randomUUID(),
-                title: title.trim(),
-                description: description.trim(),
-                topicId: selectedTopicId,
-                ...(folderId ? { folderId } : reviewer?.folderId ? { folderId: "" } : {}),
-                cards: cards.map((c) => ({
-                  ...c,
-                  question: c.question.trim(),
-                  answer: c.answer.trim(),
-                })),
-                updatedAt: new Date().toISOString(),
-              },
-              newTopic,
-            ), onClose);
+          void save.run(
+            () =>
+              onSave(
+                {
+                  id: reviewer?.id || crypto.randomUUID(),
+                  title: title.trim(),
+                  description: description.trim(),
+                  topicId: selectedTopicId,
+                  ...(folderId
+                    ? { folderId }
+                    : reviewer?.folderId
+                      ? { folderId: "" }
+                      : {}),
+                  cards: cards.map((c) => ({
+                    ...c,
+                    question: c.question.trim(),
+                    answer: c.answer.trim(),
+                    ...(c.acceptedAnswers
+                      ? {
+                          acceptedAnswers: [
+                            ...new Set(
+                              c.acceptedAnswers
+                                .map((answer) => answer.trim())
+                                .filter(Boolean),
+                            ),
+                          ],
+                        }
+                      : {}),
+                  })),
+                  updatedAt: new Date().toISOString(),
+                },
+                newTopic,
+              ),
+            onClose,
+          );
         }}
       >
-        {save.error && <p role="alert" className="text-sm text-red-600">{save.error}</p>}
+        {save.error && (
+          <p role="alert" className="text-sm text-red-600">
+            {save.error}
+          </p>
+        )}
         <label className="field">
           Reviewer title
           <input
@@ -117,7 +146,21 @@ export function ReviewerEditor({
             rows={2}
           />
         </label>
-        <div className="field"><span>Folder</span><SearchSelect label="Folder" value={folderId} onChange={setFolderId} options={[{ value: "", label: "No folder" }, ...folders.map(folder => ({ value: folder.id, label: folder.name }))]} /></div>
+        <div className="field">
+          <span>Folder</span>
+          <SearchSelect
+            label="Folder"
+            value={folderId}
+            onChange={setFolderId}
+            options={[
+              { value: "", label: "No folder" },
+              ...folders.map((folder) => ({
+                value: folder.id,
+                label: folder.name,
+              })),
+            ]}
+          />
+        </div>
         <div className="field">
           <span>Topic</span>
           <SearchSelect
@@ -218,6 +261,31 @@ export function ReviewerEditor({
                 placeholder="The answer goes here…"
               />
             </label>
+            <details>
+              <summary className="text-xs text-stone-500">
+                Accepted alternative answers (optional)
+              </summary>
+              <label className="field mt-3">
+                One alternative per line
+                <textarea
+                  rows={2}
+                  maxLength={10000}
+                  value={(c.acceptedAnswers ?? []).join("\n")}
+                  onChange={(e) =>
+                    setCards(
+                      cards.map((card) =>
+                        card.id === c.id
+                          ? {
+                              ...card,
+                              acceptedAnswers: e.target.value.split("\n"),
+                            }
+                          : card,
+                      ),
+                    )
+                  }
+                />
+              </label>
+            </details>
           </div>
         ))}
         <button

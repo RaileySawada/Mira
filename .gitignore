@@ -32,3 +32,6 @@ coverage/
 !.env.example
 # Local Netlify folder
 .netlify
+
+# Generated local validation reports
+artifacts/

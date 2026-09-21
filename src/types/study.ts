@@ -3,11 +3,15 @@ export interface Topic {
   name: string;
   color: string;
 }
-export interface Folder { id: string; name: string; }
+export interface Folder {
+  id: string;
+  name: string;
+}
 export interface Card {
   id: string;
   question: string;
   answer: string;
+  acceptedAnswers?: string[];
 }
 export interface Reviewer {
   id: string;
@@ -17,6 +21,26 @@ export interface Reviewer {
   folderId?: string;
   cards: Card[];
   updatedAt: string;
+}
+export interface QuestionResult {
+  cardId: string;
+  reviewerId?: string;
+  question: string;
+  expectedAnswer: string;
+  userAnswer: string;
+  correct: boolean;
+  durationMs: number;
+}
+export interface CardSchedule {
+  reviewerId: string;
+  cardId: string;
+  lastReviewedAt: string;
+  nextReviewAt: string;
+  repetitions: number;
+  lapses: number;
+  intervalDays: number;
+  recent: boolean[];
+  source: "quiz" | "flashcard";
 }
 export interface Attempt {
   id: string;
@@ -28,6 +52,7 @@ export interface Attempt {
   mode: "quiz" | "daily";
   difficulty?: "normal" | "hard";
   fastCorrect?: boolean;
+  results?: QuestionResult[];
 }
 export type Theme = "light" | "dark" | "system";
 export interface Settings {
@@ -40,11 +65,17 @@ export interface Settings {
   shuffle: boolean;
 }
 export interface StudyData {
-  version: 2;
+  version: 2 | 3;
+  schedules?: CardSchedule[];
   lastStudy?: { reviewerId: string; startedAt: string };
   earnedBadges?: string[];
   achievementVersion?: 2;
-  milestones?: { studyDates?: string[]; importedReviewer?: boolean; focusCompleted?: boolean; askedMira?: boolean };
+  milestones?: {
+    studyDates?: string[];
+    importedReviewer?: boolean;
+    focusCompleted?: boolean;
+    askedMira?: boolean;
+  };
   topics: Topic[];
   folders?: Folder[];
   reviewers: Reviewer[];
@@ -52,6 +83,7 @@ export interface StudyData {
   settings: Settings;
 }
 export type Page =
+  | "Mira"
   | "Home"
   | "Reviewers"
   | "Topics"

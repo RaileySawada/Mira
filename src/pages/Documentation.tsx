@@ -1,4 +1,5 @@
-import { POLICY_VERSION } from "../features/consent/policy";
+import { POLICY_VERSION } from "../config/policy";
+
 import type { Page } from "../types/study";
 import { PageHeading } from "../components/ui";
 import { Icon } from "../components/Icon";
@@ -12,7 +13,7 @@ export function Documentation({ page }: { page: Page }) {
     return (
       <>
         <PageHeading
-          eyebrow="A SMALL DETOUR"
+          eyebrow="404 · PAGE NOT FOUND"
           title="This page is still a blank page."
           description="The address doesn’t match a Mira page."
         />
@@ -29,7 +30,28 @@ export function Documentation({ page }: { page: Page }) {
         title={document.title}
         description={document.intro}
       />
-      {(page === "Privacy" || page === "Terms") && <p className="mb-6 text-xs text-stone-500">Policy version {POLICY_VERSION} · Optional services: <a className="underline" href="https://www.netlify.com/privacy/" target="_blank" rel="noreferrer">Netlify privacy</a> · <a className="underline" href="https://pollinations.ai" target="_blank" rel="noreferrer">Pollinations</a></p>}
+      {(page === "Privacy" || page === "Terms") && (
+        <p className="mb-6 text-xs text-stone-500">
+          Policy version {POLICY_VERSION} · Optional services:{" "}
+          <a
+            className="underline"
+            href="https://www.netlify.com/privacy/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Netlify privacy
+          </a>{" "}
+          ·{" "}
+          <a
+            className="underline"
+            href="https://pollinations.ai"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Pollinations
+          </a>
+        </p>
+      )}
       {page === "Contribute" && (
         <div className="mb-7 flex flex-wrap gap-3">
           <a
@@ -60,23 +82,30 @@ export function Documentation({ page }: { page: Page }) {
       )}
       <div className="grid gap-8 xl:grid-cols-[210px_1fr]">
         <nav className="documentation-tabs" aria-label="Documentation">
-          {(["Docs", "Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
-            (item) => (
-              <RouteLink
-                key={item}
-                page={item}
-                aria-current={page === item ? "page" : undefined}
-                className={`nav-item ${page === item ? "active" : ""}`}
-              >
-                <Icon name={item} size={18} />
-                {item === "Terms"
-                  ? "Terms & conditions"
-                  : item === "Guide"
-                    ? "Study guide"
-                    : item}
-              </RouteLink>
-            ),
-          )}
+          {(
+            [
+              "Docs",
+              "Guide",
+              "Contribute",
+              "Privacy",
+              "Terms",
+              "About",
+            ] as const
+          ).map((item) => (
+            <RouteLink
+              key={item}
+              page={item}
+              aria-current={page === item ? "page" : undefined}
+              className={`nav-item ${page === item ? "active" : ""}`}
+            >
+              <Icon name={item} size={18} />
+              {item === "Terms"
+                ? "Terms & conditions"
+                : item === "Guide"
+                  ? "Study guide"
+                  : item}
+            </RouteLink>
+          ))}
         </nav>
         <article className="documentation-article panel max-w-3xl divide-y divide-stone-200 px-6 sm:px-9">
           {document.sections.map((section) => (

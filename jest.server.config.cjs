@@ -1,7 +1,7 @@
 module.exports = {
   testEnvironment: "node",
   testMatch: ["<rootDir>/tests/server/**/*.test.ts"],
-  transform: { "^.+\\.[tj]sx?$": "<rootDir>/tests/transform.cjs" },
+  transform: { "^.+\\.[tj]sx?$": "<rootDir>/tests/support/transform.cjs" },
   collectCoverageFrom: ["netlify/functions/**/*.ts"],
   coverageDirectory: "coverage/server",
   coverageReporters: ["text", "html", "json-summary"],

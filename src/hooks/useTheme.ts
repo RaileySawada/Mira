@@ -2,7 +2,10 @@ import { useLayoutEffect, useRef } from "react";
 import { flushSync } from "react-dom";
 import type { Theme } from "../types/study";
 
-export function useTheme(theme: Theme, save: (theme: Theme) => boolean) {
+export function useTheme(
+  theme: Theme,
+  save: (theme: Theme) => boolean | Promise<boolean>,
+) {
   const active = useRef<ViewTransition | null>(null);
   const revision = useRef(0);
   useLayoutEffect(() => {
@@ -24,11 +27,10 @@ export function useTheme(theme: Theme, save: (theme: Theme) => boolean) {
   return (next: Theme, origin: HTMLElement) => {
     const request = ++revision.current;
     active.current?.skipTransition();
-    const apply = () => {
-      if (request === revision.current)
-        flushSync(() => {
-          save(next);
-        });
+    const apply = async () => {
+      if (request !== revision.current) return;
+      await save(next);
+      flushSync(() => {});
     };
     if (
       !document.startViewTransition ||
@@ -66,7 +68,9 @@ export function useTheme(theme: Theme, save: (theme: Theme) => boolean) {
         // A newer theme selection can intentionally skip an unfinished transition.
       },
     );
-    const finish = () => { if (active.current === transition) active.current = null; };
+    const finish = () => {
+      if (active.current === transition) active.current = null;
+    };
     void transition.finished.then(finish, finish);
   };
 }

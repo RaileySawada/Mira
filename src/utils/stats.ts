@@ -1,3 +1,4 @@
+import { normalizeWrittenAnswer } from "../features/learning/answers";
 import type { Attempt, Card } from "../types/study";
 export function dayKey(date: Date | string): string {
   const d = new Date(date);
@@ -42,7 +43,7 @@ export function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 export function normalizeAnswer(answer: string) {
-  return answer.trim().toLocaleLowerCase().replace(/\s+/g, " ");
+  return normalizeWrittenAnswer(answer);
 }
 export function prepareCards(cards: Card[], shuffle: boolean, size: number) {
   return (shuffle ? shuffled(cards) : [...cards]).slice(0, size);

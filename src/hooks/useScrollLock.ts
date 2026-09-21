@@ -3,7 +3,6 @@ import { useLayoutEffect } from "react";
 let locks = 0;
 let restore: (() => void) | undefined;
 
-// Share the lock between dialogs and the mobile menu, including nested overlays.
 export function useScrollLock() {
   useLayoutEffect(() => {
     if (locks++ === 0) {

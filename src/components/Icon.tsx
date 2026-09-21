@@ -42,6 +42,7 @@ import type { LucideIcon } from "lucide-react";
 
 const icons: Record<string, LucideIcon> = {
   menu: Menu,
+  Mira: Sparkles,
   Home: House,
   Reviewers: BookOpen,
   Topics: Tags,

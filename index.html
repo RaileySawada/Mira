@@ -7,7 +7,7 @@
         let preference = "system";
         try {
           preference =
-            JSON.parse(localStorage.getItem("mira.study.v1") || "{}").settings
+            (JSON.parse(localStorage.getItem("mira.preferences") || "null") || JSON.parse(localStorage.getItem("mira.study.v1") || "{}").settings)
               ?.theme || "system";
         } catch {}
         const dark =

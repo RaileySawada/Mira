@@ -1,3 +1,4 @@
+import { clearStudyRecoveryAndDraft, persistActiveDraft } from "../services/storageRuntime";
 import { dailyQuizSize } from "../utils/quiz";
 import { confirmAction } from "../components/confirmAction";
 import { ProcessButton } from "../components/ProcessButton";
@@ -16,7 +17,7 @@ export function Settings({
   onThemeChange,
 }: {
   data: StudyData;
-  update: (d: StudyData) => boolean;
+  update: (d: StudyData) => boolean | Promise<boolean>;
   onThemeChange: (theme: Theme, origin: HTMLElement) => void;
 }) {
   const save = useActionFeedback();
@@ -33,10 +34,28 @@ export function Settings({
     setError("");
     await importing.run(async () => {
       try {
-        if (file.size > 5 * 1024 * 1024) throw new Error("Please choose a backup smaller than 5 MB.");
+        if (file.size > 5 * 1024 * 1024)
+          throw new Error("Please choose a backup smaller than 5 MB.");
         const imported = validateData(JSON.parse(await file.text()));
-        if (!await confirmAction(`Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`)) return null;
-        if (!update({ ...imported, milestones: { ...imported.milestones, importedReviewer: imported.reviewers.length > 0 || imported.milestones?.importedReviewer === true } })) return false;
+        if (
+          !(await confirmAction(
+            `Replace this device’s data with ${imported.reviewers.length} reviewers, ${imported.topics.length} topics and ${imported.attempts.length} results? Export your current data first if you want to keep it.`,
+          ))
+        )
+          return null;
+        if (
+          !(await update({
+            ...imported,
+            milestones: {
+              ...imported.milestones,
+              importedReviewer:
+                imported.reviewers.length > 0 ||
+                imported.milestones?.importedReviewer === true,
+            },
+          }))
+        )
+          return false;
+        await persistActiveDraft(undefined);
         setSettings(imported.settings);
         setMessage("Your backup has been imported. Welcome back.");
         return true;
@@ -45,7 +64,8 @@ export function Settings({
       }
     });
   }
-  const actionError = error || save.error || exporting.error || importing.error || clearing.error;
+  const actionError =
+    error || save.error || exporting.error || importing.error || clearing.error;
 
   return (
     <>
@@ -96,16 +116,19 @@ export function Settings({
             className="panel space-y-5 p-6 sm:p-7"
             onSubmit={(event) => {
               event.preventDefault();
-              void save.run(() => { if (
-                update({
-                  ...data,
-                  settings: { ...settings, theme: data.settings.theme },
-                })
-              ) {
-                setError("");
-                setMessage("Your preferences are saved.");
-                return true;
-              } return false; });
+              void save.run(async () => {
+                if (
+                  await update({
+                    ...data,
+                    settings: { ...settings, theme: data.settings.theme },
+                  })
+                ) {
+                  setError("");
+                  setMessage("Your preferences are saved.");
+                  return true;
+                }
+                return false;
+              });
             }}
           >
             <SectionTitle
@@ -159,7 +182,8 @@ export function Settings({
                   }
                 />
                 <span className="text-[11px] font-normal text-stone-400">
-                  Up to 100 available cards. Reviewer quizzes always use every card.
+                  Up to 100 available cards. Reviewer quizzes always use every
+                  card.
                 </span>
               </label>
             </div>
@@ -210,7 +234,11 @@ export function Settings({
               <span className="text-[11px] text-stone-400">
                 Your next session, your way.
               </span>
-              <ProcessButton label="Save preferences" state={save.state} successLabel="Saved" />
+              <ProcessButton
+                label="Save preferences"
+                state={save.state}
+                successLabel="Saved"
+              />
             </div>
           </form>
         </div>
@@ -241,8 +269,20 @@ export function Settings({
               or bring your library to another device.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <ProcessButton label="Export JSON" className="button secondary" state={exporting.state} successLabel="Exported" onClick={() => void exporting.run(() => downloadJson(data))} />
-              <ProcessButton label="Import JSON" className="button secondary" state={importing.state} successLabel="Imported" onClick={() => input.current?.click()} />
+              <ProcessButton
+                label="Export JSON"
+                className="button secondary"
+                state={exporting.state}
+                successLabel="Exported"
+                onClick={() => void exporting.run(() => downloadJson(data))}
+              />
+              <ProcessButton
+                label="Import JSON"
+                className="button secondary"
+                state={importing.state}
+                successLabel="Imported"
+                onClick={() => input.current?.click()}
+              />
             </div>
             <input
               ref={input}
@@ -306,7 +346,10 @@ export function Settings({
             Clear your library, results, and preferences. Export a backup first.
           </p>
         </div>
-        <ProcessButton label="Clear all local data" state={clearing.state} successLabel="Cleared"
+        <ProcessButton
+          label="Clear all local data"
+          state={clearing.state}
+          successLabel="Cleared"
           className="button border border-red-200 text-red-700 hover:bg-red-50"
           onClick={async () => {
             if (
@@ -314,14 +357,17 @@ export function Settings({
                 "Permanently clear all Mira data on this device? Export a backup first.",
               )
             ) {
-              void clearing.run(() => {
-              const fresh = emptyData();
-              if (update(fresh)) {
-                setSettings(fresh.settings);
-                setError("");
-                setMessage("Your local data has been cleared.");
-                return true;
-              } return false; });
+              void clearing.run(async () => {
+                const fresh = emptyData();
+                if (await update(fresh)) {
+                  await clearStudyRecoveryAndDraft();
+                  setSettings(fresh.settings);
+                  setError("");
+                  setMessage("Your local data has been cleared.");
+                  return true;
+                }
+                return false;
+              });
             }
           }}
         >

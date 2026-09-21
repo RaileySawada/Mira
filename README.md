@@ -38,7 +38,7 @@ npm run dev
 
 ## Data and scoring
 
-Study data is stored under `mira.study.v1` in localStorage. Export a backup before clearing browser storage or changing devices. Imports replace existing data after validation and confirmation. Backups are limited to 5 MB. Use one browser tab for editing to avoid competing saves.
+Study data is stored in the `mira-study` IndexedDB database. The old `mira.study.v1` localStorage record is retained as a migration recovery copy. Export a backup before clearing browser storage or changing devices. Imports replace existing data after validation and confirmation. Backups are limited to 5 MB. Use one browser tab for editing to avoid competing saves.
 
 Accuracy is correct answers divided by all answered questions in completed quizzes, not a scientific measure of knowledge. Written answers ignore letter case and extra whitespace; other wording must match. Keep definitions short for written quizzes. Flashcard practice does not change scores or streaks.
 
@@ -99,7 +99,7 @@ In-app documentation is available at /guide, /privacy, /terms, and /about.
 
 ## Topics and branding
 
-Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, while the existing localStorage key stays unchanged. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
+Version-2 backups use topics. Version-1 subjects and reviewer associations migrate automatically, with the original localStorage record retained for recovery. Create a topic inside the reviewer editor; it saves together with the reviewer, and existing topic names are reused.
 
 The mobile header opens a keyboard-accessible navigation drawer. The cropped transparent `public/brand/mark.png` powers navigation, with text beside it in the sidebar; the original `public/logo.png` remains the source artwork. Separate files in `public/icons/` serve the favicon and install icons; `public/social_card.png` is the sharing preview. Typography uses locally bundled Nunito as a close match to the rounded social-card lettering, including offline. Its SIL Open Font License is included in `src/assets/fonts/OFL-Nunito.txt`.
 
@@ -185,7 +185,7 @@ Cards follow horizontal drags, settle back on short/cancelled gestures, and hand
 
 ### Study dashboard and rewards
 
-Home shows the last opened reviewer and its folder before charts, with five Mira expressions and ten messages per expression. Normal quizzes use up to four distinct saved definitions as offline answer choices; Hard quizzes use written recall. A set needs two distinct definitions for Normal mode. Achievements tracks ten milestones and preserves earned badge IDs in local storage and JSON exports. Optimized WebP expressions and badges are precached for offline use; original PNG artwork stays in `public/emoticons` and `public/new-rewards`.
+Home shows the last opened reviewer and its folder before charts, with five Mira expressions and ten messages per expression. Normal quizzes use up to four distinct saved definitions as offline answer choices; Hard quizzes use written recall. A set needs two distinct definitions for Normal mode. Achievements tracks ten milestones and preserves earned badge IDs in IndexedDB and JSON exports. Optimized WebP expressions and badges are precached for offline use; original PNG artwork stays in `public/emoticons` and `public/new-rewards`.
 
 Badge missions now match the text in all ten original images. Quiz Master counts scores of 80% or above; Fast Learner requires a correct response within 10 seconds in a saved quiz; Night Owl uses midnight–5:59 a.m. local time. The Achievements page includes a 25-minute focus timer (pauses when hidden; save after completion). Bookworm records a successful reviewer import, and Helper records a successful AI guidance response. Legacy mismatched badge IDs are recalculated from available evidence.
 
@@ -200,3 +200,56 @@ Online AI chat includes a bounded study overview: saved name, complete library c
 Create a Firebase Realtime Database and enable **Authentication → Sign-in method → Anonymous**. Set `FIREBASE_DATABASE_URL` to its exact console URL, then publish `database.rules.json` using the Firebase Console rules editor or `firebase deploy --only database --project YOUR_PROJECT_ID`. Restart Netlify Dev after environment changes; add the same variables in Netlify and rebuild for production. Existing `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, and `FIREBASE_APP_ID` are supported, along with `VITE_FIREBASE_*` aliases. Only this explicit web-config allowlist is bundled; Pollinations secrets stay server-side.
 
 The sidebar and mobile header show connected anonymous browser identities, not verified people. Tabs using the same Firebase identity count once. Presence stores only anonymous IDs and per-connection booleans, with server disconnect cleanup; no name or study records are sent to Firebase. The live count hides offline and reports errors without displaying a fabricated count. Firebase loads lazily after policy acceptance. Disconnect counts can take a short time to settle after a sudden network loss.
+
+## Mira v3 Adaptive Learning
+
+### Adaptive learning and mastery
+
+Mira derives New, Learning, Needs review and Mastered states from saved card ratings and quiz results. Three consecutive correct reviews can mark a card Mastered until it becomes due. A missed or due card needs review. Home shows due cards, cards to revisit, recently improved cards and topic/folder/reviewer insights. Self-ratings contribute to learning signals, never quiz accuracy. Mira’s five expressions respond supportively to recent scores, changes, goals, streaks, inactivity, weak cards and new achievements; they are not judgments of ability.
+
+### Spaced repetition and daily review
+
+Mira v3 uses a deterministic lightweight scheduler, not FSRS. Correct reviews schedule a card in 1 day, then 3 days, then double the interval up to 180 days. A missed answer resets repetitions and schedules a retry in 10 minutes. Daily review prioritizes overdue cards, cards needing review, frequent misses, long-unreviewed cards and new cards. Recently reviewed cards move behind new material; mastered cards fill remaining slots only when needed. The selected set can be shuffled, and its size remains configurable. All scheduling works offline.
+
+### Question history, answer alternatives and streaks
+
+Completed quizzes retain each question and expected-answer snapshot, your answer, correctness and response duration alongside the existing totals. Open Activity calendar day details to inspect them. Reviewer editing offers optional accepted alternative answers. Written grading normalizes Unicode, case, whitespace and harmless punctuation; meaningful math symbols remain distinct. Streaks count local-calendar days with a completed quiz, daily review or flashcard practice session. Opening a reviewer alone never counts. The same rule is used by Home, badges, Activity and Mira’s overview.
+
+### Unfinished quizzes and Voice Study Mode
+
+Unfinished quizzes save snapshots, ordering, mode, submitted answers and draft text locally. On return, choose Continue unfinished quiz or Discard; Mira never resumes automatically. Drafts are removed after successful completion or explicit discard. In Hard mode, Start voice study reads the question when speech synthesis is available. Pause, Stop and Repeat control playback; Speak answer uses the existing microphone service. Stop the microphone, edit the transcript and explicitly check the answer. Unsupported browsers and offline recognition fall back to typing; core study never requires speech services.
+
+### v3 storage, migration and backups
+
+Growing study data is stored in a version-3 IndexedDB database with separate stores for reviewers, cards, attempts, question results, schedules and quiz drafts. Small preferences may remain in localStorage. Existing v1/v2 libraries migrate automatically and are read back for verification. The original localStorage backup is retained for recovery and is not the live library after migration. JSON exports remain portable and v1/v2 imports remain supported. Unknown fields are discarded and invalid data is rejected before saving. Keep regular exported backups: clearing browser/site data removes local study records.
+
+### Local document imports and optional AI context
+
+Import notes accepts TXT, Markdown and CSV locally. CSV supports question/answer columns, quoted commas and multiline fields. Preview, edit and remove text before opening the reviewer editor. Text selections for one card are limited to 5,000 characters; CSV supports up to 1,000 rows and files up to 1 MB. PDF extraction is not included; export a PDF as text first. Generate with Mira requires an explicit consent checkbox and only pre-fills the selected text; submit separately to send up to 3,000 characters to Pollinations. Use current reviewer as context is OFF by default. When enabled for chat, only up to 30 cards from the current reviewer are shared, with a 12,000-character content budget. Omitted cards are disclosed. Reviewer text is untrusted data, never system instructions.
+
+### Anonymous AI verification
+
+Online AI requests may require Cloudflare Turnstile verification. The server verifies single-use tokens, hostname and action before contacting Pollinations; rate limits, payload limits, timeouts and origin checks remain in place. Origin checks are not authentication. No account is required and Mira does not persist verification tokens or add a tracking identifier. Cloudflare processes verification information under its own policies. Failed verification affects AI only; saved reviewers, quizzes and offline studying remain available.
+
+### Turnstile deployment
+
+Configure `VITE_TURNSTILE_SITE_KEY` for the frontend build and `TURNSTILE_SECRET_KEY` as a server-only Netlify secret. Configure the widget for your deployment hostname. Production AI fails closed when the secret is absent; local development without keys keeps existing AI testing available. Never prefix the secret with `VITE_`. Redeploy after changes. Verification tokens are not stored.
+
+### Validation and CI
+
+`.github/workflows/ci.yml` runs npm ci, lint, type checks, coverage, server tests, production build and Chrome browser tests for pushes and pull requests. Coverage thresholds are unchanged. `fake-indexeddb` is a test-only dependency for migration and storage regressions.
+
+### Navigation and chat workspace
+
+Mira has a dedicated `/mira` workspace alongside the floating assistant. Enter sends a message; Shift+Enter inserts a line break. Both share the same online-only AI flow. The theme-aware line logo and ambient background respect reduced-motion preferences. Settings and documentation live in the sidebar’s More menu; presence is shown only in the header. Unknown routes show a 404 indicator. See `tests/README.md` for the test layout; generated local reports belong in ignored `artifacts/validation/`.
+
+### Shared definitions
+
+- `src/types/study.ts`: persisted library data; `session.ts`: quiz sessions and drafts.
+- `src/types/ai.ts`: AI request, conversation, reviewer-context and overview contracts.
+- `src/types/learning.ts`: mastery, mood and study-card types; `ui.ts`: shared control types.
+- `src/types/presence.ts`: online presence state and Firebase configuration shape.
+- `src/config/`: routes, storage keys, policy version, learning thresholds and general time constants.
+- `src/config/firebase.ts` reads public build configuration; `src/lib/firebase.ts` initializes Firebase SDK clients. These files have different responsibilities.
+
+Features own their behavior. Private component props, vendor-adapter types, implementation constants and feature content stay beside the code that uses them. Shared types do not import feature implementations. Storage key values and study thresholds remain unchanged by this organization.

@@ -97,9 +97,17 @@ export const messageVariants = {
   ],
 } as const;
 
-export function messageVariant(category: keyof typeof messageVariants, seed: number, values: Record<string, string> = {}): string {
+export function messageVariant(
+  category: keyof typeof messageVariants,
+  seed: number,
+  values: Record<string, string> = {},
+): string {
   const options = messageVariants[category];
   const offset = Object.keys(messageVariants).indexOf(category) * 7;
-  const template = options[(Math.abs(Math.trunc(seed)) + offset) % options.length];
-  return template.replace(/\{(\w+)\}/g, (placeholder, key: string) => values[key] ?? placeholder);
+  const template =
+    options[(Math.abs(Math.trunc(seed)) + offset) % options.length];
+  return template.replace(
+    /\{(\w+)\}/g,
+    (placeholder, key: string) => values[key] ?? placeholder,
+  );
 }

@@ -1,8 +1,12 @@
+import { LearningInsights } from "../features/home/LearningInsights";
+import { LearningPath } from "../features/home/LearningPath";
+import { learningAnalytics } from "../features/learning/analytics";
+import { studyStreak } from "../features/learning/streak";
 import { MiraInteraction } from "../features/home/MiraInteraction";
 import { homeMessages } from "../features/home/miraMessages";
 import { lazy, Suspense, useMemo, useState } from "react";
 import type { Page, Reviewer, StudyData } from "../types/study";
-import { dayKey, percentage, streak } from "../utils/stats";
+import { dayKey, percentage } from "../utils/stats";
 import { EmptyState, PageHeading } from "../components/ui";
 
 const StudyCharts = lazy(() => import("../components/StudyCharts"));
@@ -13,23 +17,31 @@ export function Home({
   onCreate,
   onStudy,
   onDaily,
+  newlyEarned = 0,
 }: {
   data: StudyData;
+  newlyEarned?: number;
   navigate: (page: Page) => void;
   onCreate: () => void;
   onStudy: (reviewer: Reviewer) => void;
   onDaily: () => void;
 }) {
   const [messageVariant] = useState(() => Math.floor(Math.random() * 100000));
-  const greetings = useMemo(() => homeMessages(data, new Date(), messageVariant), [data, messageVariant]);
-  const current = data.reviewers.find(r => r.id === data.lastStudy?.reviewerId);
-  const folder = data.folders?.find(f => f.id === current?.folderId);
+  const greetings = useMemo(
+    () => homeMessages(data, new Date(), messageVariant, newlyEarned),
+    [data, messageVariant, newlyEarned],
+  );
+  const adaptive = useMemo(() => learningAnalytics(data), [data]);
+  const current = data.reviewers.find(
+    (r) => r.id === data.lastStudy?.reviewerId,
+  );
+  const folder = data.folders?.find((f) => f.id === current?.folderId);
   const today = data.attempts.filter(
     (a) => dayKey(a.date) === dayKey(new Date()),
   );
   const studied = today.reduce((n, a) => n + a.total, 0);
   const accuracy = percentage(data.attempts);
-  const currentStreak = streak(data.attempts);
+  const currentStreak = studyStreak(data);
   const cards = data.reviewers.reduce((n, r) => n + r.cards.length, 0);
   const dailyDone = today.some((a) => a.mode === "daily");
   const stats = [
@@ -71,23 +83,67 @@ export function Home({
         <MiraInteraction key={JSON.stringify(greetings)} messages={greetings} />
         <div className="mira-welcome-footer">
           <p className="mira-welcome-progress">
-            {today.length ? <><strong>{today.length} {today.length === 1 ? "quiz" : "quizzes"} completed today</strong><span>{studied} {studied === 1 ? "question" : "questions"} practiced</span></> : cards === 0 ? "Add your first reviewer to begin." : "A fresh page for today. Start whenever you’re ready."}
+            {today.length ? (
+              <>
+                <strong>
+                  {today.length} {today.length === 1 ? "quiz" : "quizzes"}{" "}
+                  completed today
+                </strong>
+                <span>
+                  {studied} {studied === 1 ? "question" : "questions"} practiced
+                </span>
+              </>
+            ) : cards === 0 ? (
+              "Add your first reviewer to begin."
+            ) : (
+              "A fresh page for today. Start whenever you’re ready."
+            )}
           </p>
-          <button className="button secondary" onClick={data.settings.autoDaily ? onDaily : () => navigate("Reviewers")} disabled={data.settings.autoDaily && cards === 0}>
-            {data.settings.autoDaily ? dailyDone ? "Practice again" : "Start daily review" : "Explore reviewers"}
+          <button
+            className="button secondary"
+            onClick={
+              data.settings.autoDaily ? onDaily : () => navigate("Reviewers")
+            }
+            disabled={data.settings.autoDaily && cards === 0}
+          >
+            {data.settings.autoDaily
+              ? dailyDone
+                ? "Practice again"
+                : "Start daily review"
+              : "Explore reviewers"}
           </button>
         </div>
       </section>
+      <LearningPath insights={adaptive} onStart={onDaily} />
+      <LearningInsights insights={adaptive} onStudy={onStudy} />
       <section className="panel current-study">
-        <div><p className="mira-welcome-label">{current ? "PICK UP WHERE YOU LEFT OFF" : "YOUR STUDY DESK"}</p>
+        <div>
+          <p className="mira-welcome-label">
+            {current ? "PICK UP WHERE YOU LEFT OFF" : "YOUR STUDY DESK"}
+          </p>
           <h2>{current?.title ?? "What would you like to learn?"}</h2>
-          <p>{current ? (folder?.name ?? "Unfiled") + " / " + (data.topics.find(t => t.id === current.topicId)?.name ?? "Uncategorized") + " · " + current.cards.length + " cards" : "Open a reviewer to keep your current study set and its folder here."}</p>
+          <p>
+            {current
+              ? (folder?.name ?? "Unfiled") +
+                " / " +
+                (data.topics.find((t) => t.id === current.topicId)?.name ??
+                  "Uncategorized") +
+                " · " +
+                current.cards.length +
+                " cards"
+              : "Open a reviewer to keep your current study set and its folder here."}
+          </p>
         </div>
-        <button className="button primary" onClick={() => current ? onStudy(current) : navigate("Reviewers")}>{current ? "Continue studying" : "Choose a reviewer"}</button>
+        <button
+          className="button primary"
+          onClick={() => (current ? onStudy(current) : navigate("Reviewers"))}
+        >
+          {current ? "Continue studying" : "Choose a reviewer"}
+        </button>
       </section>
-      <div className="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
+      <div className="home-study-grid grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section>
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
             <h2 className="section-title">Keep the curiosity going</h2>
             <button
               className="text-button"
@@ -121,7 +177,7 @@ export function Home({
                       <p className="truncate text-sm font-medium">
                         {reviewer.title}
                       </p>
-                      <p className="mt-1 text-xs text-stone-400">
+                      <p className="mt-1 break-words text-xs text-stone-400">
                         {data.topics.find((s) => s.id === reviewer.topicId)
                           ?.name || "Uncategorized"}{" "}
                         · {reviewer.cards.length} card
@@ -169,23 +225,31 @@ export function Home({
           </div>
         </section>
       </div>
-      <div className="mt-8">      <div className="mb-7 grid grid-cols-2 gap-3 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <div className="panel p-5" key={stat.label}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-stone-500">{stat.label}</p>
+      <div className="mt-8">
+        {" "}
+        <div className="mb-7 grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {stats.map((stat) => (
+            <div className="panel p-5" key={stat.label}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-stone-500">{stat.label}</p>
+              </div>
+              <p className="mt-3 text-3xl font-semibold tracking-tight">
+                {stat.value}
+              </p>
+              <p className="mt-2 text-[11px] text-stone-400">{stat.note}</p>
             </div>
-            <p className="mt-3 text-3xl font-semibold tracking-tight">
-              {stat.value}
-            </p>
-            <p className="mt-2 text-[11px] text-stone-400">{stat.note}</p>
-          </div>
-        ))}
+          ))}
+        </div>
+        <Suspense
+          fallback={
+            <div className="mb-8 h-72" role="status">
+              Loading charts…
+            </div>
+          }
+        >
+          <StudyCharts attempts={data.attempts} />
+        </Suspense>
       </div>
-      <Suspense fallback={<div className="mb-8 h-72" role="status">Loading charts…</div>}>
-        <StudyCharts attempts={data.attempts} />
-      </Suspense>
-</div>
     </>
   );
 }

@@ -1,6 +1,7 @@
+import type { ActionState } from "../types/ui";
 import { useEffect, useRef, useState } from "react";
 
-export type ActionState = "idle" | "loading" | "success";
+
 
 export function useActionFeedback() {
   const [state, setState] = useState<ActionState>("idle");
@@ -10,10 +11,16 @@ export function useActionFeedback() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; clearTimeout(timer.current); };
+    return () => {
+      mounted.current = false;
+      clearTimeout(timer.current);
+    };
   }, []);
 
-  async function run(action: () => boolean | void | null | Promise<boolean | void | null>, afterSuccess?: () => void) {
+  async function run(
+    action: () => boolean | void | null | Promise<boolean | void | null>,
+    afterSuccess?: () => void,
+  ) {
     if (locked.current) return;
     locked.current = true;
     setState("loading");
@@ -21,7 +28,11 @@ export function useActionFeedback() {
     try {
       const result = await action();
       if (!mounted.current) return;
-      if (result === null) { locked.current = false; setState("idle"); return; }
+      if (result === null) {
+        locked.current = false;
+        setState("idle");
+        return;
+      }
       if (result === false) {
         locked.current = false;
         setState("idle");
@@ -38,9 +49,18 @@ export function useActionFeedback() {
       if (!mounted.current) return;
       locked.current = false;
       setState("idle");
-      setError(failure instanceof Error ? failure.message : "The action could not be completed. Please try again.");
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "The action could not be completed. Please try again.",
+      );
     }
   }
-  function reset() { clearTimeout(timer.current); locked.current = false; setState("idle"); setError(""); }
+  function reset() {
+    clearTimeout(timer.current);
+    locked.current = false;
+    setState("idle");
+    setError("");
+  }
   return { state, error, run, reset };
 }

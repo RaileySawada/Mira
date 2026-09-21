@@ -1,3 +1,11 @@
+import { OnlineCount } from "../components/OnlineCount";
+import { recoveryBackup } from "../services/storageRuntime";
+import { confirmNewQuiz } from "../features/study/sessionActions";
+import { cardMastery } from "../features/learning/mastery";
+import { ResumeQuiz } from "../features/study/ResumeQuiz";
+import { DocumentImport } from "../features/import/DocumentImport";
+import { selectDailyCards } from "../features/learning/dailyReview";
+import { recordAttempt, recordRating } from "../features/learning/scheduler";
 import { usePresence } from "../hooks/usePresence";
 import { dailyQuizSize } from "../utils/quiz";
 import { AchievementCelebration } from "../features/achievements/AchievementCelebration";
@@ -24,13 +32,22 @@ import { Activity } from "../pages/Activity";
 import { Settings } from "../pages/Settings";
 import { ReviewerEditor } from "../features/reviewers/ReviewerEditor";
 import { StudySession } from "../features/study/StudySession";
-import type { Session } from "../features/study/StudySession";
+import type { Session } from "../types/session";
+
 import type { Reviewer, Topic } from "../types/study";
 import { prepareCards } from "../utils/stats";
-import { downloadJson, STORAGE_KEY } from "../services/storage";
+import { downloadJson } from "../services/storage";
 
 export default function App() {
-  const { data, update, rewards, dismissRewards, error, needsRecovery, allowRecovery } = useStudyData();
+  const {
+    data,
+    update,
+    rewards,
+    dismissRewards,
+    error,
+    needsRecovery,
+    allowRecovery,
+  } = useStudyData();
   const page = usePage();
   const [accepted, setAccepted] = useState(hasPolicyConsent);
   const presence = usePresence(accepted);
@@ -48,14 +65,33 @@ export default function App() {
   useEffect(() => {
     document.title = `${page} · Mira — A little wiser, every day`;
   }, [page]);
-  function start(reviewer: Reviewer, mode: "cards" | "quiz") {
+  async function start(reviewer: Reviewer, mode: "cards" | "quiz") {
     const cards = prepareCards(
       reviewer.cards,
       data.settings.shuffle,
       reviewer.cards.length,
     );
     if (cards.length) {
-      if (!update({ ...data, lastStudy: { reviewerId: reviewer.id, startedAt: new Date().toISOString() } })) return;
+      if (mode === "quiz") {
+        try {
+          if (!(await confirmNewQuiz())) return;
+        } catch {
+          setRecoveryError(
+            "Could not check your unfinished quiz. Reload before starting another.",
+          );
+          return;
+        }
+      }
+      if (
+        !(await update({
+          ...data,
+          lastStudy: {
+            reviewerId: reviewer.id,
+            startedAt: new Date().toISOString(),
+          },
+        }))
+      )
+        return;
       setSession({
         title: reviewer.title,
         reviewerId: reviewer.id,
@@ -65,19 +101,23 @@ export default function App() {
       });
     }
   }
-  function daily() {
-    const cards = prepareCards(
-      data.reviewers.flatMap((r) => r.cards),
-      data.settings.shuffle,
-      dailyQuizSize(data.settings),
-    );
+  async function daily() {
+    try {
+      if (!(await confirmNewQuiz())) return;
+    } catch {
+      setRecoveryError(
+        "Could not check your unfinished quiz. Reload before starting another.",
+      );
+      return;
+    }
+    const cards = selectDailyCards(data, dailyQuizSize(data.settings));
     if (cards.length)
       setSession({
         title: "Your daily review",
         reviewerId: "",
         mode: "daily",
         cards,
-        answerPool: data.reviewers.flatMap(r => r.cards),
+        answerPool: data.reviewers.flatMap((r) => r.cards),
       });
   }
   function saveReviewer(reviewer: Reviewer, topic?: Topic) {
@@ -92,7 +132,7 @@ export default function App() {
   if (!accepted) return <PolicyConsent onAccept={() => setAccepted(true)} />;
   return (
     <div className="min-h-screen bg-page text-ink">
-      <Sidebar page={page} presence={presence} />
+      <Sidebar page={page} />
       <InstallPrompt />
       <div className="flex min-h-dvh flex-col lg:ml-60">
         <MobileHeader page={page} presence={presence} />
@@ -102,106 +142,155 @@ export default function App() {
             <span>/</span>
             <span className="text-stone-600">{page}</span>
           </div>
-          <span className="text-xs text-stone-400">
+          <div className="flex items-center gap-5"><OnlineCount presence={presence} /><span className="text-xs text-stone-400">
             {new Date().toLocaleDateString("en", {
               weekday: "short",
               month: "short",
               day: "numeric",
             })}
-          </span>
+          </span></div>
         </header>
-        <main className="app-main mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10">
-          <OnlineAssistant data={data} update={update} />
-          <div key={page} className="page-content min-w-0 flex-1">
-          {(error || recoveryError) && (
-            <div
-              role="alert"
-              className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-            >
-              {recoveryError || error}
-              <button
-                className="ml-3 underline"
-                onClick={() => {
-                  try {
-                    downloadJson(
-                      localStorage.getItem(STORAGE_KEY) || "{}",
-                      "mira-recovery.json",
-                    );
-                  } catch {
-                    setRecoveryError(
-                      "Browser storage is unavailable. Please check your browser permissions.",
-                    );
-                  }
-                }}
+        <main className={page === "Mira" ? "app-main mira-main" : "app-main mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10"}>
+          <OnlineAssistant data={data} update={update} pageMode={page === "Mira"} />
+          <ResumeQuiz
+            active={!!session}
+            completedIds={data.attempts.map((a) => a.id)}
+            onResume={setSession}
+          />
+          <div key={page} className={page === "Mira" ? "contents" : "page-content min-w-0 flex-1"}>
+            {(error || recoveryError) && (
+              <div
+                role="alert"
+                className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
               >
-                Export existing storage
-              </button>
-              {needsRecovery && <button className="ml-3 underline" onClick={async () => {
-                if (await confirmAction("Your existing data could not be loaded. Future saves will replace it. Export existing storage first if you need to recover it. Continue?")) allowRecovery();
-              }}>Allow replacing unreadable data</button>}
-            </div>
-          )}
-          {page === "Home" && (
-            <Home
-              data={data}
-              navigate={navigate}
-              onCreate={() => setEditor("new")}
-              onStudy={(r) => start(r, "cards")}
-              onDaily={daily}
-            />
-          )}
-          {page === "Reviewers" && (
-            <Reviewers
-              data={data}
-              onCreate={() => setEditor("new")}
-              onEdit={setEditor}
-              onDelete={async (r) => {
-                if (
-                  await confirmAction(
-                    `Delete “${r.title}” and its cards? Past quiz results will be kept.`,
+                {recoveryError || error}
+                <button
+                  className="ml-3 underline"
+                  onClick={async () => {
+                    try {
+                      downloadJson(
+                        await recoveryBackup(),
+                        "mira-recovery.json",
+                      );
+                    } catch {
+                      setRecoveryError(
+                        "Browser storage is unavailable. Please check your browser permissions.",
+                      );
+                    }
+                  }}
+                >
+                  Export existing storage
+                </button>
+                {needsRecovery && (
+                  <button
+                    className="ml-3 underline"
+                    onClick={async () => {
+                      if (
+                        await confirmAction(
+                          "Your existing data could not be loaded. Future saves will replace it. Export existing storage first if you need to recover it. Continue?",
+                        )
+                      )
+                        allowRecovery();
+                    }}
+                  >
+                    Allow replacing unreadable data
+                  </button>
+                )}
+              </div>
+            )}
+            {page === "Home" && (
+              <Home
+                newlyEarned={rewards.length}
+                data={data}
+                navigate={navigate}
+                onCreate={() => setEditor("new")}
+                onStudy={(r) => start(r, "cards")}
+                onDaily={daily}
+              />
+            )}
+            {page === "Reviewers" && (
+              <div className="mb-3">
+                <DocumentImport onReviewer={setEditor} />
+              </div>
+            )}
+            {page === "Reviewers" && (
+              <Reviewers
+                data={data}
+                onCreate={() => setEditor("new")}
+                onEdit={setEditor}
+                onDelete={async (r) => {
+                  if (
+                    await confirmAction(
+                      `Delete “${r.title}” and its cards? Past quiz results will be kept.`,
+                    )
                   )
-                )
-                  update({
-                    ...data,
-                    reviewers: data.reviewers.filter(
-                      (item) => item.id !== r.id,
-                    ),
-                  });
-              }}
-              onStudy={(r) => start(r, "cards")}
-              onQuiz={(r) => start(r, "quiz")}
-            />
-          )}
-          {page === "Folders" && <Folders data={data} update={update} onEdit={setEditor} onStudy={r => start(r, "cards")} />}
-          {page === "Topics" && <Topics data={data} update={update} />}
-          {page === "Quizzes" && (
-            <Quizzes
-              data={data}
-              onQuiz={(r) => start(r, "quiz")}
-              onDaily={daily}
-            />
-          )}
-          {page === "Achievements" && <Achievements data={data} />}
-          {page === "Activity" && <Activity data={data} />}
-          {page === "Settings" && (
-            <Settings data={data} update={update} onThemeChange={changeTheme} />
-          )}
-          {[
-            "Docs",
-            "Guide",
-            "Contribute",
-            "Privacy",
-            "Terms",
-            "About",
-            "Not found",
-          ].includes(page) && <Documentation page={page} />}
+                    update({
+                      ...data,
+                      reviewers: data.reviewers.filter(
+                        (item) => item.id !== r.id,
+                      ),
+                    });
+                }}
+                onStudy={(r) => start(r, "cards")}
+                onQuiz={(r) => start(r, "quiz")}
+              />
+            )}
+            {page === "Folders" && (
+              <Folders
+                data={data}
+                update={update}
+                onEdit={setEditor}
+                onStudy={(r) => start(r, "cards")}
+              />
+            )}
+            {page === "Topics" && <Topics data={data} update={update} />}
+            {page === "Quizzes" && (
+              <Quizzes
+                data={data}
+                onQuiz={(r) => start(r, "quiz")}
+                onDaily={daily}
+              />
+            )}
+            {page === "Achievements" && <Achievements data={data} />}
+            {page === "Activity" && <Activity data={data} />}
+            {page === "Settings" && (
+              <Settings
+                data={data}
+                update={update}
+                onThemeChange={changeTheme}
+              />
+            )}
+            {[
+              "Docs",
+              "Guide",
+              "Contribute",
+              "Privacy",
+              "Terms",
+              "About",
+              "Not found",
+            ].includes(page) && <Documentation page={page} />}
           </div>
-          <FocusTimer visible={page === "Achievements"} onComplete={() => update({ ...data, milestones: { ...data.milestones, focusCompleted: true } })} />
-          <footer className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
+          <FocusTimer
+            visible={page === "Achievements"}
+            onComplete={() =>
+              update({
+                ...data,
+                milestones: { ...data.milestones, focusCompleted: true },
+              })
+            }
+          />
+          <footer hidden={page === "Mira"} className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
             <span>A little wiser, every day.</span>
             <nav className="flex flex-wrap gap-4" aria-label="Footer">
               {(
-                ["Docs", "Guide", "Contribute", "Privacy", "Terms", "About"] as const
+                [
+                  "Docs",
+                  "Guide",
+                  "Contribute",
+                  "Privacy",
+                  "Terms",
+                  "About",
+                ] as const
               ).map((item) => (
                 <RouteLink
                   key={item}
@@ -227,10 +316,40 @@ export default function App() {
       {session && (
         <StudySession
           session={session}
+          mastery={session.cards.map((card) =>
+            cardMastery(
+              data.schedules?.find(
+                (s) =>
+                  s.reviewerId === session.reviewerId && s.cardId === card.id,
+              ),
+            ),
+          )}
+          onRate={(card, known) =>
+            update((current) =>
+              recordRating(
+                current,
+                session.reviewerId,
+                card.id,
+                known,
+                "flashcard",
+              ),
+            )
+          }
           onClose={() => setSession(null)}
-          onPracticeComplete={() => update({ ...data, milestones: { ...data.milestones, studyDates: [...(data.milestones?.studyDates ?? []), new Date().toISOString()] } })}
+          onPracticeComplete={() =>
+            update((current) => ({
+              ...current,
+              milestones: {
+                ...current.milestones,
+                studyDates: [
+                  ...(current.milestones?.studyDates ?? []),
+                  new Date().toISOString(),
+                ],
+              },
+            }))
+          }
           onComplete={(attempt) =>
-            update({ ...data, attempts: [...data.attempts, attempt] })
+            update((current) => recordAttempt(current, attempt))
           }
         />
       )}

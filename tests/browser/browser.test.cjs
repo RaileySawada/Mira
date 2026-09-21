@@ -91,6 +91,18 @@ test("production study flows, themes, mobile overlays and offline reload", async
       });
     }
     async function evaluate(expression) {
+      if (
+        expression.includes("JSON.parse(localStorage.getItem('mira.study.v1'))")
+      )
+        expression =
+          "(async () => { return " +
+          expression
+            .replaceAll(
+              "JSON.parse(localStorage.getItem('mira.study.v1'))",
+              "(await (async () => { const db = await new Promise((resolve,reject) => { const request=indexedDB.open('mira-study',3); request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error); }); const tx=db.transaction(['metadata','reviewers','cards','attempts']); const read = store => new Promise(resolve=>{const request=tx.objectStore(store).getAll();request.onsuccess=()=>resolve(request.result);}); const [metadata,reviewers,cards,attempts] = await Promise.all(['metadata','reviewers','cards','attempts'].map(read)); db.close(); return {...metadata[0],reviewers:reviewers.map(r=>({...r,cards:cards.filter(c=>c.reviewerId===r.id)})),attempts}; })())",
+            )
+            .replaceAll("(() =>", "(async () =>") +
+          "; })()";
       const result = await send("Runtime.evaluate", {
         expression,
         returnByValue: true,
@@ -108,6 +120,12 @@ test("production study flows, themes, mobile overlays and offline reload", async
       throw new Error("Timed out: " + expression);
     }
     async function click(text) {
+      if (text === "Create reviewers" || text === "Ask a question") {
+        await click("Assistant mode");
+        await evaluate(`Array.from(document.querySelectorAll('[role="option"]')).find(option => option.textContent.trim() === ${JSON.stringify(text)}).click()`);
+        await delay(150);
+        return;
+      }
       await evaluate(
         `(() => { const button = [...document.querySelectorAll('button')].find(b => (b.textContent.trim() === ${JSON.stringify(text)} || b.getAttribute("aria-label") === ${JSON.stringify(text)})); if (!button) throw new Error('Missing button: ' + ${JSON.stringify(text)}); button.click(); })()`,
       );
@@ -120,16 +138,28 @@ test("production study flows, themes, mobile overlays and offline reload", async
     }
     const performanceSamples = [];
     async function sampleWork(label, action) {
-      const readMetrics = async () => Object.fromEntries((await send("Performance.getMetrics")).metrics.map(metric => [metric.name, metric.value]));
+      const readMetrics = async () =>
+        Object.fromEntries(
+          (await send("Performance.getMetrics")).metrics.map((metric) => [
+            metric.name,
+            metric.value,
+          ]),
+        );
       const before = await readMetrics();
       await action();
       const after = await readMetrics();
       performanceSamples.push({
         label,
         elapsedMs: Math.round((after.Timestamp - before.Timestamp) * 1000),
-        mainThreadMs: Math.round((after.TaskDuration - before.TaskDuration) * 1000),
-        scriptMs: Math.round((after.ScriptDuration - before.ScriptDuration) * 1000),
-        layoutMs: Math.round((after.LayoutDuration - before.LayoutDuration) * 1000),
+        mainThreadMs: Math.round(
+          (after.TaskDuration - before.TaskDuration) * 1000,
+        ),
+        scriptMs: Math.round(
+          (after.ScriptDuration - before.ScriptDuration) * 1000,
+        ),
+        layoutMs: Math.round(
+          (after.LayoutDuration - before.LayoutDuration) * 1000,
+        ),
         heapMb: Math.round(after.JSHeapUsedSize / 1048576),
       });
     }
@@ -145,37 +175,80 @@ test("production study flows, themes, mobile overlays and offline reload", async
     });
     await send("Page.navigate", { url: "http://127.0.0.1:4179" });
     await waitFor("document.querySelector('h1')");
-    expect(await evaluate("document.body.innerText.includes('Welcome to Mira.')")).toBe(true);
-    expect(await evaluate("document.querySelector('.consent-card button[type=submit]')?.disabled ?? document.querySelector('.consent-card form button').disabled")).toBe(true);
-    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(
+      await evaluate("document.body.innerText.includes('Welcome to Mira.')"),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.consent-card button[type=submit]')?.disabled ?? document.querySelector('.consent-card form button').disabled",
+      ),
+    ).toBe(true);
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 320,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
     const consentShot = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(tmpdir(), "mira-consent-mobile.png"), Buffer.from(consentShot.data, "base64"));
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
+    await writeFile(
+      path.join(tmpdir(), "mira-consent-mobile.png"),
+      Buffer.from(consentShot.data, "base64"),
+    );
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 1440,
+      height: 1100,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
     await click("Privacy policy");
-    await evaluate("document.querySelectorAll('.consent-card input[type=checkbox]').forEach(input => input.click())");
+    await evaluate(
+      "document.querySelectorAll('.consent-card input[type=checkbox]').forEach(input => input.click())",
+    );
     await click("Agree & continue");
     await waitFor("document.querySelector('.sidebar')");
     expect(await evaluate("document.body.innerText")).toMatch(
       /Your next chapter/,
     );
     expect(
-      await evaluate("[...document.querySelectorAll('main .panel svg')].filter(svg => !svg.closest('[data-slot=chart]')).length"),
+      await evaluate(
+        "[...document.querySelectorAll('main .panel svg')].filter(svg => !svg.closest('[data-slot=chart]')).length",
+      ),
     ).toBe(0);
     expect(
       await evaluate(
         "document.querySelector('a[aria-label=\"Mira home\"]').textContent.trim()",
       ),
     ).toBe("mira");
-    await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
+    await waitFor(
+      "document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2",
+    );
     await delay(1500);
     await sampleWork("home-idle", () => delay(2000));
-    expect(await evaluate("document.querySelector('header.hidden').getBoundingClientRect().height")).toBeLessThanOrEqual(52);
-    expect(await evaluate("performance.getEntriesByType('resource').some(entry => entry.name.includes('/.netlify/functions/'))")).toBe(false);
-    await evaluate("Array.from(document.links).find(a => a.pathname === '/activity').click()");
+    expect(
+      await evaluate(
+        "document.querySelector('header.hidden').getBoundingClientRect().height",
+      ),
+    ).toBeLessThanOrEqual(52);
+    expect(
+      await evaluate(
+        "performance.getEntriesByType('resource').some(entry => entry.name.includes('/.netlify/functions/'))",
+      ),
+    ).toBe(false);
+    await evaluate(
+      "Array.from(document.links).find(a => a.pathname === '/activity').click()",
+    );
     await waitFor("location.pathname === '/activity'");
-    expect(await evaluate("document.querySelector('footer').getBoundingClientRect().bottom >= innerHeight - 42")).toBe(true);
-    await evaluate("Array.from(document.links).find(a => a.pathname === '/').click()");
+    expect(
+      await evaluate(
+        "document.querySelector('footer').getBoundingClientRect().bottom >= innerHeight - 42",
+      ),
+    ).toBe(true);
+    await evaluate(
+      "Array.from(document.links).find(a => a.pathname === '/').click()",
+    );
     await waitFor("location.pathname === '/'");
     await evaluate("window.scrollTo(0, 250)");
     const priorScroll = await evaluate("window.scrollY");
@@ -300,6 +373,7 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "JSON.parse(localStorage.getItem('mira.study.v1')).attempts[0].correct",
       ),
     ).toBe(1);
+    await waitFor("Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === 'Keep learning')");
     await click("Keep learning");
     await click("Back to learning");
 
@@ -332,13 +406,17 @@ test("production study flows, themes, mobile overlays and offline reload", async
     input.files = transfer.files;
     input.dispatchEvent(new Event('change', { bubbles: true }));
   })()`);
-    await waitFor("Boolean(document.querySelector('dialog[aria-label=\"Please confirm\"]'))");
+    await waitFor(
+      "Boolean(document.querySelector('dialog[aria-label=\"Please confirm\"]'))",
+    );
     await click("Continue");
     await waitFor(
       "document.body.innerText.includes('Your backup has been imported.')",
     );
     await click("Keep learning");
-    await waitFor("document.querySelector('button[aria-label=\"Import JSON\"]').dataset.state === 'idle'");
+    await waitFor(
+      "document.querySelector('button[aria-label=\"Import JSON\"]').dataset.state === 'idle'",
+    );
     expect(
       await evaluate(
         "JSON.parse(localStorage.getItem('mira.study.v1')).settings.name",
@@ -579,64 +657,186 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "document.querySelector('meta[property=\"og:image\"]').content",
       ),
     ).toBe("/social_card.png");
-    expect(await evaluate("document.querySelector('.mobile-header').getBoundingClientRect().height")).toBeLessThanOrEqual(64);
-    expect(await evaluate("document.querySelector('.mobile-header .menu-button').getBoundingClientRect().right < document.querySelector('.mobile-header img').getBoundingClientRect().left")).toBe(true);
-    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
-    await evaluate("Array.from(document.links).find(a => a.pathname === '/reviewers').click()");
+    expect(
+      await evaluate(
+        "document.querySelector('.mobile-header').getBoundingClientRect().height",
+      ),
+    ).toBeLessThanOrEqual(64);
+    expect(
+      await evaluate(
+        "document.querySelector('.mobile-header .menu-button').getBoundingClientRect().right < document.querySelector('.mobile-header img').getBoundingClientRect().left",
+      ),
+    ).toBe(true);
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 320,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    await evaluate(
+      "Array.from(document.links).find(a => a.pathname === '/reviewers').click()",
+    );
     await waitFor("document.querySelector('.reviewer-toolbar')");
-    expect(await evaluate("new Set([...document.querySelector('.reviewer-toolbar').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
+    expect(
+      await evaluate(
+        "new Set([...document.querySelector('.reviewer-toolbar').children].map(el => Math.round(el.getBoundingClientRect().top))).size",
+      ),
+    ).toBe(1);
     await delay(400);
-    await evaluate("document.querySelector('button[aria-label=\"Filter by topic\"]').focus(); document.querySelector('button[aria-label=\"Filter by topic\"]').click()");
-    expect(await evaluate("document.activeElement.getAttribute('aria-label')")).toBe("Filter by topic");
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
-    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().left >= 0")).toBe(true);
-    expect(await evaluate("document.querySelector('.select-panel').matches(':popover-open')")).toBe(true);
-    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8")).toBe(true);
-    expect(await evaluate("document.querySelector('.select-panel input').getBoundingClientRect().width >= 240")).toBe(true);
-    expect(await evaluate("document.querySelector('.reviewer-toolbar input').getBoundingClientRect().width >= 90")).toBe(true);
-    const dropdownShot = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(tmpdir(), "mira-topic-dropdown-mobile.png"), Buffer.from(dropdownShot.data, "base64"));
-    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 420, deviceScaleFactor: 1, mobile: true });
+    await evaluate(
+      "document.querySelector('button[aria-label=\"Filter by topic\"]').focus(); document.querySelector('button[aria-label=\"Filter by topic\"]').click()",
+    );
+    expect(
+      await evaluate("document.activeElement.getAttribute('aria-label')"),
+    ).toBe("Filter by topic");
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.select-panel').getBoundingClientRect().left >= 0",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.select-panel').matches(':popover-open')",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.select-panel input').getBoundingClientRect().width >= 240",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.reviewer-toolbar input').getBoundingClientRect().width >= 90",
+      ),
+    ).toBe(true);
+    const dropdownShot = await send("Page.captureScreenshot", {
+      format: "png",
+    });
+    await writeFile(
+      path.join(tmpdir(), "mira-topic-dropdown-mobile.png"),
+      Buffer.from(dropdownShot.data, "base64"),
+    );
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 320,
+      height: 420,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
     await delay(100);
-    expect(await evaluate("document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8")).toBe(true);
-    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
+    expect(
+      await evaluate(
+        "document.querySelector('.select-panel').getBoundingClientRect().bottom <= innerHeight - 8",
+      ),
+    ).toBe(true);
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 320,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
     await click("Filter by topic");
     await click("List view");
-    expect(await evaluate("document.querySelector('.reviewer-list .reviewer-card').getBoundingClientRect().height < 210")).toBe(true);
-    expect(await evaluate("getComputedStyle(document.querySelector('.reviewer-list .reviewer-card')).borderRadius")).toBe("0px");
+    expect(
+      await evaluate(
+        "document.querySelector('.reviewer-list .reviewer-card').getBoundingClientRect().height < 210",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.reviewer-list .reviewer-card')).borderRadius",
+      ),
+    ).toBe("0px");
     const listShot = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(tmpdir(), "mira-reviewers-list-mobile.png"), Buffer.from(listShot.data, "base64"));
+    await writeFile(
+      path.join(tmpdir(), "mira-reviewers-list-mobile.png"),
+      Buffer.from(listShot.data, "base64"),
+    );
     await evaluate("document.querySelector('a[href=\"/topics\"]').click()");
     await waitFor("document.querySelector('.topic-card')");
     await click("List view");
-    expect(await evaluate("document.querySelector('.topic-list .topic-card').getBoundingClientRect().height < 110")).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.topic-list .topic-card').getBoundingClientRect().height < 110",
+      ),
+    ).toBe(true);
     await evaluate("document.querySelector('a[href=\"/quizzes\"]').click()");
     await waitFor("document.querySelector('.quiz-card')");
     await click("List view");
-    expect(await evaluate("getComputedStyle(document.querySelector('.quiz-list .quiz-card')).flexDirection")).toBe("row");
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.quiz-list .quiz-card')).flexDirection",
+      ),
+    ).toBe("row");
     await evaluate("document.querySelector('a[href=\"/activity\"]').click()");
     await waitFor("document.querySelector('.activity-calendar')");
     await delay(400);
-    expect(await evaluate("document.querySelectorAll('.calendar-day').length")).toBe(42);
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
-    const calendarShot = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(tmpdir(), "mira-calendar-mobile.png"), Buffer.from(calendarShot.data, "base64"));
-    await evaluate("document.querySelector('.calendar-day:not([data-level=\"0\"])').click()");
+    expect(
+      await evaluate("document.querySelectorAll('.calendar-day').length"),
+    ).toBe(42);
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
+    const calendarShot = await send("Page.captureScreenshot", {
+      format: "png",
+    });
+    await writeFile(
+      path.join(tmpdir(), "mira-calendar-mobile.png"),
+      Buffer.from(calendarShot.data, "base64"),
+    );
+    await evaluate(
+      "document.querySelector('.calendar-day:not([data-level=\"0\"])').click()",
+    );
     await waitFor("document.querySelector('dialog[open] .day-summary-stats')");
-    expect(await evaluate("document.querySelector('dialog[open]').getBoundingClientRect().width <= innerWidth")).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('dialog[open]').getBoundingClientRect().width <= innerWidth",
+      ),
+    ).toBe(true);
     await click("Close dialog");
 
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
 
-    await evaluate("Array.from(document.links).find(a => a.pathname === '/about').click()");
+    await evaluate(
+      "Array.from(document.links).find(a => a.pathname === '/about').click()",
+    );
     await waitFor("document.querySelector('.documentation-tabs')");
-    expect(await evaluate("new Set([...document.querySelector('.documentation-tabs').children].map(el => Math.round(el.getBoundingClientRect().top))).size")).toBe(1);
-    expect(await evaluate("document.querySelector('.documentation-tabs').scrollWidth > document.querySelector('.documentation-tabs').clientWidth")).toBe(true);
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(
+      await evaluate(
+        "new Set([...document.querySelector('.documentation-tabs').children].map(el => Math.round(el.getBoundingClientRect().top))).size",
+      ),
+    ).toBe(1);
+    expect(
+      await evaluate(
+        "document.querySelector('.documentation-tabs').scrollWidth > document.querySelector('.documentation-tabs').clientWidth",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
     const compact = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(profile, "mobile-about.png"), Buffer.from(compact.data, "base64"));
-    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-    await evaluate("Array.from(document.links).find(a => a.pathname === '/').click()");
+    await writeFile(
+      path.join(profile, "mobile-about.png"),
+      Buffer.from(compact.data, "base64"),
+    );
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    await evaluate(
+      "Array.from(document.links).find(a => a.pathname === '/').click()",
+    );
     await waitFor("location.pathname === '/'");
     const mobile = await send("Page.captureScreenshot", {
       format: "png",
@@ -651,45 +851,124 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await waitFor("document.querySelector('.reviewer-card')");
     await click("Study cards");
     await delay(350);
-    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2")).toBe(true);
-    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().top) < 2")).toBe(true);
-    const scrollBounds = await evaluate("[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]");
-    await evaluate("(() => { const card = document.querySelector('.study-card'); for (const [type, x] of [['touchstart',100],['touchmove',280]]) { const event = new Event(type, { bubbles: true }); Object.defineProperty(event, 'touches', { value: [{ clientX:x, clientY:300 }] }); card.dispatchEvent(event); } })()");
-    expect(await evaluate("document.querySelector('.study-card').style.transform.includes('180px')")).toBe(true);
-    expect(await evaluate("[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]")).toEqual(scrollBounds);
-    await evaluate("document.querySelector('.study-card').dispatchEvent(new Event('touchcancel', { bubbles: true }))");
+    expect(
+      await evaluate(
+        "Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "Math.abs(document.querySelector('.study-modal').getBoundingClientRect().top) < 2",
+      ),
+    ).toBe(true);
+    const scrollBounds = await evaluate(
+      "[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]",
+    );
+    await evaluate(
+      "(() => { const card = document.querySelector('.study-card'); for (const [type, x] of [['touchstart',100],['touchmove',280]]) { const event = new Event(type, { bubbles: true }); Object.defineProperty(event, 'touches', { value: [{ clientX:x, clientY:300 }] }); card.dispatchEvent(event); } })()",
+    );
+    expect(
+      await evaluate(
+        "document.querySelector('.study-card').style.transform.includes('180px')",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "[document.documentElement.scrollHeight, document.body.scrollHeight, document.querySelector('.study-modal').scrollHeight, document.querySelector('.study-modal .modal-content').scrollHeight]",
+      ),
+    ).toEqual(scrollBounds);
+    await evaluate(
+      "document.querySelector('.study-card').dispatchEvent(new Event('touchcancel', { bubbles: true }))",
+    );
 
     await click("Close dialog");
     await click("Take quiz");
     await delay(350);
-    expect(await evaluate("Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2")).toBe(true);
+    expect(
+      await evaluate(
+        "Math.abs(document.querySelector('.study-modal').getBoundingClientRect().height - innerHeight) < 2",
+      ),
+    ).toBe(true);
     await click("Close dialog");
     await click("Continue");
     await waitFor("!document.querySelector('dialog[open]')");
     await evaluate("document.querySelector('a[href=\"/docs\"]').click()");
-    await waitFor("document.body.innerText.includes('Everything you can do with Mira.')");
+    await waitFor(
+      "document.body.innerText.includes('Everything you can do with Mira.')",
+    );
     await evaluate("document.querySelector('a[href=\"/folders\"]').click()");
     await waitFor("document.querySelector('.folder-reviewer')");
-    await send("Emulation.setDeviceMetricsOverride", { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
-    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height < 180")).toBe(true);
-    expect(await evaluate("getComputedStyle(document.querySelector('.folder-navigation')).display")).toBe("none");
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 320,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.folder-reviewer').getBoundingClientRect().height < 180",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.folder-navigation')).display",
+      ),
+    ).toBe("none");
     await delay(400);
-    const reviewerTop = await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().top");
+    const reviewerTop = await evaluate(
+      "document.querySelector('.folder-reviewer').getBoundingClientRect().top",
+    );
     await click("Browse folders");
-    expect(await evaluate("getComputedStyle(document.querySelector('.folder-navigation')).position")).toBe("absolute");
-    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().top")).toBe(reviewerTop);
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.folder-navigation')).position",
+      ),
+    ).toBe("absolute");
+    expect(
+      await evaluate(
+        "document.querySelector('.folder-reviewer').getBoundingClientRect().top",
+      ),
+    ).toBe(reviewerTop);
     await click("Browse folders");
-    const reviewerHeight = await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height");
-    await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
-    expect(await evaluate("getComputedStyle(document.querySelector('.folder-reviewer .select-panel')).position")).toBe("fixed");
-    expect(await evaluate("document.querySelector('.folder-reviewer').getBoundingClientRect().height")).toBe(reviewerHeight);
-    await evaluate("document.querySelector('.folder-reviewer .select-trigger').click()");
-    const foldersMobile = await send("Page.captureScreenshot", { format: "png" });
-    await writeFile(path.join(tmpdir(), "mira-folders-mobile.png"), Buffer.from(foldersMobile.data, "base64"));
-    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    const reviewerHeight = await evaluate(
+      "document.querySelector('.folder-reviewer').getBoundingClientRect().height",
+    );
+    await evaluate(
+      "document.querySelector('.folder-reviewer .select-trigger').click()",
+    );
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.folder-reviewer .select-panel')).position",
+      ),
+    ).toBe("fixed");
+    expect(
+      await evaluate(
+        "document.querySelector('.folder-reviewer').getBoundingClientRect().height",
+      ),
+    ).toBe(reviewerHeight);
+    await evaluate(
+      "document.querySelector('.folder-reviewer .select-trigger').click()",
+    );
+    const foldersMobile = await send("Page.captureScreenshot", {
+      format: "png",
+    });
+    await writeFile(
+      path.join(tmpdir(), "mira-folders-mobile.png"),
+      Buffer.from(foldersMobile.data, "base64"),
+    );
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
 
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
 
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("document.querySelector('[aria-label=\"Color theme\"]')");
@@ -726,11 +1005,21 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("document.querySelector('[aria-label=\"Color theme\"]')");
 
-    // The launcher stays attached to the viewport after page animations and scrolling.
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-launcher')).display")).toBe('none');
+    await send('Emulation.setDeviceMetricsOverride', {width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+    // The desktop launcher stays attached to the viewport after scrolling.
     await evaluate("window.scrollTo(0, document.body.scrollHeight)");
     await waitFor("scrollY > 0");
-    expect(await evaluate("Math.round(innerWidth - document.querySelector('.ai-launcher').getBoundingClientRect().right)")).toBe(20);
-    expect(await evaluate("Math.round(innerHeight - document.querySelector('.ai-launcher').getBoundingClientRect().bottom)")).toBe(20);
+    expect(
+      await evaluate(
+        "Math.round(document.documentElement.clientWidth - document.querySelector('.ai-launcher').getBoundingClientRect().right)",
+      ),
+    ).toBe(20);
+    expect(
+      await evaluate(
+        "Math.round(innerHeight - document.querySelector('.ai-launcher').getBoundingClientRect().bottom)",
+      ),
+    ).toBe(20);
 
     // Exercise the real browser client with deterministic AI responses (no paid calls).
     await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => {
@@ -741,45 +1030,105 @@ test("production study flows, themes, mobile overlays and offline reload", async
     }`);
     await click("AI study assistant");
     await waitFor("document.querySelector('.ai-panel')");
-    expect(await evaluate("document.querySelector('.ai-panel').getBoundingClientRect().right <= innerWidth")).toBe(true);
-    expect(await evaluate("getComputedStyle(document.querySelector('.ai-panel')).position")).toBe("fixed");
-    expect(await evaluate("getComputedStyle(document.body).position")).not.toBe("fixed");
-    await evaluate("window.openMiraPanel = document.querySelector('.ai-panel'); document.querySelector('a[href=\"/quizzes\"]').click()");
+    expect(
+      await evaluate(
+        "document.querySelector('.ai-panel').getBoundingClientRect().right <= innerWidth",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "getComputedStyle(document.querySelector('.ai-panel')).position",
+      ),
+    ).toBe("fixed");
+    expect(await evaluate("getComputedStyle(document.body).position")).not.toBe(
+      "fixed",
+    );
+    await evaluate(
+      "window.openMiraPanel = document.querySelector('.ai-panel'); document.querySelector('a[href=\"/quizzes\"]').click()",
+    );
     await waitFor("location.pathname === '/quizzes'");
-    expect(await evaluate("document.querySelector('.ai-panel') === window.openMiraPanel")).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.ai-panel') === window.openMiraPanel",
+      ),
+    ).toBe(true);
     await evaluate("document.querySelector('a[href=\"/settings\"]').click()");
     await waitFor("location.pathname === '/settings'");
     await fill(".ai-panel textarea", "What are cells?");
-    await evaluate("window.idlePanel = document.querySelector('.ai-panel'); true");
-    await send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+    await evaluate(
+      "window.idlePanel = document.querySelector('.ai-panel'); true",
+    );
+    await send("Network.emulateNetworkConditions", {
+      offline: true,
+      latency: 0,
+      downloadThroughput: 0,
+      uploadThroughput: 0,
+    });
     await waitFor("document.querySelector('.ai-panel').hidden");
-    await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    await send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
     await waitFor("!document.querySelector('.ai-panel').hidden");
-    expect(await evaluate("document.querySelector('.ai-panel') === window.idlePanel")).toBe(true);
-    expect(await evaluate("document.querySelector('.ai-panel textarea').value")).toBe("What are cells?");
+    expect(
+      await evaluate(
+        "document.querySelector('.ai-panel') === window.idlePanel",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate("document.querySelector('.ai-panel textarea').value"),
+    ).toBe("What are cells?");
 
     await sampleWork("ai-answer-typing", async () => {
       await click("Send question");
       await waitFor("document.querySelectorAll('.chat-message').length === 2");
-      expect(await evaluate("[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')")).toBe(true);
-      const chatScreenshot = await send("Page.captureScreenshot", { format: "png" });
-      await writeFile(path.join(profile, "floating-chat.png"), Buffer.from(chatScreenshot.data, "base64"));
-      await waitFor("document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'");
+      expect(
+        await evaluate(
+          "[...document.querySelectorAll('.chat-message img')].every(img => img.complete && img.naturalWidth > 0 && getComputedStyle(img).borderRadius === '50%')",
+        ),
+      ).toBe(true);
+      const chatScreenshot = await send("Page.captureScreenshot", {
+        format: "png",
+      });
+      await writeFile(
+        path.join(profile, "floating-chat.png"),
+        Buffer.from(chatScreenshot.data, "base64"),
+      );
+      await waitFor(
+        "document.querySelector('button[aria-label=\"Send question\"]').dataset.state === 'idle'",
+      );
     });
     await click("Keep learning");
     await sampleWork("ai-open-idle", () => delay(2000));
-    await writeFile(path.join(tmpdir(), "mira-performance.json"), JSON.stringify(performanceSamples, null, 2));
+    await writeFile(
+      path.join(tmpdir(), "mira-performance.json"),
+      JSON.stringify(performanceSamples, null, 2),
+    );
     await click("Create reviewers");
     await click("Cards per reviewer");
-    expect(await evaluate("(() => { const p = document.querySelector('.ai-panel .select-panel').getBoundingClientRect(); const t = document.querySelector('button[aria-label=\"Cards per reviewer\"]').getBoundingClientRect(); return Math.min(Math.abs(p.bottom - t.top), Math.abs(p.top - t.bottom)) < 9; })()")).toBe(true);
-    expect(await evaluate("document.querySelector('.ai-panel .select-panel input').getBoundingClientRect().height >= 40")).toBe(true);
+    expect(
+      await evaluate(
+        "(() => { const p = document.querySelector('.ai-panel .select-panel').getBoundingClientRect(); const t = document.querySelector('button[aria-label=\"Cards per reviewer\"]').getBoundingClientRect(); return Math.min(Math.abs(p.bottom - t.top), Math.abs(p.top - t.bottom)) < 9; })()",
+      ),
+    ).toBe(true);
+    expect(
+      await evaluate(
+        "document.querySelector('.ai-panel .select-panel input').getBoundingClientRect().height >= 40",
+      ),
+    ).toBe(true);
     await click("Cards per reviewer");
     await fill(".ai-panel input", "AI Biology");
     await click("Generate reviewers");
     await waitFor("document.body.innerText.includes('Ready to review')");
     await click("Save all reviewers");
     await waitFor("!document.querySelector('.ai-panel')");
-    expect(await evaluate("JSON.parse(localStorage.getItem('mira.study.v1')).reviewers.filter(r=>r.title.startsWith('AI reviewer')).length")).toBe(3);
+    expect(
+      await evaluate(
+        "JSON.parse(localStorage.getItem('mira.study.v1')).reviewers.filter(r=>r.title.startsWith('AI reviewer')).length",
+      ),
+    ).toBe(3);
     await evaluate("window.fetch = window.originalFetch");
     await waitFor("navigator.serviceWorker.controller !== null");
     await send("Network.emulateNetworkConditions", {
@@ -799,17 +1148,72 @@ test("production study flows, themes, mobile overlays and offline reload", async
         "JSON.parse(localStorage.getItem('mira.study.v1')).attempts.length",
       ),
     ).toBe(1);
-    expect(await evaluate("Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))")).toBe(false);
-    expect(await evaluate("document.body.innerText.includes('offline')")).toBe(true);
+    expect(
+      await evaluate(
+        "Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))",
+      ),
+    ).toBe(false);
+    expect(await evaluate("document.body.innerText.includes('offline')")).toBe(
+      true,
+    );
     await evaluate("document.querySelector('a[href=\"/\"]').click()");
-    await waitFor("document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2");
-    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    await waitFor(
+      "document.querySelectorAll('[data-slot=chart] svg.recharts-surface').length === 2",
+    );
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
     await evaluate("document.querySelector('a[href=\"/reviewers\"]').click()");
     await waitFor("document.body.innerText.includes('AI reviewer 0')");
-    await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
-    await waitFor("Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))");
+    await send("Network.emulateNetworkConditions", {
+      offline: false,
+      latency: 0,
+      downloadThroughput: -1,
+      uploadThroughput: -1,
+    });
+    await waitFor(
+      "Boolean(document.querySelector('button[aria-label=\"AI study assistant\"]'))",
+    );
+    await evaluate("document.querySelector('a[href=\"/mira\"]').click()");
+    await send('Emulation.setDeviceMetricsOverride', {width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await waitFor("document.querySelector('.ai-page textarea')");
+    expect(await evaluate("document.querySelector('.ai-page').getBoundingClientRect().width <= innerWidth")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-page .mira-line-logo').getAttribute('src')")).toBe('/brand/mark.png');
+    expect(await evaluate("document.querySelector('.sidebar .online-count') === null")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-page .ai-identity') === null")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-page button[aria-label=\"Close dialog\"]') === null")).toBe(true);
+    await fill('.ai-page textarea', 'A longer message to Mira.\n'.repeat(35));
+    await waitFor("document.querySelector('.ai-page textarea').scrollHeight > 160");
+    expect(await evaluate("document.querySelector('.ai-page textarea').getBoundingClientRect().height <= 161")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-page textarea')).overflowY")).toBe('auto');
+    await fill('.ai-page textarea', '');
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-page .chat-log')).overflowY")).toBe('visible');
+    await evaluate("document.querySelector('.ai-page .chat-log').insertAdjacentHTML('beforeend', '<p style=\"height:1500px\">Long conversation</p>')");
+    expect(await evaluate("document.documentElement.scrollHeight > innerHeight")).toBe(true);
+    expect(await evaluate("document.querySelector('.ai-page .chat-log').clientHeight >= 1500")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-page .chat-composer-wrap')).position")).toBe('fixed');
+    await evaluate("window.scrollTo(0, 0)");
+    expect(await evaluate("Math.abs(innerHeight - document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().bottom) < 2")).toBe(true);
+    await evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
+    expect(await evaluate("Math.abs(innerHeight - document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().bottom) < 2")).toBe(true);
+    await evaluate("document.querySelector('.ai-page .chat-log').lastElementChild.remove()");
+    const miraMobile = await send('Page.captureScreenshot', {format:'png'});
+    await writeFile(path.join(tmpdir(), 'mira-page-mobile.png'), Buffer.from(miraMobile.data,'base64'));
+    await evaluate("document.querySelector('a[href=\"/\"]').click()");
+    await send('Emulation.setDeviceMetricsOverride', {width:320,height:740,deviceScaleFactor:1,mobile:true});
+    await waitFor("document.querySelector('.home-study-grid')");
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    expect(await evaluate("getComputedStyle(document.querySelector('.ai-launcher')).display")).toBe('none');
+    await evaluate("document.querySelector('.home-study-grid button p').textContent = 'LongReviewerTitle'.repeat(35)");
+    expect(await evaluate("document.documentElement.scrollWidth <= innerWidth")).toBe(true);
+    await send('Emulation.setDeviceMetricsOverride', {width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+    await evaluate("document.querySelector('a[href=\"/mira\"]').click()");
+    await waitFor("document.querySelector('.ai-page')");
+    const miraDesktop = await send('Page.captureScreenshot', {format:'png'});
+    await writeFile(path.join(tmpdir(), 'mira-page-desktop.png'), Buffer.from(miraDesktop.data,'base64'));
+    await evaluate("history.pushState(null,'','/this-page-does-not-exist'); window.dispatchEvent(new PopStateEvent('popstate'))");
+    await waitFor("document.body.innerText.includes('404')");
     expect(errors).toEqual([]);
-
   } finally {
     socket?.close();
     chrome.kill();

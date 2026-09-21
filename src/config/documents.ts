@@ -1,4 +1,11 @@
-export type DocumentPage = "Docs" | "Guide" | "Terms" | "Privacy" | "About" | "Contribute";
+import { adaptiveDocs } from "./adaptiveDocs";
+export type DocumentPage =
+  | "Docs"
+  | "Guide"
+  | "Terms"
+  | "Privacy"
+  | "About"
+  | "Contribute";
 export const documents: Record<
   DocumentPage,
   {
@@ -11,20 +18,57 @@ export const documents: Record<
   Docs: {
     eyebrow: "THE MIRA HANDBOOK",
     title: "Everything you can do with Mira.",
-    intro: "A practical reference for your library, study sessions, privacy, and offline use.",
+    intro:
+      "A practical reference for your library, study sessions, privacy, and offline use.",
     sections: [
-      {"title":"First visit and policy acceptance","text":"Before entering the app, read the Terms and Privacy tabs and explicitly accept both. Mira records the policy version and acceptance time on this device. A missing, unreadable or outdated record shows the agreement again. The app and optional AI do not mount until acceptance; downloaded application files can still be cached. Acceptance is separate from JSON library backups."},
-      {"title":"Mobile browsing and controls","text":"Use the left hamburger to open navigation. The header shows the original cat mark, while the sidebar adds the Mira name beside it. Topic filters open searchable menus within the visible screen, including above the on-screen keyboard. Folders have a compact searchable picker on mobile. Grid and list views are distinct, with compact divided rows in list mode. Pencil and trash buttons edit and delete; their accessible labels explain each action."},
-      { title: "Library: reviewers, topics and folders", text: "A reviewer is a set of question-and-answer flashcards. Topics label what a reviewer teaches; folders group reviewers for a course, exam, or project. Create and rename folders on the Folders page. Move a reviewer using its folder selector or the reviewer editor. Deleting a folder moves its reviewers to Unfiled without deleting cards. Each reviewer has one topic and at most one folder. You can create topics directly while adding a reviewer." },
-      { title: "Flashcards: keyboard, touch and self-ratings", text: "Open Study cards. Tap the card or press Space to flip it. Swipe left or press Left Arrow for I don’t know; swipe right or press Right Arrow for I know. The two buttons do the same thing. Previous and Next card let you navigate without rating. Rating the last card shows this session’s known and needs-practice totals. These self-ratings are temporary and do not count toward quiz accuracy or streaks. Mobile study and quiz sessions fill the screen, with scrolling for longer content." },
-      { title: "Quizzes and daily review", text: "Written quizzes compare your answer to the saved definition, ignoring letter case and repeated whitespace. Synonyms are not automatically accepted. Check an answer, continue, then finish and save the result. An unfinished quiz is discarded after a leave confirmation. Reviewer quizzes include every card. Daily review mixes available cards across your library using its own question count and shuffle setting: 20 by default for new libraries, or five more than the old quiz limit for older backups (up to 100). You can change Daily review questions in Settings. Normal mode offers up to four distinct answers drawn from the saved study set. Hard mode uses written recall. Select the mode before checking the first answer. Sets with fewer than two distinct answers use Hard mode. Both modes work offline." },
-      { title: "Achievements", text: "Open Achievements to see ten badges, their requirements and progress. Locked artwork is gray; earned badges are colored. A congratulation dialog shows newly earned badges after a successful save, grouping rewards earned together. Choose Keep learning to return. Existing rewards do not replay on reload or when importing their saved unlock records. Each badge matches its artwork: First Step (first completed session), Study Streak (three consecutive study days), Quiz Master (ten quizzes scoring at least 80%), Perfect Score (100% on a quiz), Bookworm (import a reviewer), Night Owl (complete a session between midnight and 5:59 a.m.), Focus Mode (finish and save the 25-minute timer), Fast Learner (a correct answer within ten seconds in a saved quiz), Helper (receive a Mira response), and Century Club (100 answered questions in saved quizzes). The timer pauses when the app is hidden. Flashcard completions count toward badge study days, but not quiz accuracy or the Home quiz streak. Earlier mismatched badges are recalculated from recorded evidence. Earned badge IDs persist with your library and are included in JSON backups. Deleting a reviewer does not remove a saved badge. A reset or replacement import replaces these records. Flashcard self-ratings do not count as completed quizzes." },
-      { title: "Progress and activity", text: "Home starts with Mira’s contextual expression and your last opened reviewer with its folder. Mira types a finite series of greetings and messages about your library, current reviewer and folder, completed study sessions and badges. Messages advance automatically after a short reading pause, pause when the tab is hidden, and stop on the last message. Reduced motion shows complete text without typing and still advances automatically. Home also shows your reviewer count, completed quizzes, question activity and weighted quiz accuracy. Streaks count consecutive local-calendar days with completed quizzes, allowing yesterday as the latest day. Activity opens with a month calendar. Select a day for completed sessions, total questions, weighted accuracy and individual results. Indicators count completed quizzes and daily reviews: 1 slightly active, 2–4 active, 5+ super active. Dates use your device timezone. The searchable, sortable, paginated history remains below the calendar. Grid/list choices on Reviewers, Topics and Quizzes are remembered separately on this device." },
-      { title: "Mira AI: questions and reviewer drafts", text: "Open Ask Mira in the lower-right corner when online. Ask a study question or request reviewer creation directly in chat. You can also use Create reviewers to choose one to five sets with five or ten cards each. Expand drafts to check questions and answers before saving. Generated content can be inaccurate; verify it against your course material. Online chat requests send your question, recent chat context and a study overview through Netlify to Pollinations. The overview includes your saved name, total library counts, up to 10 reviewer summaries, 15 topic names, 15 folder names, current reviewer, goals, activity statistics, earned achievements and five recent quiz results. Full flashcard contents are not included. The overview is built on submission, not uploaded in the background. On disconnect the assistant hides and requests stop; its open conversation returns when reconnected." },
-      { title: "Voice input", text: "Supported browsers show a microphone beside the message input. Allow microphone access, speak, then press Stop. Recognition resumes after pauses until stopped. Provisional text may change while the browser confirms words. Review and edit the transcript before Send; recording never sends automatically. Speech uses your browser language and may use the browser’s online speech service. Permission errors or unsupported browsers do not prevent typing. Closing the assistant stops recording." },
-      { title: "Install and offline availability", text: "When your browser offers installation, Mira shows a bottom prompt once per tab session. Choose Install Mira or Not now. On iPhone and iPad, follow the Share menu and Add to Home Screen instructions instead. Installed apps do not show this prompt. Allow the production app to finish loading online before studying offline. Your library, folders, quizzes, charts and settings work offline; AI and speech require connectivity. Installation availability is controlled by the browser. If the prompt is unavailable, check your browser’s install menu or the guide." },
-      { title: "Storage, backups and session memory", text: "Mira has no login or automatic cloud synchronization. LocalStorage holds your library, folders, results and settings. Export JSON in Settings for a backup; import replaces this device’s library after confirmation and accepts older backups without folders. Maximum import size is 5 MB. Device-specific layout choices and temporary AI conversations are not part of a library export. Chat messages use sessionStorage for the current tab and are cleared when you close the assistant or start a new conversation. Unsent inputs and unsaved generated drafts remain in memory only. Keep backups before clearing browser data, and use one tab for edits." },
-      { title: "Preferences, accessibility and troubleshooting", text: "Settings controls your name, daily goal, daily-review length, shuffle and daily-review shortcut. Light, dark and system themes save immediately. Other settings save with Save preferences. Reduced-motion preferences disable decorative transitions. Searchable selectors support arrow keys, Enter and Escape. If storage fails, Mira shows an error instead of claiming your work was saved. Export before clearing data. For bugs or suggestions, open Contribute to visit the repository and issue tracker." },
+      {
+        title: "First visit and policy acceptance",
+        text: "Before entering the app, read the Terms and Privacy tabs and explicitly accept both. Mira records the policy version and acceptance time on this device. A missing, unreadable or outdated record shows the agreement again. The app and optional AI do not mount until acceptance; downloaded application files can still be cached. Acceptance is separate from JSON library backups.",
+      },
+      {
+        title: "Mobile browsing and controls",
+        text: "Use the left hamburger to open navigation. The header shows the original cat mark, while the sidebar adds the Mira name beside it. Topic filters open searchable menus within the visible screen, including above the on-screen keyboard. Folders have a compact searchable picker on mobile. Grid and list views are distinct, with compact divided rows in list mode. Pencil and trash buttons edit and delete; their accessible labels explain each action.",
+      },
+      {
+        title: "Library: reviewers, topics and folders",
+        text: "A reviewer is a set of question-and-answer flashcards. Topics label what a reviewer teaches; folders group reviewers for a course, exam, or project. Create and rename folders on the Folders page. Move a reviewer using its folder selector or the reviewer editor. Deleting a folder moves its reviewers to Unfiled without deleting cards. Each reviewer has one topic and at most one folder. You can create topics directly while adding a reviewer.",
+      },
+      {
+        title: "Flashcards: keyboard, touch and self-ratings",
+        text: "Open Study cards. Tap the card or press Space to flip it. Swipe left or press Left Arrow for I don’t know; swipe right or press Right Arrow for I know. The two buttons do the same thing. Previous and Next card let you navigate without rating. Rating the last card shows this session’s known and needs-practice totals. These self-ratings are temporary and do not count toward quiz accuracy or streaks. Mobile study and quiz sessions fill the screen, with scrolling for longer content.",
+      },
+      {
+        title: "Quizzes and daily review",
+        text: "Written quizzes compare your answer to the saved definition, ignoring letter case and repeated whitespace. Synonyms are not automatically accepted. Check an answer, continue, then finish and save the result. An unfinished quiz is discarded after a leave confirmation. Reviewer quizzes include every card. Daily review mixes available cards across your library using its own question count and shuffle setting: 20 by default for new libraries, or five more than the old quiz limit for older backups (up to 100). You can change Daily review questions in Settings. Normal mode offers up to four distinct answers drawn from the saved study set. Hard mode uses written recall. Select the mode before checking the first answer. Sets with fewer than two distinct answers use Hard mode. Both modes work offline.",
+      },
+      {
+        title: "Achievements",
+        text: "Open Achievements to see ten badges, their requirements and progress. Locked artwork is gray; earned badges are colored. A congratulation dialog shows newly earned badges after a successful save, grouping rewards earned together. Choose Keep learning to return. Existing rewards do not replay on reload or when importing their saved unlock records. Each badge matches its artwork: First Step (first completed session), Study Streak (three consecutive study days), Quiz Master (ten quizzes scoring at least 80%), Perfect Score (100% on a quiz), Bookworm (import a reviewer), Night Owl (complete a session between midnight and 5:59 a.m.), Focus Mode (finish and save the 25-minute timer), Fast Learner (a correct answer within ten seconds in a saved quiz), Helper (receive a Mira response), and Century Club (100 answered questions in saved quizzes). The timer pauses when the app is hidden. Flashcard completions count toward study streaks everywhere, but not quiz accuracy. Earlier mismatched badges are recalculated from recorded evidence. Earned badge IDs persist with your library and are included in JSON backups. Deleting a reviewer does not remove a saved badge. A reset or replacement import replaces these records. Flashcard self-ratings do not count as completed quizzes.",
+      },
+      {
+        title: "Progress and activity",
+        text: "Home starts with Mira’s contextual expression and your last opened reviewer with its folder. Mira types a finite series of greetings and messages about your library, current reviewer and folder, completed study sessions and badges. Messages advance automatically after a short reading pause, pause when the tab is hidden, and stop on the last message. Reduced motion shows complete text without typing and still advances automatically. Home also shows your reviewer count, completed quizzes, question activity and weighted quiz accuracy. Streaks count consecutive local-calendar days with completed quizzes, daily reviews or flashcard sessions, allowing yesterday as the latest day. Activity opens with a month calendar. Select a day for completed sessions, total questions, weighted accuracy and individual results. Indicators count completed quizzes and daily reviews: 1 slightly active, 2–4 active, 5+ super active. Dates use your device timezone. The searchable, sortable, paginated history remains below the calendar. Grid/list choices on Reviewers, Topics and Quizzes are remembered separately on this device.",
+      },
+      {
+        title: "Mira AI: questions and reviewer drafts",
+        text: "Open Ask Mira in the lower-right corner when online. Ask a study question or request reviewer creation directly in chat. You can also use Create reviewers to choose one to five sets with five or ten cards each. Expand drafts to check questions and answers before saving. Generated content can be inaccurate; verify it against your course material. Online chat requests send your question, recent chat context and a study overview through Netlify to Pollinations. The overview includes your saved name, total library counts, up to 10 reviewer summaries, 15 topic names, 15 folder names, current reviewer, goals, activity statistics, earned achievements and five recent quiz results. Full flashcard contents are not included unless you explicitly enable current-reviewer context. The overview is built on submission, not uploaded in the background. On disconnect the assistant hides and requests stop; its open conversation returns when reconnected.",
+      },
+      {
+        title: "Voice input",
+        text: "Supported browsers show a microphone beside the message input. Allow microphone access, speak, then press Stop. Recognition resumes after pauses until stopped. Provisional text may change while the browser confirms words. Review and edit the transcript before Send; recording never sends automatically. Speech uses your browser language and may use the browser’s online speech service. Permission errors or unsupported browsers do not prevent typing. Closing the assistant stops recording.",
+      },
+      {
+        title: "Install and offline availability",
+        text: "When your browser offers installation, Mira shows a bottom prompt once per tab session. Choose Install Mira or Not now. On iPhone and iPad, follow the Share menu and Add to Home Screen instructions instead. Installed apps do not show this prompt. Allow the production app to finish loading online before studying offline. Your library, folders, quizzes, charts and settings work offline; AI and speech require connectivity. Installation availability is controlled by the browser. If the prompt is unavailable, check your browser’s install menu or the guide.",
+      },
+      {
+        title: "Storage, backups and session memory",
+        text: "Mira has no login or automatic cloud synchronization. LocalStorage holds your library, folders, results and settings. Export JSON in Settings for a backup; import replaces this device’s library after confirmation and accepts older backups without folders. Maximum import size is 5 MB. Device-specific layout choices and temporary AI conversations are not part of a library export. Chat messages use sessionStorage for the current tab and are cleared when you close the assistant or start a new conversation. Unsent inputs and unsaved generated drafts remain in memory only. Keep backups before clearing browser data, and use one tab for edits.",
+      },
+      {
+        title: "Preferences, accessibility and troubleshooting",
+        text: "Settings controls your name, daily goal, daily-review length, shuffle and daily-review shortcut. Light, dark and system themes save immediately. Other settings save with Save preferences. Reduced-motion preferences disable decorative transitions. Searchable selectors support arrow keys, Enter and Escape. If storage fails, Mira shows an error instead of claiming your work was saved. Export before clearing data. For bugs or suggestions, open Contribute to visit the repository and issue tracker.",
+      },
     ],
   },
   Guide: {
@@ -32,7 +76,10 @@ export const documents: Record<
     title: "A little guidance goes a long way.",
     intro: "Everything you need to settle into your study space.",
     sections: [
-      {"title":"08 · Start safely and keep a backup","text":"Read the terms and privacy policy on your first visit, then check both agreement boxes to continue. Optional AI is not needed for studying. Export a JSON backup regularly, especially before changing devices or clearing browser data. Consent is saved per browser and is requested again if it is missing or the policy version changes."},
+      {
+        title: "08 · Start safely and keep a backup",
+        text: "Read the terms and privacy policy on your first visit, then check both agreement boxes to continue. Optional AI is not needed for studying. Export a JSON backup regularly, especially before changing devices or clearing browser data. Consent is saved per browser and is requested again if it is missing or the policy version changes.",
+      },
       {
         title: "01 · Build your first reviewer",
         text: "Create a topic to organize your library, then choose New reviewer. You can also create a new topic directly in the reviewer form; it saves together with your reviewer. Add a title and question-and-answer cards. Use short, specific answers if you plan to take written quizzes. You can edit or delete reviewers any time.",
@@ -68,12 +115,21 @@ export const documents: Record<
     title: "Privacy, in plain language.",
     intro: "How this version of Mira handles your study data.",
     sections: [
-      {"title":"Agreement record and activity calendar","text":"Mira stores the accepted policy version and an ISO acceptance timestamp in localStorage, separately from your library. The calendar is calculated locally from saved quiz and daily-review results; it does not measure browsing time, microphone use or general device activity. Clearing browser site data removes the acceptance record. A library reset or import does not transfer another person’s acceptance."},
-      {"title":"Voice and optional online services","text":"Microphone access is requested only when you choose voice input. Browser speech recognition may send audio to its own service. Mira uses the resulting text in your composer and does not send it to the AI until you submit it. Netlify processes the AI request and the configured Pollinations provider generates a response. Their policies govern their processing; Mira cannot delete provider-held records. Do not submit confidential material. Closing the assistant clears its local conversation, not records an external provider may retain."},
-      {"title":"Questions and changes","text":"Use the repository issue tracker for general privacy questions without posting private data, recordings or backups. Hosting operators can have additional practices outside this source code. Check this policy when the app requests a new agreement. AI generation, voice and ordinary online requests remain subject to the services involved."},
+      {
+        title: "Agreement record and activity calendar",
+        text: "Mira stores the accepted policy version and an ISO acceptance timestamp in localStorage, separately from your library. The calendar is calculated locally from saved quiz and daily-review results; it does not measure browsing time, microphone use or general device activity. Clearing browser site data removes the acceptance record. A library reset or import does not transfer another person’s acceptance.",
+      },
+      {
+        title: "Voice and optional online services",
+        text: "Microphone access is requested only when you choose voice input. Browser speech recognition may send audio to its own service. Mira uses the resulting text in your composer and does not send it to the AI until you submit it. Netlify processes the AI request and the configured Pollinations provider generates a response. Their policies govern their processing; Mira cannot delete provider-held records. Do not submit confidential material. Closing the assistant clears its local conversation, not records an external provider may retain.",
+      },
+      {
+        title: "Questions and changes",
+        text: "Use the repository issue tracker for general privacy questions without posting private data, recordings or backups. Hosting operators can have additional practices outside this source code. Check this policy when the app requests a new agreement. AI generation, voice and ordinary online requests remain subject to the services involved.",
+      },
       {
         title: "What stays on your device",
-        text: "Your chosen name, topics, flashcards, last opened reviewer, earned badge IDs, completed flashcard-session dates, import/timer/AI guidance milestones, a fast-answer flag, completed quiz results and difficulty, and preferences are stored in this browser’s localStorage. Your saved library is not uploaded automatically, and no login is required. When online after accepting these policies, Firebase creates an anonymous browser identity and stores temporary connection markers to show the online count. Multiple tabs using the same identity count once; separate devices count separately. Firebase receives connection information such as your IP address. No saved name, flashcards or study results are sent to Firebase. Connection markers are removed after disconnection. When you send an online AI chat, your submitted question, recent chat messages and saved study overview go to our Netlify function and then Pollinations. This overview includes your display name, library organization and counts, current reviewer, goals, activity, recent results and achievements. Lists are limited for performance; full flashcard contents are excluded. Reviewer generation sends submitted topics and notes. AI messages are kept in this tab’s sessionStorage until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
+        text: "Your chosen name, topics, flashcards, last opened reviewer, earned badge IDs, completed flashcard-session dates, import/timer/AI guidance milestones, a fast-answer flag, completed quiz results and difficulty, and preferences are stored locally in this browser’s IndexedDB; small preferences remain in localStorage. Your saved library is not uploaded automatically, and no login is required. When online after accepting these policies, Firebase creates an anonymous browser identity and stores temporary connection markers to show the online count. Multiple tabs using the same identity count once; separate devices count separately. Firebase receives connection information such as your IP address. No saved name, flashcards or study results are sent to Firebase. Connection markers are removed after disconnection. When you send an online AI chat, your submitted question, recent chat messages and saved study overview go to our Netlify function and then Pollinations. This overview includes your display name, library organization and counts, current reviewer, goals, activity, recent results and achievements. Lists are limited for performance; full flashcard contents are excluded. Reviewer generation sends submitted topics and notes. AI messages are kept in this tab’s sessionStorage until you close the assistant; generated reviewers are stored locally only when you save them. Provider and hosting policies apply to those requests.",
       },
       {
         title: "Storage and offline files",
@@ -98,9 +154,18 @@ export const documents: Record<
     title: "Terms & conditions.",
     intro: "The basics of using this local-first, open-source study app.",
     sections: [
-      {"title":"Acceptance and policy updates","text":"To use this version of Mira, review these terms and the privacy policy and affirm both using the agreement screen. If you do not agree, do not continue into the app. Acceptance is stored in this browser with the policy version and time; updated versions require a new agreement. This local record is not an account, signature verification or proof of identity."},
-      {"title":"Optional AI and speech tools","text":"AI drafts and answers can be incomplete or incorrect. Review them before saving or relying on them. Submit only material you are permitted to share with the online provider. Speech recognition can make mistakes; check the transcript before sending. AI availability depends on connectivity and external providers and may be limited or interrupted. You can study entirely without these optional tools."},
-      {"title":"Activity indicators","text":"Calendar activity labels summarize how many quizzes or daily reviews you completed on a local date. They are motivational descriptions, not judgments about effort, skill or wellbeing. Flashcard ratings are temporary and do not contribute to calendar totals, saved accuracy or streaks."},
+      {
+        title: "Acceptance and policy updates",
+        text: "To use this version of Mira, review these terms and the privacy policy and affirm both using the agreement screen. If you do not agree, do not continue into the app. Acceptance is stored in this browser with the policy version and time; updated versions require a new agreement. This local record is not an account, signature verification or proof of identity.",
+      },
+      {
+        title: "Optional AI and speech tools",
+        text: "AI drafts and answers can be incomplete or incorrect. Review them before saving or relying on them. Submit only material you are permitted to share with the online provider. Speech recognition can make mistakes; check the transcript before sending. AI availability depends on connectivity and external providers and may be limited or interrupted. You can study entirely without these optional tools.",
+      },
+      {
+        title: "Activity indicators",
+        text: "Calendar activity labels summarize how many quizzes or daily reviews you completed on a local date. They are motivational descriptions, not judgments about effort, skill or wellbeing. Flashcard ratings are temporary and do not contribute to calendar totals, saved accuracy or streaks.",
+      },
       {
         title: "Using Mira",
         text: "Mira is a personal study tool for creating reviewers and practicing recall. Use it lawfully and respect other people’s privacy and intellectual property. Only add or share material that you have permission to use.",
@@ -133,8 +198,14 @@ export const documents: Record<
     intro:
       "Mira is open source. There’s room here for your ideas, care, and curiosity.",
     sections: [
-      {"title":"Test real interaction paths","text":"Run build, lint, TypeScript checks and the relevant Jest suites before submitting a change. Run the browser suite for responsive or offline changes. Check first-visit acceptance, stored and outdated policy versions, storage failures, month/year boundaries, empty calendar days, weighted scores, reduced motion, touch cancellation, and rightward swipe overflow. Use mock AI responses and fictional study data."},
-      {"title":"Keep docs and assets consistent","text":"Update the handbook, guide and policies when behavior or data handling changes. Bump the policy version for material Terms or Privacy changes. Preserve the original raster artwork when regenerating brand and PWA assets. Keep client keys out of the bundle and never include .env or real library exports in a contribution."},
+      {
+        title: "Test real interaction paths",
+        text: "Run build, lint, TypeScript checks and the relevant Jest suites before submitting a change. Run the browser suite for responsive or offline changes. Check first-visit acceptance, stored and outdated policy versions, storage failures, month/year boundaries, empty calendar days, weighted scores, reduced motion, touch cancellation, and rightward swipe overflow. Use mock AI responses and fictional study data.",
+      },
+      {
+        title: "Keep docs and assets consistent",
+        text: "Update the handbook, guide and policies when behavior or data handling changes. Bump the policy version for material Terms or Privacy changes. Preserve the original raster artwork when regenerating brand and PWA assets. Keep client keys out of the bundle and never include .env or real library exports in a contribution.",
+      },
       {
         title: "Everyone has something to offer",
         text: "You can contribute code, report bugs, improve documentation, test accessibility, or suggest a more thoughtful study experience. You don’t need to be an experienced developer to help.",
@@ -159,7 +230,10 @@ export const documents: Record<
     intro:
       "Mira makes room for curiosity, one card and one small win at a time.",
     sections: [
-      {"title":"A little progress, made visible","text":"Mira combines original cat artwork, touch-friendly flashcards, written quizzes, folders and a calendar of completed study sessions. Quiet daily indicators celebrate showing up; they do not measure your worth or promise an exam result. The project stays open for improvements from its community."},
+      {
+        title: "A little progress, made visible",
+        text: "Mira combines original cat artwork, touch-friendly flashcards, written quizzes, folders and a calendar of completed study sessions. Quiet daily indicators celebrate showing up; they do not measure your worth or promise an exam result. The project stays open for improvements from its community.",
+      },
       {
         title: "Developed with love for Mira, by Railey",
         text: "Your learning space should feel encouraging, not overwhelming. Mira brings reviewers, flashcards, quizzes, and progress together in a simple place that belongs to you.",
@@ -175,3 +249,23 @@ export const documents: Record<
     ],
   },
 };
+
+documents.Docs.sections.push(...adaptiveDocs);
+documents.Guide.sections.push(...adaptiveDocs);
+documents.Privacy.sections.push(
+  adaptiveDocs[4],
+  adaptiveDocs[5],
+  adaptiveDocs[6],
+);
+documents.Terms.sections.push({
+  title: "Learning signals and external services",
+  text: "Mastery, schedules and Mira moods are practice aids, not guaranteed measures of knowledge. Voice recognition and optional AI depend on external services. Review your transcript, generated material and backups. Core study works locally without these services.",
+});
+documents.Contribute.sections.push({
+  title: "Adaptive learning contributions",
+  text: "Keep domain logic in features/learning and test deterministic dates. Storage changes require migration, rollback and backup tests. Never upload a library implicitly. Run lint, type checks, coverage, server and browser tests before submitting a pull request; preserve the existing coverage thresholds.",
+});
+documents.About.sections.push({
+  title: "Mira v3 Adaptive Learning",
+  text: "Offline-first practice with question history, spaced review, supportive moods and portable learning data. Developed with love for Mira, by Railey.",
+});

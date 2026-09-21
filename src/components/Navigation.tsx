@@ -13,11 +13,40 @@ const pages: Page[] = [
   "Quizzes",
   "Activity",
   "Achievements",
-  "Settings",
-  "Docs",
+  "Mira",
 ];
 
-function Brand({ onNavigate, showName = true }: { onNavigate?: () => void; showName?: boolean }) {
+function MoreNavigation({ page, onNavigate }: { page: Page; onNavigate?: () => void }) {
+  return (
+    <details className="sidebar-more" onKeyDown={event => {
+      if (event.key === "Escape") {
+        event.currentTarget.open = false;
+        event.currentTarget.querySelector("summary")?.focus();
+      }
+    }} onBlur={event => {
+      if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+    }}>
+      <summary className="nav-item"><span aria-hidden="true">•••</span><span>More</span><Icon name="up" size={16}/></summary>
+      <nav aria-label="More navigation">
+        {(["Settings", "Docs", "Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(item => (
+          <RouteLink key={item} page={item} aria-current={page === item ? "page" : undefined} className="nav-item" onClick={event => {
+            const menu = event.currentTarget.closest("details");
+            if (menu) menu.open = false;
+            onNavigate?.();
+          }}><Icon name={item} size={17}/><span>{item === "Terms" ? "Terms & conditions" : item}</span></RouteLink>
+        ))}
+      </nav>
+    </details>
+  );
+}
+
+function Brand({
+  onNavigate,
+  showName = true,
+}: {
+  onNavigate?: () => void;
+  showName?: boolean;
+}) {
   return (
     <RouteLink
       page="Home"
@@ -32,7 +61,11 @@ function Brand({ onNavigate, showName = true }: { onNavigate?: () => void; showN
         height={44}
         className="brand-image"
       />
-      {showName && <span className="brand-name" aria-hidden="true">mira</span>}
+      {showName && (
+        <span className="brand-name" aria-hidden="true">
+          mira
+        </span>
+      )}
     </RouteLink>
   );
 }
@@ -55,7 +88,7 @@ function NavigationLinks({
             aria-current={page === item ? "page" : undefined}
             className={`nav-item ${page === item ? "active" : ""}`}
           >
-            <Icon name={item} size={19} />
+            {item === "Mira" ? <span className="nav-mira-icon" aria-hidden="true" /> : <Icon name={item} size={19} />}
             <span>{item}</span>
             {page === item && (
               <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#8d80b5]" />
@@ -66,31 +99,27 @@ function NavigationLinks({
     </>
   );
 }
-export function Sidebar({ page, presence }: { page: Page; presence?: PresenceState }) {
+export function Sidebar({ page }: { page: Page }) {
   return (
     <aside className="sidebar">
       <div className="mb-6 px-3">
         <Brand />
       </div>
-      <div className="mb-4 px-3"><OnlineCount presence={presence} /></div>
       <NavigationLinks page={page} />
       <div className="mt-auto pt-8">
-        <div className="rounded-xl border border-line bg-soft p-4">
-          <p className="text-xs font-medium">Made for your kind of mind.</p>
-          <p className="mt-2 text-[11px] leading-5 text-stone-500">
-            A quiet space to learn,
-            <br />
-            grow, and surprise yourself.
-          </p>
-        </div>
-        <p className="mt-6 px-3 text-[10px] text-stone-400">
-          Local-first. Always yours.
-        </p>
+        <p className="mb-3 px-4 text-[10px] text-stone-400">Local-first. Always yours.</p>
+        <MoreNavigation page={page} />
       </div>
     </aside>
   );
 }
-export function MobileHeader({ page, presence }: { page: Page; presence?: PresenceState }) {
+export function MobileHeader({
+  page,
+  presence,
+}: {
+  page: Page;
+  presence?: PresenceState;
+}) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const opened = useRef(false);
@@ -103,20 +132,20 @@ export function MobileHeader({ page, presence }: { page: Page; presence?: Presen
     <>
       <header className="mobile-header lg:hidden">
         <div className="flex items-center gap-3">
-        <button
-          type="button"
-          className="menu-button"
-          ref={trigger}
-          aria-label="Open navigation menu"
-          aria-expanded={open}
-          aria-controls="mobile-sidebar"
-          onClick={() => {
-            opened.current = true;
-            setOpen(true);
-          }}
-        >
-          <Icon name="menu" size={20} />
-        </button>
+          <button
+            type="button"
+            className="menu-button"
+            ref={trigger}
+            aria-label="Open navigation menu"
+            aria-expanded={open}
+            aria-controls="mobile-sidebar"
+            onClick={() => {
+              opened.current = true;
+              setOpen(true);
+            }}
+          >
+            <Icon name="menu" size={20} />
+          </button>
           <Brand showName={false} />
           <span className="text-xs text-stone-400">{page}</span>
         </div>
@@ -178,28 +207,7 @@ function MobileDrawer({ page, onClose }: { page: Page; onClose: () => void }) {
         </button>
       </div>
       <NavigationLinks page={page} onNavigate={onClose} />
-      <div className="mt-auto pt-8">
-        <div className="rounded-xl border border-line bg-soft p-5">
-          <p className="text-sm font-medium">A little space just for you.</p>
-          <p className="mt-2 text-xs leading-6 text-stone-500">
-            Keep learning. Keep growing.
-            <br />
-            You’re doing better than you think.
-          </p>
-        </div>
-        <nav
-          aria-label="Menu documentation"
-          className="mt-5 flex flex-wrap gap-4 px-1 text-[11px] text-stone-500"
-        >
-          {(["Guide", "Contribute", "Privacy", "Terms", "About"] as const).map(
-            (item) => (
-              <RouteLink key={item} page={item} onClick={onClose}>
-                {item}
-              </RouteLink>
-            ),
-          )}
-        </nav>
-      </div>
+      <div className="mt-auto pt-8"><MoreNavigation page={page} onNavigate={onClose} /></div>
     </dialog>
   );
 }

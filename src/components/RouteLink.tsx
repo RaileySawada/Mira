@@ -1,6 +1,8 @@
 import type { AnchorHTMLAttributes } from "react";
 import type { Page } from "../types/study";
-import { navigate, routes } from "../hooks/usePage";
+import { navigate } from "../hooks/usePage";
+import { routes } from "../config/routes";
+
 export function RouteLink({
   page,
   children,

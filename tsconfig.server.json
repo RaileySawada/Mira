@@ -2,11 +2,7 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "netlify/**/*.ts"
-  ]
+  "include": ["netlify/**/*.ts"]
 }

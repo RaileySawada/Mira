@@ -8,5 +8,9 @@ function subscribe(notify: () => void) {
     window.removeEventListener("offline", notify);
   };
 }
-function snapshot() { return navigator.onLine; }
-export function useOnline() { return useSyncExternalStore(subscribe, snapshot); }
+function snapshot() {
+  return navigator.onLine;
+}
+export function useOnline() {
+  return useSyncExternalStore(subscribe, snapshot);
+}

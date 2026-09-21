@@ -1,10 +1,8 @@
+import type { SelectOption } from "../types/ui";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { ChevronDown, Check, Search } from "lucide-react";
-export interface SelectOption {
-  value: string;
-  label: string;
-}
+
 export function SearchSelect({
   label,
   value,
@@ -67,7 +65,8 @@ export function SearchSelect({
     // The top layer escapes transformed page wrappers and modal scroll containers.
     dropdown?.showPopover?.();
     function place(event?: Event) {
-      if (event?.target instanceof Node && dropdown?.contains(event.target)) return;
+      if (event?.target instanceof Node && dropdown?.contains(event.target))
+        return;
       const rect = trigger.current?.getBoundingClientRect();
       if (!rect) return;
       const viewport = window.visualViewport;
@@ -79,10 +78,17 @@ export function SearchSelect({
       const below = viewportTop + viewportHeight - rect.bottom - 18;
       const above = rect.top - viewportTop - 18;
       const upwards = below < 220 && above > below;
-      const height = Math.min(viewportHeight - 24, Math.max(80, Math.min(320, upwards ? above : below)));
+      const height = Math.min(
+        viewportHeight - 24,
+        Math.max(80, Math.min(320, upwards ? above : below)),
+      );
       setPosition({
-        width, maxHeight: height,
-        left: Math.max(viewportLeft + 12, Math.min(rect.left, viewportLeft + viewportWidth - width - 12)),
+        width,
+        maxHeight: height,
+        left: Math.max(
+          viewportLeft + 12,
+          Math.min(rect.left, viewportLeft + viewportWidth - width - 12),
+        ),
         top: upwards ? "auto" : rect.bottom + 6,
         bottom: upwards ? window.innerHeight - rect.top + 6 : "auto",
       });
@@ -106,8 +112,12 @@ export function SearchSelect({
     if (!open || !option || !menu) return;
     // Scroll only the options, never the entire page to the selected option.
     if (option.offsetTop < menu.scrollTop) menu.scrollTop = option.offsetTop;
-    else if (option.offsetTop + option.offsetHeight > menu.scrollTop + menu.clientHeight)
-      menu.scrollTop = option.offsetTop + option.offsetHeight - menu.clientHeight;
+    else if (
+      option.offsetTop + option.offsetHeight >
+      menu.scrollTop + menu.clientHeight
+    )
+      menu.scrollTop =
+        option.offsetTop + option.offsetHeight - menu.clientHeight;
   }, [active, open, id]);
   return (
     <div
@@ -128,16 +138,34 @@ export function SearchSelect({
         aria-controls={`${id}-list`}
         onClick={() => (open ? close() : show())}
         onKeyDown={(event) => {
-          if (open && event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); }
-          if (open && event.key === "Enter") { event.preventDefault(); if (filtered[active]) choose(filtered[active]); }
+          if (open && event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            close();
+          }
+          if (open && event.key === "Enter") {
+            event.preventDefault();
+            if (filtered[active]) choose(filtered[active]);
+          }
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {
             event.preventDefault();
-            if (open) setActive(index => Math.max(0, Math.min(filtered.length - 1, index + (event.key === "ArrowDown" ? 1 : -1))));
+            if (open)
+              setActive((index) =>
+                Math.max(
+                  0,
+                  Math.min(
+                    filtered.length - 1,
+                    index + (event.key === "ArrowDown" ? 1 : -1),
+                  ),
+                ),
+              );
             else show();
           }
         }}
       >
-        {triggerIcon && <span className="select-trigger-icon">{triggerIcon}</span>}
+        {triggerIcon && (
+          <span className="select-trigger-icon">{triggerIcon}</span>
+        )}
         <span className="truncate">
           {options.find((option) => option.value === value)?.label ||
             "Select an option"}
@@ -145,7 +173,12 @@ export function SearchSelect({
         <ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && !disabled && (
-        <div ref={panel} popover="manual" className="select-panel" style={position}>
+        <div
+          ref={panel}
+          popover="manual"
+          className="select-panel"
+          style={position}
+        >
           <div className="relative">
             <Search
               size={15}

@@ -818,7 +818,7 @@ button:active:not(:disabled) { transform: scale(.97); }
 .ai-conversation .chat-log { flex: 1; min-height: 0; max-height: none; margin: 0; padding: 24px 18px 12px; overflow-y: auto; overscroll-behavior: contain; }
 .chat-empty-state { max-width: 330px; margin: auto; padding: 36px 6px 22px; }
 .chat-empty-state > img { width: 54px; height: 54px; margin-bottom: 22px; border-radius: 18px; object-fit: cover; box-shadow: 0 0 0 5px var(--soft); }
-.chat-empty-state h3 { margin: 7px 0 10px; font-size: 23px; font-weight: 650; line-height: 1.3; letter-spacing: -.04em; }
+.chat-empty-state :is(h1, h3) { margin: 7px 0 10px; font-size: 23px; font-weight: 650; line-height: 1.3; letter-spacing: -.04em; }
 .chat-empty-state p { color: var(--color-stone-500); font-size: 13px; line-height: 1.7; }
 .chat-suggestions { display: grid; gap: 7px; margin-top: 22px; }
 .chat-suggestions button { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--color-stone-600); text-align: left; font-size: 12px; }
@@ -1352,3 +1352,192 @@ progress::-webkit-progress-value { background: #8d80b5; }
 .online-count.is-online .online-count-dot { background: var(--accent-ink); }
 .mobile-header > .online-count { margin-left: auto; font-size: 10px; }
 @media (max-width: 360px) { .mobile-header > div:first-child { gap: 8px; min-width: 0; } .mobile-header > div:first-child > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 76px; } }
+
+/* Compact, actionable daily plan. */
+.learning-path { margin-bottom: 20px; padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+.learning-path-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.learning-path-heading h2 { margin-top:6px; font-size:20px; font-weight:700; letter-spacing:-.035em; }
+.learning-path-heading .eyebrow { font-size:9px; }
+.learning-path-heading button { gap:16px; white-space:nowrap; }
+.learning-path-steps { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); margin:24px 0; gap:24px; }
+.learning-path-steps > div { display:flex; gap:12px; align-items:flex-start; }
+.path-step-number { font-size:11px; color:var(--accent-ink); padding-top:6px; font-variant-numeric:tabular-nums; }
+.learning-path-steps strong { font-size:24px; font-weight:650; }
+.learning-path-steps strong span { font-size:13px; font-weight:500; color:var(--color-stone-600); }
+.learning-path-steps p { font-size:12px; line-height:1.6; color:var(--color-stone-500); margin-top:4px; }
+.learning-path-progress { display:flex; align-items:center; gap:20px; border-top:1px solid var(--line); padding-top:16px; font-size:11px; color:var(--color-stone-500); }
+.learning-path-progress progress { flex:1; width:100px; height:4px; appearance:none; border:0; border-radius:4px; overflow:hidden; background:var(--soft); }
+.learning-path-progress progress::-webkit-progress-bar { background:var(--soft); }
+.learning-path-progress progress::-webkit-progress-value { background:var(--accent-ink); }
+.learning-path-progress progress::-moz-progress-bar { background:var(--accent-ink); }
+.sidebar-more { position:relative; margin-bottom:16px; }
+.sidebar-more summary { cursor:pointer; list-style:none; }
+.sidebar-more summary::-webkit-details-marker { display:none; }
+.sidebar-more summary > :last-child { margin-left:auto; }
+.sidebar-more nav { position:absolute; bottom:calc(100% + 8px); left:0; right:0; z-index:55; padding:7px; border:1px solid var(--line); border-radius:14px; background:var(--surface); box-shadow:0 10px 35px #0002; max-height:60dvh; overflow-y:auto; }
+.sidebar-more .nav-item { font-size:13px; }
+.mira-main { position:relative; flex:1; min-width:0; display:flex; flex-direction:column; }
+.mira-main footer[hidden] { display:none; }
+.ai-panel.ai-page { position:relative; inset:auto; z-index:0; width:100%; max-width:none; height:calc(100dvh - 49px); min-height:480px; max-height:none; border:0; border-radius:0; box-shadow:none; animation:none; clip-path:none; isolation:isolate; }
+.ai-page::before { content:""; pointer-events:none; position:absolute; inset:0; z-index:-1; opacity:.45; background:radial-gradient(ellipse at 20% 25%,color-mix(in srgb,var(--accent-ink) 13%,transparent),transparent 50%),radial-gradient(ellipse at 80% 75%,color-mix(in srgb,var(--accent-ink) 9%,transparent),transparent 50%); animation:mira-ambient 18s ease-in-out infinite alternate; }
+@keyframes mira-ambient { to { opacity:.8; transform:scale(1.08); } }
+.ai-page .ai-chat-header { background:transparent; padding:16px 28px; border:0; }
+.ai-page .ai-chat-main { width:100%; max-width:900px; margin-inline:auto; }
+.ai-page .chat-log { padding:24px 32px; }
+.ai-page .chat-log:has(.chat-empty-state) { display:flex; align-items:center; justify-content:center; }
+.ai-page .chat-empty-state { width:100%; max-width:650px; padding:24px 0; text-align:center; }
+.ai-page .chat-empty-state > img { width:80px; height:80px; margin:0 auto 22px; border:0; background:none; border-radius:0; }
+.mira-line-logo { filter:brightness(0); object-fit:contain; }
+[data-theme="dark"] .mira-line-logo { filter:brightness(0) invert(1); }
+.ai-page .chat-empty-state :is(h1, h3) { font-size:clamp(26px,4vw,38px); line-height:1.2; font-weight:600; }
+.ai-page .chat-empty-state p { max-width:420px; margin-inline:auto; }
+.ai-page .chat-suggestions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+.ai-page .chat-suggestions button { border-radius:24px; padding:10px 16px; background:transparent; }
+.ai-page .chat-composer-wrap { padding:16px 32px 24px; border:0; background:transparent; }
+.ai-page .chat-composer { padding:12px 12px 12px 20px; border-radius:24px; box-shadow:0 4px 25px #00000008; }
+.ai-page .chat-composer textarea { font-size:15px; }
+.ai-page .chat-message { margin-bottom:28px; }
+.ai-page .chat-message-content { max-width:85%; }
+.ai-page .assistant .chat-bubble { border:0; padding:2px 0; background:transparent; box-shadow:none; font-size:15px; line-height:1.8; }
+.ai-page .user .chat-bubble { background:var(--soft); color:var(--ink); font-size:15px; padding:12px 18px; border-radius:20px; }
+.ai-page .ai-generator-workspace { width:100%; max-width:760px; margin-inline:auto; }
+@media(max-width:640px) {
+ .learning-path { padding:18px; }
+ .learning-path-heading { align-items:flex-start; }
+ .learning-path-heading h2 { font-size:17px; }
+ .learning-path-heading button { font-size:11px; padding:8px 10px; gap:6px; }
+ .learning-path-steps { grid-template-columns:1fr; gap:16px; margin:20px 0; }
+ .learning-path-steps strong { font-size:21px; }
+ .learning-path-steps p { margin-top:0; }
+ .ai-panel.ai-page { height:calc(100dvh - 65px); min-height:0; }
+ .ai-page .ai-chat-header { padding:12px 16px; }
+ .ai-page .chat-log { padding:16px; }
+ .ai-page .chat-composer-wrap { padding:12px 16px max(16px,env(safe-area-inset-bottom)); }
+ .ai-page .chat-empty-state > img { width:64px; height:64px; }
+ .ai-page .chat-composer-meta { font-size:10px; }
+}
+@media(prefers-reduced-motion:reduce) { .ai-page::before { animation:none; } }
+
+.mira-main { padding:0; }
+.ai-page .mira-line-logo { box-shadow:none; border-radius:0; object-fit:contain; }
+.ai-page .ai-chat-main:has(.chat-empty-state) { justify-content:center; }
+.ai-page .chat-log:has(.chat-empty-state) { flex:0 1 auto; }
+.ai-page .chat-empty-state { padding-block:12px; }
+.ai-page .chat-composer-wrap { margin-bottom:20px; }
+@media(max-width:640px) {
+ .ai-page .chat-empty-state :is(h1, h3) { font-size:25px; }
+ .ai-page .chat-empty-state p { font-size:12px; }
+ .ai-page .chat-empty-state > img { width:56px; height:56px; margin-bottom:14px; }
+ .ai-page .chat-suggestions { margin-top:14px; gap:6px; }
+ .ai-page .chat-suggestions button { font-size:11px; padding:8px 12px; }
+ .ai-page .chat-composer-wrap { margin-bottom:0; }
+}
+
+/* Keep long study titles within their grid track instead of widening the page. */
+.home-study-grid > *, .current-study > *, .learning-path-steps > *, .learning-path-steps > div > div { min-width:0; }
+.home-study-grid .panel { max-width:100%; }
+.home-study-grid .text-button { flex-shrink:0; }
+.home-study-grid p, .current-study h2, .current-study p, .learning-path p { overflow-wrap:anywhere; }
+.nav-mira-icon { width:21px; height:21px; flex-shrink:0; }
+.nav-item, .menu-button, .icon-button, .view-toggle, button, summary, .brand-image, .brand-name { user-select:none; -webkit-user-select:none; }
+input, textarea, .chat-bubble, .markdown-message { user-select:text; -webkit-user-select:text; }
+.ai-page .ai-chat-header { justify-content:flex-end; }
+.ai-conversation .chat-composer textarea { min-height:38px; max-height:160px; overflow-y:auto; overscroll-behavior:contain; overflow-wrap:anywhere; }
+.chat-input-label, .chat-composer, .chat-composer-wrap, .chat-message-content { min-width:0; }
+.chat-bubble { overflow-wrap:anywhere; }
+.learning-insights { margin-bottom:20px; padding:24px; border:1px solid var(--line); border-radius:20px; background:var(--surface); min-width:0; }
+.learning-insights header h2 { margin-top:6px; font-size:20px; font-weight:700; letter-spacing:-.03em; }
+.learning-insights header > p { margin-top:8px; font-size:12px; line-height:1.6; color:var(--color-stone-500); }
+.learning-insights .eyebrow { font-size:9px; }
+.insight-tabs { display:flex; width:fit-content; max-width:100%; gap:4px; margin:20px 0; padding:4px; border-radius:10px; background:var(--soft); }
+.insight-tabs button { padding:7px 12px; border-radius:7px; font-size:12px; color:var(--color-stone-500); }
+.insight-tabs button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:0 1px 4px #0001; }
+.insight-layout { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:28px; }
+.insight-layout > * { min-width:0; }
+.insight-groups { list-style:none; margin:0; padding:0; }
+.insight-groups li { padding:14px 0; border-bottom:1px solid var(--line); }
+.insight-groups li:first-child { padding-top:0; }
+.insight-row-heading { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.insight-row-heading h3 { min-width:0; font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.insight-row-heading span { flex-shrink:0; font-size:10px; color:var(--color-stone-500); }
+.insight-groups progress { display:block; appearance:none; width:100%; height:5px; border:0; border-radius:5px; overflow:hidden; margin:10px 0 7px; background:var(--soft); }
+.insight-groups progress::-webkit-progress-bar { background:var(--soft); }
+.insight-groups progress::-webkit-progress-value { background:var(--accent-ink); }
+.insight-groups progress::-moz-progress-bar { background:var(--accent-ink); }
+.insight-groups p, .insight-empty, .insight-note { font-size:11px; color:var(--color-stone-500); line-height:1.6; }
+.insight-show-more { margin-top:12px; }
+.insight-practice { padding:16px; border-radius:12px; background:var(--soft); align-self:start; }
+.insight-practice h3 { font-size:13px; font-weight:600; }
+.insight-practice > p { font-size:12px; line-height:1.6; color:var(--color-stone-500); margin-top:6px; }
+.insight-practice button { display:block; text-align:left; width:100%; padding:12px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; font-size:12px; }
+.insight-practice button:last-child { border:0; padding-bottom:0; }
+.insight-practice small { display:block; margin-top:4px; color:var(--color-stone-500); }
+.insight-practice-action { display:block; margin-top:8px; color:var(--accent-ink); font-size:11px; }
+.insight-note { margin-top:18px; }
+@media(max-width:1023px) { .ai-launcher { display:none; } }
+@media(max-width:640px) {
+ .learning-insights { padding:18px; }
+ .insight-layout { grid-template-columns:minmax(0,1fr); gap:18px; }
+ .insight-row-heading { flex-wrap:wrap; gap:3px 12px; }
+ .insight-tabs { width:100%; }
+ .insight-tabs button { flex:1; min-width:0; padding-inline:8px; }
+}
+
+/* The full-page assistant uses the document's scrollbar. */
+.ai-panel.ai-page { height:auto; min-height:calc(100dvh - 49px); overflow:visible; }
+.ai-page::before { transform:none; animation-name:mira-page-glow; }
+@keyframes mira-page-glow { to { opacity:.8; } }
+.ai-page .chat-log, .ai-page .ai-generator-workspace { overflow:visible; max-height:none; flex:none; overscroll-behavior:auto; }
+.ai-page .ai-chat-main { min-height:0; flex:1; }
+.ai-page .chat-log:has(.chat-empty-state) { flex:1; }
+.ai-page .ai-chat-header:has(.ai-header-actions:empty) { display:none; }
+.ai-page .chat-composer-wrap { position:sticky; bottom:0; z-index:2; margin-bottom:0; background:var(--page); border-radius:20px 20px 0 0; }
+.ai-conversation .chat-composer { flex-wrap:wrap; }
+.ai-conversation .chat-input-label { flex:1 0 100%; }
+.ai-mode-picker { width:160px; max-width:100%; margin-left:auto; }
+.ai-mode-picker .select-trigger { min-height:36px; padding:6px 10px; font-size:12px; background:transparent; }
+.generator-submit-row { display:flex; gap:10px; align-items:center; }
+.generator-submit-row .ai-mode-picker { flex:0 1 160px; margin-left:0; }
+.generator-submit-row > .process-button { flex:1; min-width:0; width:auto; }
+@media(max-width:640px) { .ai-panel.ai-page { min-height:calc(100dvh - 65px); } }
+
+/* Surfaces and spacing provide grouping; borders are reserved for useful divisions. */
+.panel, .panel:hover, .learning-path, .learning-insights, .current-study,
+.settings-banner, .install-card, .generator-size, .generator-preview,
+.ai-panel, .ai-conversation .chat-bubble, .chat-log > .generator-results,
+.ai-conversation .chat-composer, .chat-suggestions button,
+.select-trigger, .view-toggle, .button.secondary, .sidebar-more nav {
+  border-color:transparent;
+}
+.panel:hover { box-shadow:0 6px 20px #00000008; }
+.ai-conversation .chat-composer:focus-within { border-color:transparent; box-shadow:none; }
+.ai-chat-header, .chat-composer-wrap, .generator-results, .generator-preview dl > div,
+.insight-groups li, .insight-practice button, .learning-path-progress,
+.sidebar, .mobile-header { border-color:transparent; }
+.app-main > footer { border-color:transparent; }
+:where(button, a, summary, input, textarea, select):focus:not(:focus-visible) { outline:none; }
+:where(button, a, summary, input, textarea, select):focus-visible { outline:2px solid var(--accent-ink); outline-offset:3px; }
+
+/* Match navigation glyph color, including hover and selected states. */
+.nav-mira-icon {
+  display:inline-block;
+  width:19px;
+  height:19px;
+  background:currentColor;
+  mask:url('/brand/mark.png') center / contain no-repeat;
+  -webkit-mask:url('/brand/mark.png') center / contain no-repeat;
+}
+/* Keep the composer at the viewport edge while messages use page scrolling. */
+.ai-page .ai-chat-main { padding-bottom:var(--composer-height, 240px); }
+.ai-page .chat-composer-wrap {
+  position:fixed;
+  inset:auto 0 0;
+  width:100%;
+  max-width:900px;
+  margin-inline:auto;
+  box-sizing:border-box;
+  padding-bottom:max(16px, env(safe-area-inset-bottom));
+}
+@media(min-width:1024px) {
+  .ai-page .chat-composer-wrap { left:240px; width:calc(100% - 240px); }
+}
