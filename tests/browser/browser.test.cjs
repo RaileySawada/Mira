@@ -1300,17 +1300,25 @@ test("production study flows, themes, mobile overlays and offline reload", async
       await evaluate(
         "getComputedStyle(document.querySelector('.ai-page .chat-composer-wrap')).position",
       ),
-    ).toBe("fixed");
+    ).toBe("static");
     await evaluate("window.scrollTo(0, 0)");
+    await waitFor("document.querySelector('.mira-scroll-bottom')");
     expect(
       await evaluate(
-        "Math.abs(innerHeight - document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().bottom) < 2",
+        "document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().top > innerHeight",
       ),
     ).toBe(true);
-    await evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
     expect(
       await evaluate(
-        "Math.abs(innerHeight - document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().bottom) < 2",
+        "document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().top - document.querySelector('.ai-page .chat-log').getBoundingClientRect().bottom >= 20",
+      ),
+    ).toBe(true);
+    await evaluate("document.querySelector('.mira-scroll-bottom').click()");
+    await waitFor("document.documentElement.scrollHeight - scrollY - innerHeight < 2");
+    await waitFor("!document.querySelector('.mira-scroll-bottom')");
+    expect(
+      await evaluate(
+        "document.querySelector('.ai-page .chat-composer-wrap').getBoundingClientRect().bottom <= innerHeight + 2",
       ),
     ).toBe(true);
     await evaluate(
