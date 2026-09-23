@@ -1,15 +1,13 @@
+import { ChatComposer } from "./ChatComposer";
 import "./MiraLayout.css";
-import "./ModelPicker.css";
 import type { LibraryAction } from "../../types/agent";
 import { parseLibraryActions, describeLibraryAction } from "./libraryActions";
 import { MiraAmbient } from "./MiraAmbient";
 import { ambientMood } from "./ambientMood";
-import type { AiMode as Mode } from "../../types/ai";
 import { AbuseChallenge } from "./AbuseChallenge";
 import { buildReviewerContext } from "./reviewerContext";
 import { buildStudyOverview } from "./studyOverview";
 import type { StudyData } from "../../types/study";
-import { SearchSelect } from "../../components/SearchSelect";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import { MarkdownMessage } from "./MarkdownMessage";
 import { ProcessButton } from "../../components/ProcessButton";
@@ -17,13 +15,12 @@ import { useActionFeedback } from "../../hooks/useActionFeedback";
 import {
   useEffect,
   useEffectEvent,
-  useLayoutEffect,
   useRef,
   useState,
   type SubmitEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { ArrowDown, ArrowUp, Mic, Square, RotateCcw, X } from "lucide-react";
+import { ArrowDown, RotateCcw, X } from "lucide-react";
 import miraAvatar from "../../assets/images/profile_pictures/mira.png";
 import userAvatar from "../../assets/images/profile_pictures/user.png";
 import { requestAi } from "../../services/ai";
@@ -32,7 +29,8 @@ import {
   readAiSession,
   saveAiSession,
 } from "../../services/aiSession";
-import { isRecord, parseReviewers, validText } from "./schema";
+import { parseReviewers } from "./schema";
+import { isRecord, validText } from "../../utils/validation";
 import { type ChatMessage, type GeneratedReviewer } from "../../types/ai";
 
 export default function AiAssistant({
@@ -73,12 +71,12 @@ export default function AiAssistant({
   const applying = useActionFeedback();
   const [actions, setActions] = useState<LibraryAction[]>([]);
   const [savedFolder, setSavedFolder] = useState("");
-  const [mode, setMode] = useState<Mode>(importedNotes ? "generate" : "chat");
-  const [topic, setTopic] = useState("");
-  const [prompt, setPrompt] = useState(importedNotes);
+  const [prompt, setPrompt] = useState(
+    importedNotes
+      ? ("Create reviewers from these notes:\n" + importedNotes).slice(0, 3000)
+      : "",
+  );
   const voice = useVoiceInput(setPrompt);
-  const [count, setCount] = useState(3);
-  const [cardsPerReviewer, setCardsPerReviewer] = useState(5);
   const [busy, setBusy] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
   const [error, setError] = useState("");
@@ -86,16 +84,6 @@ export default function AiAssistant({
   const [typingAnswer, setTypingAnswer] = useState("");
   const [drafts, setDrafts] = useState<GeneratedReviewer[]>([]);
   const [savedTopic, setSavedTopic] = useState("");
-  const composerInput = useRef<HTMLTextAreaElement>(null);
-  useLayoutEffect(() => {
-    const input = composerInput.current;
-    if (!input) return;
-
-    input.style.height = "auto";
-    const nextHeight = Math.min(input.scrollHeight, 160);
-    input.style.height = `${nextHeight}px`;
-    input.style.overflowY = input.scrollHeight > 160 ? "auto" : "hidden";
-  }, [prompt, mode]);
   const conversation = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const controller = useRef<AbortController | null>(null);
@@ -159,11 +147,6 @@ export default function AiAssistant({
   function closeAssistant() {
     clearAiSession();
     onClose();
-  }
-  function openMode(next: Mode) {
-    voice.stop();
-    setMode(next);
-    setError("");
   }
   function cancelRequest() {
     controller.current?.abort();
@@ -248,7 +231,7 @@ export default function AiAssistant({
       busy ||
       voice.listening ||
       applying.state !== "idle" ||
-      (mode === "generate" ? !topic.trim() : !prompt.trim())
+      !prompt.trim()
     )
       return;
     if (siteKey && !abuseToken) {
@@ -264,13 +247,8 @@ export default function AiAssistant({
     setDrafts([]);
     setActions([]);
     setSavedFolder("");
-    if (mode === "chat") {
-      setMessages((current) => [
-        ...current,
-        { role: "user", content: question },
-      ]);
-      setPrompt("");
-    }
+    setMessages((current) => [...current, { role: "user", content: question }]);
+    setPrompt("");
     timer.current = window.setTimeout(() => {
       pending.abort();
       setBusy(false);
@@ -280,47 +258,25 @@ export default function AiAssistant({
     try {
       const result = await requestAi(
         {
-          mode,
+          mode: "chat",
           ...(abuseToken ? { abuseToken } : {}),
-          ...(mode === "chat" && useReviewer && currentReviewer
+          ...(useReviewer && currentReviewer
             ? { reviewerContext: buildReviewerContext(currentReviewer) }
             : {}),
           prompt: question || "General overview",
-          topic: topic.trim(),
-          count,
-          ...(mode === "chat" && studyData
-            ? { overview: buildStudyOverview(studyData) }
-            : {}),
-          ...(mode === "generate" && cardsPerReviewer !== 5
-            ? { cardsPerReviewer }
-            : {}),
-          ...(mode === "chat"
-            ? {
-                history: messages.slice(-6).map((message) => ({
-                  ...message,
-                  content: message.content.slice(0, 1800),
-                })),
-              }
-            : {}),
+          ...(studyData ? { overview: buildStudyOverview(studyData) } : {}),
+          history: messages
+            .slice(-6)
+            .map((message) => ({
+              ...message,
+              content: message.content.slice(0, 1800),
+            })),
         },
         pending.signal,
       );
       if (pending.signal.aborted) return;
       window.clearTimeout(timeout);
-      if (mode === "generate") {
-        const reviewers = parseReviewers(result);
-        if (
-          reviewers.length !== count ||
-          reviewers.some(
-            (reviewer) => reviewer.cards.length !== cardsPerReviewer,
-          )
-        )
-          throw new Error(
-            "AI did not finish every reviewer. Please try a smaller batch.",
-          );
-        setDrafts(reviewers);
-        setSavedTopic(topic.trim());
-      } else {
+      {
         if (!isRecord(result) || !validText(result.answer, 80000))
           throw new Error("AI returned an empty answer. Please try again.");
         if (result.actions !== undefined)
@@ -347,7 +303,7 @@ export default function AiAssistant({
             ? failure.message
             : "Could not connect to Mira. Please try again.",
         );
-        if (mode === "chat") {
+        {
           setPrompt(question);
           setMessages(messages);
         }
@@ -465,19 +421,6 @@ export default function AiAssistant({
     </section>
   );
 
-  const modePicker = (
-    <SearchSelect
-      label="Assistant mode"
-      className="ai-mode-picker"
-      value={mode}
-      options={[
-        { value: "chat", label: "Ask a question" },
-        { value: "generate", label: "Create reviewers" },
-      ]}
-      onChange={(value) => openMode(value as Mode)}
-      disabled={busy || voice.listening}
-    />
-  );
   const WelcomeHeading = presentation === "page" ? "h1" : "h3";
   const content = (
     <aside
@@ -520,7 +463,7 @@ export default function AiAssistant({
           </div>
         )}
         <div className="ai-header-actions">
-          {mode === "chat" && messages.length > 0 && (
+          {messages.length > 0 && (
             <button
               type="button"
               className="icon-button"
@@ -553,7 +496,7 @@ export default function AiAssistant({
         )}
       </div>
 
-      {mode === "chat" ? (
+      {
         <section className="ai-chat-main">
           <div
             ref={conversation}
@@ -658,217 +601,23 @@ export default function AiAssistant({
               </div>
             )}
           </div>
-          <div className="chat-composer-wrap">
-            {currentReviewer && (
-              <label className="mb-2 block text-xs">
-                <input
-                  type="checkbox"
-                  checked={useReviewer}
-                  disabled={busy}
-                  onChange={(e) => setUseReviewer(e.target.checked)}
-                />{" "}
-                Use current reviewer as context{" "}
-                <span className="block text-stone-500">
-                  {useReviewer
-                    ? "Sending shares selected cards from “" +
-                      currentReviewer.title +
-                      "” with Pollinations (up to 30 cards, bounded text)."
-                    : "Off by default. Reviewer contents stay on this device."}
-                </span>
-              </label>
-            )}
-            {error && (
-              <p className="ai-inline-error" role="alert">
-                {error}
-              </p>
-            )}
-            <form onSubmit={submit} className="chat-composer">
-              <label className="chat-input-label">
-                <span className="sr-only">Your study question</span>
-                <textarea
-                  ref={composerInput}
-                  value={prompt}
-                  onChange={(event) => setPrompt(event.target.value)}
-                  required
-                  maxLength={3000}
-                  disabled={busy || voice.listening}
-                  onKeyDown={(event) => {
-                    const isMobile =
-                      window.matchMedia("(max-width: 640px)").matches;
-
-                    if (
-                      event.key === "Enter" &&
-                      !event.shiftKey &&
-                      !isMobile &&
-                      !event.nativeEvent.isComposing
-                    ) {
-                      event.preventDefault();
-                      if (!busy && online && prompt.trim() && !voice.listening)
-                        event.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                  enterKeyHint="enter"
-                  placeholder="Message Mira…"
-                  rows={1}
-                  style={{ overflowY: "hidden" }}
-                />
-              </label>
-              <div className="chat-composer-toolbar">
-                {voice.supported && (
-                  <button
-                    type="button"
-                    className="icon-button voice-button"
-                    aria-label={
-                      voice.listening ? "Stop recording" : "Start voice input"
-                    }
-                    aria-pressed={voice.listening}
-                    disabled={busy}
-                    onClick={() =>
-                      voice.listening ? voice.stop() : voice.start(prompt)
-                    }
-                  >
-                    {voice.listening ? <Square size={17} /> : <Mic size={19} />}
-                  </button>
-                )}
-                <div className="ai-composer-selectors">{modePicker}</div>
-                <ProcessButton
-                  label="Send question"
-                  state={busy ? "loading" : succeeded ? "success" : "idle"}
-                  successLabel="Ready"
-                  className="button primary chat-send"
-                  disabled={!prompt.trim() || voice.listening}
-                >
-                  {busy ? undefined : <ArrowUp size={19} aria-hidden="true" />}
-                </ProcessButton>
-              </div>
-            </form>
-            {voice.supported && (
-              <p className="voice-notice" role="status">
-                {voice.listening
-                  ? "Listening… Stop to edit your words before sending."
-                  : "Voice input may use your browser’s online speech service. Review the text before sending."}
-              </p>
-            )}
-            {voice.error && (
-              <p className="ai-inline-error" role="alert">
-                {voice.error}
-              </p>
-            )}
-            <div className="chat-composer-meta">
-              <span>
-                {studyData
-                  ? "Sending shares your saved name and study overview with Pollinations. "
-                  : ""}
-                Mira can make mistakes. Check important answers.
-              </span>
-              {busy && (
-                <button type="button" onClick={cancelRequest}>
-                  Stop generating
-                </button>
-              )}
-            </div>
-          </div>
+          <ChatComposer
+            prompt={prompt}
+            setPrompt={setPrompt}
+            busy={busy}
+            succeeded={succeeded}
+            online={online}
+            error={error}
+            sharesOverview={Boolean(studyData)}
+            currentReviewerTitle={currentReviewer?.title}
+            useReviewer={useReviewer}
+            setUseReviewer={setUseReviewer}
+            submit={submit}
+            cancelRequest={cancelRequest}
+            voice={voice}
+          />
         </section>
-      ) : (
-        <section className="ai-generator-workspace">
-          <div className="generator-intro">
-            <span className="chat-eyebrow">CREATE A STUDY SET</span>
-            <h3>Make a review set in one go.</h3>
-            <p>
-              Create up to five reviewers with five or ten flashcards each. You
-              can inspect every card before saving.
-            </p>
-          </div>
-          <form onSubmit={submit} className="reviewer-generator">
-            <label className="generator-field">
-              Topic
-              <input
-                className="input"
-                value={topic}
-                maxLength={150}
-                required
-                disabled={busy}
-                onChange={(event) => setTopic(event.target.value)}
-                placeholder="e.g. Cell biology"
-              />
-            </label>
-            <label className="generator-field">
-              Learning goals or notes (optional)
-              <textarea
-                className="input"
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                maxLength={3000}
-                disabled={busy}
-                placeholder="Focus on cell structures and their functions…"
-              />
-            </label>
-            <div className="generator-size">
-              <div>
-                <label htmlFor="reviewer-count">Number of reviewers</label>
-                <p id="reviewer-count-hint">
-                  Choose how many study sets to prepare.
-                </p>
-              </div>
-              <input
-                id="reviewer-count"
-                aria-describedby="reviewer-count-hint"
-                className="input"
-                type="number"
-                min={1}
-                max={5}
-                value={count}
-                required
-                disabled={busy}
-                onChange={(event) => setCount(Number(event.target.value))}
-              />
-            </div>
-            <SearchSelect
-              label="Cards per reviewer"
-              value={String(cardsPerReviewer)}
-              options={[
-                { value: "5", label: "5 cards · Quick review" },
-                { value: "10", label: "10 cards · More practice" },
-              ]}
-              onChange={(value) => setCardsPerReviewer(Number(value))}
-              disabled={busy}
-            />
-            <div className="generator-submit-row">
-              <div className="ai-composer-selectors">{modePicker}</div>
-              <ProcessButton
-                label="Generate reviewers"
-                state={busy ? "loading" : succeeded ? "success" : "idle"}
-                successLabel="Ready"
-                className="button primary"
-                disabled={!topic.trim()}
-              >
-                Generate reviewers
-              </ProcessButton>
-            </div>
-            {busy && (
-              <button
-                type="button"
-                className="button secondary"
-                onClick={cancelRequest}
-              >
-                Cancel request
-              </button>
-            )}
-          </form>
-          {error && (
-            <p className="ai-inline-error" role="alert">
-              {error}
-            </p>
-          )}
-          {busy && (
-            <p className="generator-progress" role="status">
-              Preparing your study material. This may take a little time.
-            </p>
-          )}
-          {actionPreview}
-          {reviewerPreview}
-        </section>
-      )}
+      }
       {presentation === "page" && showScrollDown && (
         <button
           type="button"

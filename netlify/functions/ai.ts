@@ -5,12 +5,8 @@ import { parseReviewerContext } from "../../src/features/ai/reviewerContext";
 import { parseStudyOverview } from "../../src/features/ai/studyOverview";
 import { reviewerTool } from "../lib/reviewerTool";
 import type { Config } from "@netlify/functions";
-import {
-  isRecord,
-  parseHistory,
-  parseReviewers,
-  validText,
-} from "../../src/features/ai/schema";
+import { parseHistory, parseReviewers } from "../../src/features/ai/schema";
+import { isRecord, validText } from "../../src/utils/validation";
 
 export const config: Config = {
   rateLimit: {

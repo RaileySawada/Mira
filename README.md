@@ -42,7 +42,7 @@ Mira uses one server-configured model for chat, reviewer creation, and library a
 
 ## Organize with Mira
 
-When online, ask Mira to create study sets in a named folder and topic, or organize existing reviewers. For example: “Create biology flashcards in my Finals folder,” “Move Cell biology to Semester 2,” or “Copy Cell biology into Revision.” Mira can also create folders/topics, rename reviewers and change their topic.
+Mira has one conversation interface, with no mode selector or separate creation form. Imported notes become an editable chat draft and are never sent automatically. When online, ask Mira to create study sets in a named folder and topic, or organize existing reviewers. For example: “Create biology flashcards in my Finals folder,” “Move Cell biology to Semester 2,” or “Copy Cell biology into Revision.” Mira can also create folders/topics, rename reviewers and change their topic.
 
 Generated cards and library changes appear as previews. Choose **Save all reviewers** or **Apply changes** to store them locally. Missing destination folders/topics are created; ambiguous reviewer names require a source folder or exact title. Moves preserve card IDs and study history; copies get new IDs. No library deletion is available through AI. Saved study tools continue to work offline.
 
@@ -263,3 +263,7 @@ Mira has a dedicated `/mira` workspace alongside the floating assistant. Enter s
 - `src/config/firebase.ts` reads public build configuration; `src/lib/firebase.ts` initializes Firebase SDK clients. These files have different responsibilities.
 
 Features own their behavior. Private component props, vendor-adapter types, implementation constants and feature content stay beside the code that uses them. Shared types do not import feature implementations. Storage key values and study thresholds remain unchanged by this organization.
+
+## Code organization
+
+See [architecture and SOLID guidelines](docs/architecture.md) for folder responsibilities, dependency boundaries, and extension rules.

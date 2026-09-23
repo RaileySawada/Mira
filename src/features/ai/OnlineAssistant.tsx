@@ -3,7 +3,7 @@ import { AssistantSkeleton } from "./AssistantSkeleton";
 import { navigate } from "../../hooks/usePage";
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import { useOnline } from "../../hooks/useOnline";
-import { addGeneratedReviewers } from "./schema";
+import { addGeneratedReviewers } from "./generatedReviewers";
 import miraAvatar from "../../assets/images/profile_pictures/mira.png";
 import type { StudyData } from "../../types/study";
 

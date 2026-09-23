@@ -3,7 +3,7 @@ import {
   describeLibraryAction,
   parseLibraryActions,
 } from "../../src/features/ai/libraryActions";
-import { addGeneratedReviewers } from "../../src/features/ai/schema";
+import { addGeneratedReviewers } from "../../src/features/ai/generatedReviewers";
 import { library, reviewer } from "../support/fixtures";
 import { generated } from "../support/ai-fixtures";
 

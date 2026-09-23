@@ -5,7 +5,7 @@ import type { StudyData } from "../../types/study";
 import { achievements } from "../achievements/achievements";
 import { dayKey, percentage } from "../../utils/stats";
 import { dailyQuizSize } from "../../utils/quiz";
-import { isRecord } from "./schema";
+import { isRecord } from "../../utils/validation";
 
 const short = (value: string, limit = 80) => value.trim().slice(0, limit);
 

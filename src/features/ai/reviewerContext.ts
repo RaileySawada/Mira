@@ -1,6 +1,6 @@
 import type { ReviewerContext } from "../../types/ai";
 import type { Reviewer } from "../../types/study";
-import { isRecord, validText } from "./schema";
+import { isRecord, validText } from "../../utils/validation";
 
 export function buildReviewerContext(reviewer: Reviewer): ReviewerContext {
   const cards: ReviewerContext["cards"] = [];

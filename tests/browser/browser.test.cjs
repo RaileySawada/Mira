@@ -120,14 +120,6 @@ test("production study flows, themes, mobile overlays and offline reload", async
       throw new Error("Timed out: " + expression);
     }
     async function click(text) {
-      if (text === "Create reviewers" || text === "Ask a question") {
-        await click("Assistant mode");
-        await evaluate(
-          `Array.from(document.querySelectorAll('[role="option"]')).find(option => option.textContent.trim() === ${JSON.stringify(text)}).click()`,
-        );
-        await delay(150);
-        return;
-      }
       await evaluate(
         `(() => { const button = [...document.querySelectorAll('button')].find(b => (b.textContent.trim() === ${JSON.stringify(text)} || b.getAttribute("aria-label") === ${JSON.stringify(text)})); if (!button) throw new Error('Missing button: ' + ${JSON.stringify(text)}); button.click(); })()`,
       );
@@ -1038,8 +1030,8 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => {
       if (url !== '/.netlify/functions/ai') return window.originalFetch(url, options);
       const input = JSON.parse(options.body);
-      if (input.mode === 'chat') return Promise.resolve(Response.json({answer: ['## Cells', '', 'Cells are the **building blocks** of life. They contain structures that perform specific functions.', ''].join(String.fromCharCode(10)).repeat(30)}));
-      return Promise.resolve(Response.json({reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
+      if (!input.prompt.includes('Create three AI Biology reviewers')) return Promise.resolve(Response.json({answer: ['## Cells', '', 'Cells are the **building blocks** of life. They contain structures that perform specific functions.', ''].join(String.fromCharCode(10)).repeat(30)}));
+      return Promise.resolve(Response.json({answer:'Drafts ready.',topic:'AI Biology',reviewers: Array.from({length:3}, (_,i) => ({title:'AI reviewer '+i,description:'Generated biology',cards:Array.from({length:5},(_,j)=>({question:'Question '+j,answer:'Answer '+j}))}))}));
     }`);
     await click("AI study assistant");
     await waitFor("document.querySelector('.ai-panel')");
@@ -1133,22 +1125,10 @@ test("production study flows, themes, mobile overlays and offline reload", async
       path.join(tmpdir(), "mira-performance.json"),
       JSON.stringify(performanceSamples, null, 2),
     );
-    await click("Create reviewers");
-    await click("Cards per reviewer");
-    expect(
-      await evaluate(
-        "(() => { const p = document.querySelector('.ai-panel .select-panel').getBoundingClientRect(); const t = document.querySelector('button[aria-label=\"Cards per reviewer\"]').getBoundingClientRect(); return Math.min(Math.abs(p.bottom - t.top), Math.abs(p.top - t.bottom)) < 9; })()",
-      ),
-    ).toBe(true);
-    expect(
-      await evaluate(
-        "document.querySelector('.ai-panel .select-panel input').getBoundingClientRect().height >= 40",
-      ),
-    ).toBe(true);
-    await click("Cards per reviewer");
-    await fill(".ai-panel input", "AI Biology");
-    await click("Generate reviewers");
+    await fill(".ai-panel textarea", "Create three AI Biology reviewers");
+    await click("Send question");
     await waitFor("document.body.innerText.includes('Ready to review')");
+    await waitFor("!document.querySelector('.ai-panel textarea').disabled");
     await click("Save all reviewers");
     await waitFor("!document.querySelector('.ai-panel')");
     expect(

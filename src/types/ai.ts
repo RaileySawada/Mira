@@ -1,6 +1,9 @@
 import type { STUDY_OVERVIEW_KEYS } from "../config/ai";
 
-export type StudyOverview = Record<(typeof STUDY_OVERVIEW_KEYS)[number], string>;
+export type StudyOverview = Record<
+  (typeof STUDY_OVERVIEW_KEYS)[number],
+  string
+>;
 export type AiMode = "chat" | "generate";
 
 export interface GeneratedReviewer {
@@ -23,8 +26,8 @@ export interface ReviewerContext {
 export interface AiRequest {
   mode: AiMode;
   prompt: string;
-  topic: string;
-  count: number;
+  topic?: string;
+  count?: number;
   cardsPerReviewer?: number;
   history?: ChatMessage[];
   overview?: StudyOverview;

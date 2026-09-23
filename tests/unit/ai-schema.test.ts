@@ -1,10 +1,6 @@
-import {
-  parseHistory,
-  addGeneratedReviewers,
-  isRecord,
-  parseReviewers,
-  validText,
-} from "../../src/features/ai/schema";
+import { parseHistory, parseReviewers } from "../../src/features/ai/schema";
+import { isRecord, validText } from "../../src/utils/validation";
+import { addGeneratedReviewers } from "../../src/features/ai/generatedReviewers";
 import { validateData } from "../../src/services/storage";
 import { library } from "../support/fixtures";
 import { generated } from "../support/ai-fixtures";

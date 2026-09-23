@@ -1,6 +1,6 @@
 import type { LibraryAction } from "../../types/agent";
 import type { StudyData } from "../../types/study";
-import { isRecord, validText } from "./schema";
+import { isRecord, validText } from "../../utils/validation";
 
 export function parseLibraryActions(value: unknown): LibraryAction[] {
   if (!Array.isArray(value) || !value.length || value.length > 10)

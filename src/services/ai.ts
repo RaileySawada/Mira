@@ -1,6 +1,6 @@
 import type { AiRequest } from "../types/ai";
 
-import { isRecord } from "../features/ai/schema";
+import { isRecord } from "../utils/validation";
 
 export async function requestAi(
   input: AiRequest,
