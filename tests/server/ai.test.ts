@@ -279,3 +279,62 @@ test("production rejects unverified requests before contacting the AI provider",
     delete process.env.CONTEXT;
   }
 });
+
+test("returns a validated organization plan and folder placement", async () => {
+  const actions = [
+    { kind: "move_reviewer", reviewer: "Cell biology", destination: "Finals" },
+  ];
+  const mock = jest
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(toolResponse("organize_library", { actions }));
+  const response = await handler(request());
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ actions });
+  mock.mockResolvedValue(
+    toolResponse("prepare_reviewers", {
+      topic: "Biology",
+      folder: "Finals",
+      reviewers: [generated()],
+    }),
+  );
+  expect(await (await handler(request())).json()).toMatchObject({
+    folder: "Finals",
+  });
+});
+test.each([
+  ["organize_library", null],
+  ["organize_library", { actions: [{ kind: "delete_library" }] }],
+  [
+    "prepare_reviewers",
+    { topic: "Biology", folder: 42, reviewers: [generated()] },
+  ],
+])("rejects malformed agent plans %s", async (name, args) => {
+  jest
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(toolResponse(String(name), args));
+  expect((await handler(request())).status).toBe(502);
+});
+
+test("default respects the deployment model and invalid models never reach the provider", async () => {
+  process.env.POLLINATIONS_MODEL = "deployment-model";
+  const fetchMock = jest
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(provider("Hello"));
+  expect((await handler(request({ ...chat, model: "default" }))).status).toBe(
+    200,
+  );
+  expect(JSON.parse(String(fetchMock.mock.calls[0][1]!.body)).model).toBe(
+    "deployment-model",
+  );
+  fetchMock.mockClear();
+  for (const model of [
+    "google/gemini-3.8-flash",
+    "unapproved",
+    null,
+    42,
+    {},
+    "",
+  ])
+    expect((await handler(request({ ...chat, model }))).status).toBe(400);
+  expect(fetchMock).not.toHaveBeenCalled();
+});

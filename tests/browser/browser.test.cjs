@@ -1361,6 +1361,30 @@ test("production study flows, themes, mobile overlays and offline reload", async
     });
     await evaluate("document.querySelector('a[href=\"/mira\"]').click()");
     await waitFor("document.querySelector('.ai-page')");
+    // A chat plan must reach local storage only after explicit application.
+    await evaluate(`window.agentOriginalFetch = window.fetch; window.fetch = (url, options) => {
+      if (url !== '/.netlify/functions/ai') return window.agentOriginalFetch(url, options);
+      return Promise.resolve(Response.json({answer:'Review your library changes.',actions:[{kind:'move_reviewer',reviewer:'AI reviewer 0',destination:'Agent Finals'}]}));
+    }`);
+    await fill(".ai-page textarea", "Move AI reviewer 0 into Agent Finals");
+    await click("Send question");
+    await waitFor("document.querySelector('[aria-label=\"Library changes\"]')");
+    expect(
+      await evaluate(
+        "JSON.parse(localStorage.getItem('mira.study.v1')).folders.some(folder => folder.name === 'Agent Finals')",
+      ),
+    ).toBe(false);
+    await waitFor("!document.querySelector('.ai-page textarea').disabled");
+    await click("Apply changes");
+    await waitFor(
+      "!document.querySelector('[aria-label=\"Library changes\"]')",
+    );
+    expect(
+      await evaluate(
+        "(() => { const data=JSON.parse(localStorage.getItem('mira.study.v1')); const folder=data.folders.find(item=>item.name==='Agent Finals'); return !!folder && data.reviewers.find(item=>item.title==='AI reviewer 0').folderId===folder.id; })()",
+      ),
+    ).toBe(true);
+    await evaluate("window.fetch = window.agentOriginalFetch");
     const miraDesktop = await send("Page.captureScreenshot", { format: "png" });
     await writeFile(
       path.join(tmpdir(), "mira-page-desktop.png"),

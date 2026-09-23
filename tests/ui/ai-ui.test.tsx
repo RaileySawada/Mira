@@ -525,3 +525,106 @@ test("chat input only becomes internally scrollable after reaching its growth li
   expect(input.style.height).toBe("60px");
   expect(input.style.overflowY).toBe("hidden");
 });
+
+test("library actions are previewed, can fail safely and apply only after a click", async () => {
+  setMedia("(prefers-reduced-motion: reduce)", true);
+  const actions = [
+    { kind: "move_reviewer", reviewer: "Cell biology", destination: "Finals" },
+  ];
+  request.mockResolvedValue({ answer: "Review your plan.", actions });
+  const apply = jest.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
+  render(
+    <AiAssistant
+      onSave={jest.fn()}
+      onClose={jest.fn()}
+      onApplyActions={apply}
+    />,
+  );
+  change("Your study question", "Move Cell biology to Finals");
+  click("Send question");
+  await screen.findByRole("region", { name: "Library changes" });
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Apply changes" }),
+    ).not.toBeDisabled(),
+  );
+  expect(apply).not.toHaveBeenCalled();
+  click("Apply changes");
+  await screen.findByRole("alert");
+  expect(screen.getByRole("region", { name: "Library changes" })).toBeVisible();
+  click("Apply changes");
+  expect(apply).toHaveBeenLastCalledWith(actions);
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("region", { name: "Library changes" }),
+    ).not.toBeInTheDocument(),
+  );
+  expect(
+    screen.getByText(
+      "The requested library changes have been saved on this device.",
+    ),
+  ).toBeVisible();
+});
+
+test("dismissing a library plan makes no changes", async () => {
+  setMedia("(prefers-reduced-motion: reduce)", true);
+  request.mockResolvedValue({
+    answer: "Review your plan.",
+    actions: [{ kind: "create_folder", name: "Finals" }],
+  });
+  const apply = jest.fn();
+  render(
+    <AiAssistant
+      onSave={jest.fn()}
+      onClose={jest.fn()}
+      onApplyActions={apply}
+    />,
+  );
+  change("Your study question", "Create Finals folder");
+  click("Send question");
+  await screen.findByRole("region", { name: "Library changes" });
+  click("Dismiss");
+  expect(apply).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole("region", { name: "Library changes" }),
+  ).not.toBeInTheDocument();
+});
+
+test("chat reviewer drafts retain the requested destination folder", async () => {
+  setMedia("(prefers-reduced-motion: reduce)", true);
+  request.mockResolvedValue({
+    answer: "Review these cards.",
+    topic: "Biology",
+    folder: "Finals",
+    reviewers: drafts,
+  });
+  const save = jest.fn().mockReturnValue(true);
+  render(<AiAssistant onSave={save} onClose={jest.fn()} />);
+  change("Your study question", "Create biology reviewers in Finals");
+  click("Send question");
+  await screen.findByRole("region", { name: "Generated reviewers" });
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Save all reviewers" }),
+    ).not.toBeDisabled(),
+  );
+  await act(async () => {
+    click("Save all reviewers");
+  });
+  expect(save).toHaveBeenCalledWith("Biology", drafts, "Finals");
+});
+
+test("Mira ignores old model preferences and offers only assistant modes", async () => {
+  localStorage.setItem("mira.ai.model", "google/gemini-3.8-flash");
+  setMedia("(prefers-reduced-motion: reduce)", true);
+  request.mockResolvedValue({ answer: "Hello" });
+  render(<AiAssistant onSave={jest.fn()} onClose={jest.fn()} />);
+  expect(
+    screen.queryByRole("button", { name: "AI model" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Assistant mode" })).toBeVisible();
+  change("Your study question", "Explain cells");
+  click("Send question");
+  await waitFor(() => expect(request).toHaveBeenCalled());
+  expect(request.mock.calls[0][0]).not.toHaveProperty("model");
+});

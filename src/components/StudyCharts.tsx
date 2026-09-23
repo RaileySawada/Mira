@@ -1,12 +1,4 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, Pie, PieChart, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -38,8 +30,8 @@ export default function StudyCharts({ attempts }: { attempts: Attempt[] }) {
       ]
     : [{ name: "remaining", value: 1, fill: "var(--color-remaining)" }];
   return (
-    <div className="mb-8 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
-      <section className="panel min-w-0 p-6">
+    <div className="study-charts">
+      <section className="study-chart">
         <h2 className="section-title">Your learning rhythm</h2>
         <p className="mt-1 text-xs text-stone-500">
           Questions answered over the last 7 days
@@ -56,7 +48,6 @@ export default function StudyCharts({ attempts }: { attempts: Attempt[] }) {
             data={week}
             margin={{ left: -24, right: 8 }}
           >
-            <CartesianGrid vertical={false} />
             <XAxis
               dataKey="label"
               tickLine={false}
@@ -75,8 +66,8 @@ export default function StudyCharts({ attempts }: { attempts: Attempt[] }) {
           </BarChart>
         </ChartContainer>
       </section>
-      <section className="panel min-w-0 p-6">
-        <h2 className="section-title">A little more knowledgeable</h2>
+      <section className="study-chart">
+        <h2 className="section-title">Your recall, over time</h2>
         <p className="mt-1 text-xs text-stone-500">
           Your all-time quiz performance
         </p>

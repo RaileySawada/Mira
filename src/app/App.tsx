@@ -1,3 +1,4 @@
+import { AppFooter } from "../components/AppFooter";
 import { OnlineCount } from "../components/OnlineCount";
 import { recoveryBackup } from "../services/storageRuntime";
 import { confirmNewQuiz } from "../features/study/sessionActions";
@@ -19,7 +20,6 @@ import { confirmAction } from "../components/confirmAction";
 import { OnlineAssistant } from "../features/ai/OnlineAssistant";
 import { useEffect, useState } from "react";
 import { navigate, usePage } from "../hooks/usePage";
-import { RouteLink } from "../components/RouteLink";
 import { useTheme } from "../hooks/useTheme";
 import { Documentation } from "../pages/Documentation";
 import { Sidebar, MobileHeader } from "../components/Navigation";
@@ -142,22 +142,40 @@ export default function App() {
             <span>/</span>
             <span className="text-stone-600">{page}</span>
           </div>
-          <div className="flex items-center gap-5"><OnlineCount presence={presence} /><span className="text-xs text-stone-400">
-            {new Date().toLocaleDateString("en", {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })}
-          </span></div>
+          <div className="flex items-center gap-5">
+            <OnlineCount presence={presence} />
+            <span className="text-xs text-stone-400">
+              {new Date().toLocaleDateString("en", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </div>
         </header>
-        <main className={page === "Mira" ? "app-main mira-main" : "app-main mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10"}>
-          <OnlineAssistant data={data} update={update} pageMode={page === "Mira"} />
+        <main
+          className={
+            page === "Mira"
+              ? "app-main mira-main"
+              : "app-main mx-auto flex w-full max-w-7xl flex-1 flex-col px-5 py-8 sm:px-9 sm:py-10"
+          }
+        >
+          <OnlineAssistant
+            data={data}
+            update={update}
+            pageMode={page === "Mira"}
+          />
           <ResumeQuiz
             active={!!session}
             completedIds={data.attempts.map((a) => a.id)}
             onResume={setSession}
           />
-          <div key={page} className={page === "Mira" ? "contents" : "page-content min-w-0 flex-1"}>
+          <div
+            key={page}
+            className={
+              page === "Mira" ? "contents" : "page-content min-w-0 flex-1"
+            }
+          >
             {(error || recoveryError) && (
               <div
                 role="alert"
@@ -279,29 +297,7 @@ export default function App() {
               })
             }
           />
-          <footer hidden={page === "Mira"} className="mt-12 flex flex-wrap justify-between gap-3 border-t border-stone-200 pt-5 text-[10px] text-stone-400">
-            <span>A little wiser, every day.</span>
-            <nav className="flex flex-wrap gap-4" aria-label="Footer">
-              {(
-                [
-                  "Docs",
-                  "Guide",
-                  "Contribute",
-                  "Privacy",
-                  "Terms",
-                  "About",
-                ] as const
-              ).map((item) => (
-                <RouteLink
-                  key={item}
-                  page={item}
-                  className="hover:text-violet-500"
-                >
-                  {item === "Terms" ? "Terms & conditions" : item}
-                </RouteLink>
-              ))}
-            </nav>
-          </footer>
+          {page !== "Mira" && <AppFooter />}
         </main>
       </div>
       {editor && (

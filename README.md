@@ -36,6 +36,16 @@ npm run dev
 - **Settings:** name, daily goal, quiz length, shuffle, daily review, JSON import/export, and local data reset.
 - **PWA:** installable with a production service worker that caches the app for offline use.
 
+## Mira default
+
+Mira uses one server-configured model for chat, reviewer creation, and library actions: `POLLINATIONS_MODEL`, falling back to `openai`. There is no model picker, and previously saved model preferences are ignored. Provider credentials remain on the server.
+
+## Organize with Mira
+
+When online, ask Mira to create study sets in a named folder and topic, or organize existing reviewers. For example: “Create biology flashcards in my Finals folder,” “Move Cell biology to Semester 2,” or “Copy Cell biology into Revision.” Mira can also create folders/topics, rename reviewers and change their topic.
+
+Generated cards and library changes appear as previews. Choose **Save all reviewers** or **Apply changes** to store them locally. Missing destination folders/topics are created; ambiguous reviewer names require a source folder or exact title. Moves preserve card IDs and study history; copies get new IDs. No library deletion is available through AI. Saved study tools continue to work offline.
+
 ## Data and scoring
 
 Study data is stored in the `mira-study` IndexedDB database. The old `mira.study.v1` localStorage record is retained as a migration recovery copy. Export a backup before clearing browser storage or changing devices. Imports replace existing data after validation and confirmation. Backups are limited to 5 MB. Use one browser tab for editing to avoid competing saves.

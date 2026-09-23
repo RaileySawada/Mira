@@ -9,6 +9,12 @@ export const reviewerTool = {
       additionalProperties: false,
       required: ["topic", "reviewers"],
       properties: {
+        folder: {
+          type: "string",
+          maxLength: 150,
+          description:
+            "Optional destination folder explicitly requested by the user. Created if missing.",
+        },
         topic: { type: "string", maxLength: 150 },
         reviewers: {
           type: "array",

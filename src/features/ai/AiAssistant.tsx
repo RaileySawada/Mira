@@ -1,3 +1,7 @@
+import "./MiraLayout.css";
+import "./ModelPicker.css";
+import type { LibraryAction } from "../../types/agent";
+import { parseLibraryActions, describeLibraryAction } from "./libraryActions";
 import { MiraAmbient } from "./MiraAmbient";
 import { ambientMood } from "./ambientMood";
 import type { AiMode as Mode } from "../../types/ai";
@@ -34,6 +38,7 @@ import { type ChatMessage, type GeneratedReviewer } from "../../types/ai";
 export default function AiAssistant({
   onClose,
   onSave,
+  onApplyActions,
   onGuidance,
   studyData,
   importedNotes = "",
@@ -46,9 +51,11 @@ export default function AiAssistant({
   studyData?: StudyData;
   onClose: () => void;
   onGuidance?: () => void;
+  onApplyActions?: (actions: LibraryAction[]) => boolean | Promise<boolean>;
   onSave: (
     topic: string,
     reviewers: GeneratedReviewer[],
+    folder?: string,
   ) => boolean | Promise<boolean>;
 }) {
   const guidanceReceived = useRef(onGuidance);
@@ -63,6 +70,9 @@ export default function AiAssistant({
     (r) => r.id === studyData.lastStudy?.reviewerId,
   );
   const saving = useActionFeedback();
+  const applying = useActionFeedback();
+  const [actions, setActions] = useState<LibraryAction[]>([]);
+  const [savedFolder, setSavedFolder] = useState("");
   const [mode, setMode] = useState<Mode>(importedNotes ? "generate" : "chat");
   const [topic, setTopic] = useState("");
   const [prompt, setPrompt] = useState(importedNotes);
@@ -176,6 +186,8 @@ export default function AiAssistant({
     if (busy) return;
     voice.stop();
     setDrafts([]);
+    setActions([]);
+    setSavedFolder("");
     setMessages([]);
     clearAiSession();
     setPrompt("");
@@ -235,6 +247,7 @@ export default function AiAssistant({
       !navigator.onLine ||
       busy ||
       voice.listening ||
+      applying.state !== "idle" ||
       (mode === "generate" ? !topic.trim() : !prompt.trim())
     )
       return;
@@ -249,6 +262,8 @@ export default function AiAssistant({
     setSucceeded(false);
     setError("");
     setDrafts([]);
+    setActions([]);
+    setSavedFolder("");
     if (mode === "chat") {
       setMessages((current) => [
         ...current,
@@ -308,6 +323,11 @@ export default function AiAssistant({
       } else {
         if (!isRecord(result) || !validText(result.answer, 80000))
           throw new Error("AI returned an empty answer. Please try again.");
+        if (result.actions !== undefined)
+          setActions(parseLibraryActions(result.actions));
+        if (result.folder !== undefined && !validText(result.folder, 150))
+          throw new Error("Invalid folder name.");
+        setSavedFolder(typeof result.folder === "string" ? result.folder : "");
         if (result.reviewers !== undefined) {
           if (!validText(result.topic, 150))
             throw new Error("AI returned an invalid topic. Please try again.");
@@ -340,11 +360,64 @@ export default function AiAssistant({
     }
   }
 
+  const actionPreview = actions.length > 0 && onApplyActions && (
+    <section className="generator-results" aria-label="Library changes">
+      <h3>Ready to organize</h3>
+      <p className="text-sm text-stone-500">
+        Missing destination folders and topics will be created. Your cards and
+        study history stay intact.
+      </p>
+      <ul className="agent-action-list">
+        {actions.map((action, index) => (
+          <li key={index}>{describeLibraryAction(action)}</li>
+        ))}
+      </ul>
+      {applying.error && (
+        <p role="alert" className="ai-inline-error">
+          {applying.error}
+        </p>
+      )}
+      <div className="flex gap-3">
+        <ProcessButton
+          label="Apply changes"
+          successLabel="Applied"
+          state={applying.state}
+          disabled={busy || !online}
+          onClick={() =>
+            void applying.run(
+              () => onApplyActions(actions),
+              () => {
+                setActions([]);
+                setMessages((current) => [
+                  ...current,
+                  {
+                    role: "assistant",
+                    content:
+                      "The requested library changes have been saved on this device.",
+                  },
+                ]);
+              },
+            )
+          }
+        />
+        <button
+          className="button secondary"
+          disabled={applying.state === "loading"}
+          onClick={() => setActions([])}
+        >
+          Dismiss
+        </button>
+      </div>
+    </section>
+  );
   const reviewerPreview = drafts.length > 0 && (
     <section className="generator-results" aria-label="Generated reviewers">
       <div className="generator-result-heading">
         <span className="chat-eyebrow">YOUR STUDY SET</span>
         <h3>Ready to review · {drafts.length} reviewers</h3>
+        <p>
+          Topic: {savedTopic} · Folder: {savedFolder || "Unfiled"}
+        </p>
         <p>Open each reviewer to check answers before saving.</p>
       </div>
       {drafts.map((draft, index) => (
@@ -380,7 +453,13 @@ export default function AiAssistant({
         state={saving.state}
         successLabel="Saved"
         onClick={() =>
-          void saving.run(() => onSave(savedTopic, drafts), closeAssistant)
+          void saving.run(
+            () =>
+              savedFolder
+                ? onSave(savedTopic, drafts, savedFolder)
+                : onSave(savedTopic, drafts),
+            closeAssistant,
+          )
         }
       />
     </section>
@@ -417,7 +496,17 @@ export default function AiAssistant({
         }
       }}
     >
-      {presentation === "page" && <MiraAmbient mood={ambientMood(busy, Boolean(error), messages.findLast(message => message.role === "assistant")?.content ?? "", drafts.length > 0)} />}
+      {presentation === "page" && (
+        <MiraAmbient
+          mood={ambientMood(
+            busy,
+            Boolean(error),
+            messages.findLast((message) => message.role === "assistant")
+              ?.content ?? "",
+            drafts.length > 0,
+          )}
+        />
+      )}
       <header className="ai-chat-header">
         {presentation !== "page" && (
           <div className="ai-identity">
@@ -538,6 +627,7 @@ export default function AiAssistant({
                 </div>
               </div>
             ))}
+            {actionPreview}
             {reviewerPreview}
             {typingAnswer && (
               <div className="chat-message assistant" aria-live="polite">
@@ -623,32 +713,34 @@ export default function AiAssistant({
                   style={{ overflowY: "hidden" }}
                 />
               </label>
-              {voice.supported && (
-                <button
-                  type="button"
-                  className="icon-button voice-button"
-                  aria-label={
-                    voice.listening ? "Stop recording" : "Start voice input"
-                  }
-                  aria-pressed={voice.listening}
-                  disabled={busy}
-                  onClick={() =>
-                    voice.listening ? voice.stop() : voice.start(prompt)
-                  }
+              <div className="chat-composer-toolbar">
+                {voice.supported && (
+                  <button
+                    type="button"
+                    className="icon-button voice-button"
+                    aria-label={
+                      voice.listening ? "Stop recording" : "Start voice input"
+                    }
+                    aria-pressed={voice.listening}
+                    disabled={busy}
+                    onClick={() =>
+                      voice.listening ? voice.stop() : voice.start(prompt)
+                    }
+                  >
+                    {voice.listening ? <Square size={17} /> : <Mic size={19} />}
+                  </button>
+                )}
+                <div className="ai-composer-selectors">{modePicker}</div>
+                <ProcessButton
+                  label="Send question"
+                  state={busy ? "loading" : succeeded ? "success" : "idle"}
+                  successLabel="Ready"
+                  className="button primary chat-send"
+                  disabled={!prompt.trim() || voice.listening}
                 >
-                  {voice.listening ? <Square size={17} /> : <Mic size={19} />}
-                </button>
-              )}
-              {modePicker}
-              <ProcessButton
-                label="Send question"
-                state={busy ? "loading" : succeeded ? "success" : "idle"}
-                successLabel="Ready"
-                className="button primary chat-send"
-                disabled={!prompt.trim() || voice.listening}
-              >
-                {busy ? undefined : <ArrowUp size={19} aria-hidden="true" />}
-              </ProcessButton>
+                  {busy ? undefined : <ArrowUp size={19} aria-hidden="true" />}
+                </ProcessButton>
+              </div>
             </form>
             {voice.supported && (
               <p className="voice-notice" role="status">
@@ -742,7 +834,7 @@ export default function AiAssistant({
               disabled={busy}
             />
             <div className="generator-submit-row">
-              {modePicker}
+              <div className="ai-composer-selectors">{modePicker}</div>
               <ProcessButton
                 label="Generate reviewers"
                 state={busy ? "loading" : succeeded ? "success" : "idle"}
@@ -773,16 +865,26 @@ export default function AiAssistant({
               Preparing your study material. This may take a little time.
             </p>
           )}
+          {actionPreview}
           {reviewerPreview}
         </section>
       )}
       {presentation === "page" && showScrollDown && (
-        <button type="button" className="mira-scroll-bottom" aria-label="Scroll to bottom"
+        <button
+          type="button"
+          className="mira-scroll-bottom"
+          aria-label="Scroll to bottom"
           onClick={() => {
             followConversation.current = true;
-            window.scrollTo({ top: document.documentElement.scrollHeight,
-              behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-          }}>
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                .matches
+                ? "instant"
+                : "smooth",
+            });
+          }}
+        >
           <ArrowDown size={20} aria-hidden="true" />
         </button>
       )}

@@ -1,3 +1,4 @@
+import "../features/home/HomeDashboard.css";
 import { LearningInsights } from "../features/home/LearningInsights";
 import { LearningPath } from "../features/home/LearningPath";
 import { learningAnalytics } from "../features/learning/analytics";
@@ -68,7 +69,7 @@ export function Home({
   ];
 
   return (
-    <>
+    <div className="home-dashboard">
       <PageHeading
         eyebrow="A LITTLE PROGRESS, EVERY DAY"
         title={`Your next chapter starts here${data.settings.name ? `, ${data.settings.name}` : ""}.`}
@@ -114,8 +115,6 @@ export function Home({
           </button>
         </div>
       </section>
-      <LearningPath insights={adaptive} onStart={onDaily} />
-      <LearningInsights insights={adaptive} onStudy={onStudy} />
       <section className="panel current-study">
         <div>
           <p className="mira-welcome-label">
@@ -141,6 +140,7 @@ export function Home({
           {current ? "Continue studying" : "Choose a reviewer"}
         </button>
       </section>
+      <LearningPath insights={adaptive} onStart={onDaily} />
       <div className="home-study-grid grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section>
           <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
@@ -215,7 +215,7 @@ export function Home({
               ? "You reached your goal. Take a moment to celebrate!"
               : `${Math.max(0, data.settings.dailyGoal - studied)} more questions to reach your daily goal.`}
           </p>
-          <div className="mt-6 border-t border-stone-100 pt-5 text-sm italic leading-6 text-stone-500">
+          <div className="mt-6 pt-5 text-sm italic leading-6 text-stone-500">
             “You don’t have to be perfect.
             <br />
             You just have to keep going.”
@@ -227,29 +227,30 @@ export function Home({
       </div>
       <div className="mt-8">
         {" "}
-        <div className="mb-7 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="home-metrics">
           {stats.map((stat) => (
-            <div className="panel p-5" key={stat.label}>
+            <div className="home-metric" key={stat.label}>
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs text-stone-500">{stat.label}</p>
               </div>
-              <p className="mt-3 text-3xl font-semibold tracking-tight">
-                {stat.value}
-              </p>
+              <p className="home-metric-value">{stat.value}</p>
               <p className="mt-2 text-[11px] text-stone-400">{stat.note}</p>
             </div>
           ))}
         </div>
         <Suspense
           fallback={
-            <div className="mb-8 h-72" role="status">
-              Loading charts…
-            </div>
+            <div
+              className="chart-loading"
+              role="status"
+              aria-label="Loading study charts"
+            />
           }
         >
           <StudyCharts attempts={data.attempts} />
         </Suspense>
+        <LearningInsights insights={adaptive} onStudy={onStudy} />
       </div>
-    </>
+    </div>
   );
 }

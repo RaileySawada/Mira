@@ -1,3 +1,4 @@
+import { applyLibraryActions } from "./libraryActions";
 import { AssistantSkeleton } from "./AssistantSkeleton";
 import { navigate } from "../../hooks/usePage";
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
@@ -113,8 +114,11 @@ function AssistantLauncher({
               setImportedNotes("");
               requestAnimationFrame(() => trigger.current?.focus());
             }}
-            onSave={(topic, drafts) =>
-              update(addGeneratedReviewers(data, topic, drafts))
+            onApplyActions={(actions) =>
+              update(applyLibraryActions(data, actions))
+            }
+            onSave={(topic, drafts, folder) =>
+              update(addGeneratedReviewers(data, topic, drafts, folder))
             }
           />
         </Suspense>

@@ -1,0 +1,55 @@
+.ai-composer-selectors {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex: 0 1 160px;
+  min-width: 0;
+}
+.ai-composer-selectors .ai-mode-picker {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+}
+.ai-composer-selectors .select-trigger {
+  min-height: 32px;
+  height: 32px;
+  padding: 5px 8px;
+  gap: 4px;
+  font-size: 11px;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+}
+.ai-composer-selectors .select-trigger:hover {
+  background: var(--soft);
+}
+.ai-composer-selectors .select-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-composer-selectors .select-trigger > svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.ai-conversation .chat-composer .ai-composer-selectors {
+  flex: 1 1 0;
+  max-width: 160px;
+}
+.generator-submit-row {
+  flex-wrap: wrap;
+}
+.generator-submit-row .ai-composer-selectors {
+  flex: 0 1 160px;
+  margin-left: 0;
+}
+@media (max-width: 640px) {
+  .ai-composer-selectors .select-trigger {
+    padding-inline: 5px;
+    font-size: 10px;
+  }
+}

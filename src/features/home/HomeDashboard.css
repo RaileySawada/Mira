@@ -1,0 +1,104 @@
+.home-dashboard {
+  min-width: 0;
+}
+.home-dashboard .panel,
+.home-dashboard .learning-path,
+.home-dashboard .learning-insights {
+  border: 0;
+  box-shadow: none;
+}
+.home-dashboard .current-study {
+  background: var(--soft);
+  border-radius: 20px;
+  margin-block: 24px;
+}
+.home-dashboard .current-study h2 {
+  max-width: 36ch;
+}
+.home-dashboard .learning-path {
+  margin-block: 24px;
+}
+.home-dashboard .learning-insights {
+  margin-top: 32px;
+}
+.home-dashboard .home-study-grid {
+  margin-top: 32px;
+  gap: 28px;
+}
+.home-dashboard .home-study-grid button.panel {
+  border-radius: 14px;
+  padding: 18px;
+}
+.home-dashboard .home-study-grid button.panel:hover {
+  background: var(--soft);
+}
+.home-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 32px 0 24px;
+}
+.home-metric {
+  padding: 20px;
+  background: var(--surface);
+  border-radius: 18px;
+  min-width: 0;
+}
+.home-metric-value {
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  margin: 10px 0 6px;
+}
+.study-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.study-chart {
+  min-width: 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 0;
+  border-radius: 22px;
+  box-shadow: none;
+}
+.chart-loading {
+  height: 280px;
+  background: var(--soft);
+  border-radius: 22px;
+}
+.agent-action-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+}
+.agent-action-list li {
+  background: var(--soft);
+  padding: 12px 16px;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+@media (max-width: 740px) {
+  .home-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .home-metric {
+    padding: 16px;
+  }
+  .study-charts {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .study-chart {
+    padding: 20px 16px;
+  }
+  .home-dashboard .home-study-grid {
+    gap: 24px;
+  }
+}
