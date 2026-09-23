@@ -30,3 +30,13 @@
   port = 8888
   framework = "#custom"
   autoLaunch = false
+
+[[headers]]
+  for = "/version.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"

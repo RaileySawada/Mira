@@ -1,7 +1,7 @@
 {
   "name": "mira",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,10 @@
     "test:types": "tsc -p tsconfig.test.json --noEmit",
     "test:browser": "npm run build && jest --config jest.browser.config.cjs --runInBand",
     "test:all": "npm run test:types && npm run test:coverage && npm run test:server:coverage && npm run test:browser",
-    "dev:netlify": "netlify dev --offline"
+    "dev:netlify": "netlify dev --offline",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

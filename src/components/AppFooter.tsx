@@ -1,3 +1,4 @@
+import { APP_VERSION } from "../config/release";
 import { RouteLink } from "./RouteLink";
 import "./AppFooter.css";
 
@@ -32,7 +33,9 @@ export function AppFooter() {
         </div>
       </nav>
       <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} Mira</span>
+        <span>
+          © {new Date().getFullYear()} Mira · v{APP_VERSION}
+        </span>
         <span>Developed with love for Mira, by Railey.</span>
       </div>
     </footer>

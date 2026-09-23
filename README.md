@@ -88,7 +88,6 @@ Before publishing, set `og:url` and a canonical URL in `index.html`, and change 
 
 MIT. See [LICENSE](LICENSE).
 
-
 ## Appearance, navigation, and documentation
 
 Settings includes Light, Dark, and System appearance. The choice is stored with
@@ -101,11 +100,10 @@ Icons use Lucide React.
 Pages use clean paths such as /reviewers and /settings. Navigation, including
 browser Back and Forward, resets the page to the top. Old hash bookmarks are
 converted to the corresponding clean paths. Production hosts must serve index.html
-for app paths. public/_redirects includes this fallback for compatible hosts;
+for app paths. public/\_redirects includes this fallback for compatible hosts;
 configure an equivalent SPA rewrite on other hosting services.
 
 In-app documentation is available at /guide, /privacy, /terms, and /about.
-
 
 ## Topics and branding
 
@@ -121,15 +119,15 @@ Contributions are welcome: bug reports, documentation, accessibility, design, an
 
 All automated tests run through Jest. React Testing Library exercises the UI using accessible labels and user interactions.
 
-| Command | Purpose |
-| --- | --- |
-| `npm test` | Run application logic, hooks, components, pages, and server tests |
-| `npm run test:server` | Run Netlify function tests |
-| `npm run test:watch` | Rerun affected tests while developing |
-| `npm run test:types` | Type-check the TypeScript tests |
+| Command                 | Purpose                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `npm test`              | Run application logic, hooks, components, pages, and server tests            |
+| `npm run test:server`   | Run Netlify function tests                                                   |
+| `npm run test:watch`    | Rerun affected tests while developing                                        |
+| `npm run test:types`    | Type-check the TypeScript tests                                              |
 | `npm run test:coverage` | Enforce coverage and write an HTML report to coverage/lcov-report/index.html |
-| `npm run test:browser` | Build, start an isolated preview, and run the Chrome test through Jest |
-| `npm run test:all` | Run type checks, coverage, and production browser checks |
+| `npm run test:browser`  | Build, start an isolated preview, and run the Chrome test through Jest       |
+| `npm run test:all`      | Run type checks, coverage, and production browser checks                     |
 
 The suite covers storage validation and migrations, failures and recovery, statistics, navigation, theme changes, scroll locking, every page and reusable component, reviewer/topic editing, quizzes, JSON import/export, and PWA registration. Coverage includes all runtime files under src; type-only interfaces are excluded. Required application coverage is 100% functions and lines, 99% statements, and 95% branches. Netlify functions have a separate Node Jest suite requiring 100% coverage. AI tests use mock responses and do not spend provider credits.
 
@@ -141,7 +139,7 @@ The browser suite needs Chrome. Set CHROME_PATH if it is not at the default Wind
 
 Mira's core library, quizzes, settings, and charts work locally. The optional assistant uses a Netlify Function and Pollinations; nothing is sent until the user submits a question or generation request. Generate 1–5 reviewers with 5 or 10 cards each, inspect the preview, then save the batch with its topic. You can also ask in chat, for example: "Create two biology reviewers with ten cards each." Mira can call a validated draft-generation tool; nothing is saved until you choose Save all reviewers. Existing topic names are reused. AI may be inaccurate; check material against course sources.
 
-Set `POLLINATIONS_SK` in Netlify's environment variables with Functions scope, then redeploy. Optional server variables are `POLLINATIONS_BASE_URL` (default https://gen.pollinations.ai/v1) and `POLLINATIONS_MODEL` (default openai). Never prefix the secret with VITE_. Local .env files are not deployed. Configure a spending limit on the provider key; the endpoint is anonymous and has a Netlify limit of 10 requests per IP/domain per minute. Origin checks are not authentication.
+Set `POLLINATIONS_SK` in Netlify's environment variables with Functions scope, then redeploy. Optional server variables are `POLLINATIONS_BASE_URL` (default https://gen.pollinations.ai/v1) and `POLLINATIONS_MODEL` (default openai). Never prefix the secret with VITE\_. Local .env files are not deployed. Configure a spending limit on the provider key; the endpoint is anonymous and has a Netlify limit of 10 requests per IP/domain per minute. Origin checks are not authentication.
 
 The included netlify.toml builds dist and deploys netlify/functions. A manual upload of dist alone does not deploy functions: use a Git-connected Netlify build or the Netlify CLI. For local AI development, use `npm run dev:netlify`; plain Vite remains sufficient for offline/local study development.
 
@@ -173,15 +171,15 @@ In supported browsers, tap the microphone beside the chat input and allow microp
 
 ### Branding assets
 
-| Asset | Use |
-| --- | --- |
-| `public/brand/logo.png` | Original transparent cat and wordmark; black in light mode, white in dark mode |
-| `public/brand/mark.png` | Original cat artwork without the wordmark |
-| `public/icons/favicon-64.png`, `favicon-32.png` | Rounded browser tab icons |
-| `public/icons/apple-touch-icon.png` | 180 × 180 Apple home-screen icon |
-| `public/icons/pwa-192.png`, `pwa-512.png` | Standard PWA icons |
-| `public/icons/pwa-maskable-512.png` | Full-background icon with a padded mark for launcher masks |
-| `public/social_card.png` | Social sharing preview |
+| Asset                                           | Use                                                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| `public/brand/logo.png`                         | Original transparent cat and wordmark; black in light mode, white in dark mode |
+| `public/brand/mark.png`                         | Original cat artwork without the wordmark                                      |
+| `public/icons/favicon-64.png`, `favicon-32.png` | Rounded browser tab icons                                                      |
+| `public/icons/apple-touch-icon.png`             | 180 × 180 Apple home-screen icon                                               |
+| `public/icons/pwa-192.png`, `pwa-512.png`       | Standard PWA icons                                                             |
+| `public/icons/pwa-maskable-512.png`             | Full-background icon with a padded mark for launcher masks                     |
+| `public/social_card.png`                        | Social sharing preview                                                         |
 
 Raster assets are derived directly from `public/logo.png` by `scripts/generate-brand-assets.mjs`. Run `node scripts/generate-brand-assets.mjs` to regenerate the committed assets using the installed Sharp tooling. Runtime branding needs no image-processing library or network request. The service worker precaches the app branding and install icons.
 
