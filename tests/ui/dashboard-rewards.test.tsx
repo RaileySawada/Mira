@@ -113,7 +113,7 @@ test("locked badges show requirements and pale artwork styling", () => {
   const data = library();
   data.attempts = [attempt({ date: "2026-09-18T12:00:00" })];
   render(<Achievements data={data} />);
-  expect(screen.getAllByText("Locked")).toHaveLength(9);
+  expect(screen.getAllByText("Locked")).toHaveLength(19);
   expect(screen.getByText("Quiz Master").closest("article")).toHaveClass(
     "locked",
   );

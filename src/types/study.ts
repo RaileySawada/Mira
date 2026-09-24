@@ -30,6 +30,7 @@ export interface QuestionResult {
   userAnswer: string;
   correct: boolean;
   durationMs: number;
+  voice?: boolean;
 }
 export interface CardSchedule {
   reviewerId: string;
@@ -41,6 +42,8 @@ export interface CardSchedule {
   intervalDays: number;
   recent: boolean[];
   source: "quiz" | "flashcard";
+  needsReviewAt?: string;
+  recoveredAt?: string;
 }
 export interface Attempt {
   id: string;
@@ -64,7 +67,17 @@ export interface Settings {
   autoDaily: boolean;
   shuffle: boolean;
 }
+export interface StudyCompletion {
+  id: string;
+  date: string;
+  kind: "cards" | "quiz" | "daily";
+  offline: boolean;
+  voice: boolean;
+  dueCount: number;
+  reviewedDueCount: number;
+}
 export interface StudyData {
+  studyCompletions?: StudyCompletion[];
   version: 2 | 3;
   schedules?: CardSchedule[];
   lastStudy?: { reviewerId: string; startedAt: string };
@@ -72,6 +85,7 @@ export interface StudyData {
   achievementVersion?: 2;
   milestones?: {
     studyDates?: string[];
+    dueReviewDates?: string[];
     importedReviewer?: boolean;
     focusCompleted?: boolean;
     askedMira?: boolean;

@@ -38,6 +38,20 @@ function offlinePlugin(): Plugin {
           (_, i) => "/rewards/" + (i + 1) + ".webp",
         ),
       );
+      branding.push(
+        ...[
+          "master-first-card",
+          "master-25-cards",
+          "comeback-kid",
+          "clear-due-queue",
+          "due-five-days",
+          "topic-tamer",
+          "rising-scholar",
+          "second-chance",
+          "voice-learner",
+          "offline-scholar",
+        ].map((id) => "/rewards/" + id + ".webp"),
+      );
       const version = createHash("sha256")
         .update(appVersion)
         .update(readFileSync("vite.config.ts"))

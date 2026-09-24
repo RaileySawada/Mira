@@ -1,5 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import { achievements, withAchievements } from "../../src/features/achievements/achievements";
+import {
+  achievements,
+  withAchievements,
+} from "../../src/features/achievements/achievements";
 import { FOCUS_SECONDS } from "../../src/config/learning";
 
 import { FocusTimer } from "../../src/features/achievements/FocusTimer";
@@ -8,7 +11,7 @@ import { validateData } from "../../src/services/storage";
 import { library, attempt, reviewer } from "../support/fixtures";
 
 test("all ten images map to their actual titles and missions", async () => {
-  const badges = achievements(library());
+  const badges = achievements(library()).slice(0, 10);
   expect(badges.map((b) => [b.title, b.description])).toEqual([
     ["First Step", "Completed your first study session"],
     ["Study Streak", "Reviewed 3 days in a row"],
@@ -26,15 +29,20 @@ test("all ten images map to their actual titles and missions", async () => {
   );
   expect(badges.every((b) => !b.earned)).toBe(true);
 });
-test("legacy mismatched badge IDs do not grant unrelated new missions", async () => {
+test("legacy badge IDs remain earned when extending the catalog", async () => {
   const data = library();
   data.earnedBadges = ["badge-1", "badge-5", "badge-9"];
-  expect(withAchievements(data).earnedBadges).toEqual([]);
+  expect(withAchievements(data).earnedBadges).toEqual(data.earnedBadges);
   data.attempts = [
     attempt({ correct: 1, total: 1, date: "2026-09-18T12:00:00" }),
   ];
   const migrated = withAchievements(data);
-  expect(migrated.earnedBadges).toEqual(["badge-1", "badge-4"]);
+  expect(migrated.earnedBadges).toEqual([
+    "badge-1",
+    "badge-4",
+    "badge-5",
+    "badge-9",
+  ]);
   expect(withAchievements({ ...migrated, attempts: [] }).earnedBadges).toEqual(
     migrated.earnedBadges,
   );

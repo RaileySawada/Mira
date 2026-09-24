@@ -1,3 +1,4 @@
+import type { PracticeResult } from "../../types/session";
 import {
   useEffect,
   useLayoutEffect,
@@ -18,15 +19,19 @@ export function FlashcardPractice({
   cards: Card[];
   mastery?: string[];
   onClose: () => void;
-  onComplete?: () => boolean | Promise<boolean>;
+  onComplete?: (results: PracticeResult[]) => boolean | Promise<boolean>;
   onRate?: (card: Card, known: boolean) => boolean | Promise<boolean>;
 }) {
   const saved = useRef(false);
   const savingRating = useRef(false);
   const [saveError, setSaveError] = useState("");
-  async function savePractice() {
+  async function savePractice(currentRatings = ratings) {
     if (saved.current) return true;
-    const success = (await onComplete?.()) ?? true;
+    const results = Object.entries(currentRatings).map(([index, correct]) => ({
+      cardId: cards[Number(index)].id,
+      correct,
+    }));
+    const success = (await onComplete?.(results)) ?? true;
     if (success) saved.current = true;
     return success;
   }
@@ -141,7 +146,7 @@ export function FlashcardPractice({
         return;
       }
       if (index === cards.length - 1) {
-        if (await savePractice())
+        if (await savePractice({ ...ratings, [index]: known }))
           flushSync(() => {
             setRatings((current) => ({ ...current, [index]: known }));
             setFinished(true);

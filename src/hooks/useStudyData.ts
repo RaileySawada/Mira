@@ -18,9 +18,11 @@ export function useStudyData() {
   function update(
     input: StudyData | ((current: StudyData) => StudyData),
   ): Promise<boolean> {
-    const task = pending.current.catch(() => {}).then(() =>
-      commit(typeof input === "function" ? input(latest.current) : input),
-    );
+    const task = pending.current
+      .catch(() => {})
+      .then(() =>
+        commit(typeof input === "function" ? input(latest.current) : input),
+      );
     pending.current = task;
     return task;
   }
@@ -31,7 +33,7 @@ export function useStudyData() {
       await saveData(saved);
       const previous = new Set([
         ...(latest.current.earnedBadges ?? []),
-        ...(next.achievementVersion === 2 ? (next.earnedBadges ?? []) : []),
+        ...(next.earnedBadges ?? []),
       ]);
       const newlyEarned = achievements(saved).filter(
         (badge) => badge.earned && !previous.has(badge.id),

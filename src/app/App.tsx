@@ -1,3 +1,7 @@
+import {
+  captureDueCards,
+  recordStudyCompletion,
+} from "../features/learning/sessionEvidence";
 import { AppFooter } from "../components/AppFooter";
 import { OnlineCount } from "../components/OnlineCount";
 import { recoveryBackup } from "../services/storageRuntime";
@@ -93,6 +97,7 @@ export default function App() {
       )
         return;
       setSession({
+        dueAtStart: captureDueCards(data, reviewer.id),
         title: reviewer.title,
         reviewerId: reviewer.id,
         mode,
@@ -113,6 +118,7 @@ export default function App() {
     const cards = selectDailyCards(data, dailyQuizSize(data.settings));
     if (cards.length)
       setSession({
+        dueAtStart: captureDueCards(data),
         title: "Your daily review",
         reviewerId: "",
         mode: "daily",
@@ -332,20 +338,36 @@ export default function App() {
             )
           }
           onClose={() => setSession(null)}
-          onPracticeComplete={() =>
-            update((current) => ({
-              ...current,
-              milestones: {
-                ...current.milestones,
-                studyDates: [
-                  ...(current.milestones?.studyDates ?? []),
-                  new Date().toISOString(),
-                ],
-              },
-            }))
+          onPracticeComplete={(results) =>
+            update((current) =>
+              recordStudyCompletion(
+                {
+                  ...current,
+                  milestones: {
+                    ...current.milestones,
+                    studyDates: [
+                      ...(current.milestones?.studyDates ?? []),
+                      new Date().toISOString(),
+                    ],
+                  },
+                },
+                session,
+                crypto.randomUUID(),
+                results,
+                !navigator.onLine,
+              ),
+            )
           }
           onComplete={(attempt) =>
-            update((current) => recordAttempt(current, attempt))
+            update((current) =>
+              recordStudyCompletion(
+                recordAttempt(current, attempt),
+                session,
+                attempt.id,
+                attempt.results ?? [],
+                !navigator.onLine,
+              ),
+            )
           }
         />
       )}

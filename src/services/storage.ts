@@ -1,3 +1,5 @@
+import { dayKey } from "../utils/stats";
+import { ACHIEVEMENT_IDS } from "../features/achievements/catalog";
 import { STORAGE_KEY } from "../config/storage";
 import {
   storedSnapshot,
@@ -5,7 +7,6 @@ import {
   persistStudyData,
 } from "./storageRuntime";
 import type { StudyData } from "../types/study";
-
 
 export function emptyData(): StudyData {
   return {
@@ -139,7 +140,7 @@ export function validateData(value: unknown): StudyData {
     value.earnedBadges !== undefined &&
     (!Array.isArray(value.earnedBadges) ||
       !value.earnedBadges.every(
-        (id) => typeof id === "string" && /^badge-(?:[1-9]|10)$/.test(id),
+        (id) => typeof id === "string" && ACHIEVEMENT_IDS.includes(id),
       ))
   )
     throw new Error("The backup contains invalid achievements.");
@@ -160,6 +161,14 @@ export function validateData(value: unknown): StudyData {
       !record(m) ||
       (m.studyDates !== undefined &&
         (!Array.isArray(m.studyDates) || !m.studyDates.every(date))) ||
+      (m.dueReviewDates !== undefined &&
+        (!Array.isArray(m.dueReviewDates) ||
+          !m.dueReviewDates.every(
+            (d) =>
+              typeof d === "string" &&
+              /^\d{4}-\d{2}-\d{2}$/.test(d) &&
+              dayKey(d + "T12:00:00") === d,
+          ))) ||
       ["importedReviewer", "focusCompleted", "askedMira"].some(
         (key) => m[key] !== undefined && typeof m[key] !== "boolean",
       )
@@ -172,6 +181,28 @@ export function validateData(value: unknown): StudyData {
     )
   )
     throw new Error("Invalid answer timing milestone.");
+  if (
+    value.studyCompletions !== undefined &&
+    (!Array.isArray(value.studyCompletions) ||
+      !value.studyCompletions.every(
+        (e) =>
+          record(e) &&
+          string(e.id) &&
+          e.id &&
+          date(e.date) &&
+          ["cards", "quiz", "daily"].includes(e.kind as string) &&
+          typeof e.offline === "boolean" &&
+          typeof e.voice === "boolean" &&
+          integer(e.dueCount, 0, 1000000) &&
+          integer(e.reviewedDueCount, 0, e.dueCount),
+      ))
+  )
+    throw new Error("Invalid study completion evidence.");
+  if (
+    Array.isArray(value.studyCompletions) &&
+    !uniqueIds(value.studyCompletions)
+  )
+    throw new Error("Duplicate study completion evidence.");
   const s = value.settings;
   if (
     !string(s.name) ||
@@ -225,7 +256,8 @@ export function validateData(value: unknown): StudyData {
           string(r.expectedAnswer) &&
           string(r.userAnswer) &&
           typeof r.correct === "boolean" &&
-          integer(r.durationMs, 0, 604800000),
+          integer(r.durationMs, 0, 604800000) &&
+          (r.voice === undefined || typeof r.voice === "boolean"),
       ) ||
       attempt.results.filter((r: { correct: boolean }) => r.correct).length !==
         attempt.correct
@@ -242,6 +274,12 @@ export function validateData(value: unknown): StudyData {
           string(s.cardId) &&
           date(s.lastReviewedAt) &&
           date(s.nextReviewAt) &&
+          (s.needsReviewAt === undefined || date(s.needsReviewAt)) &&
+          (s.recoveredAt === undefined ||
+            (date(s.recoveredAt) &&
+              date(s.needsReviewAt) &&
+              Date.parse(String(s.recoveredAt)) >=
+                Date.parse(String(s.needsReviewAt)))) &&
           integer(s.repetitions, 0, 1000000) &&
           integer(s.lapses, 0, 1000000) &&
           typeof s.intervalDays === "number" &&
@@ -290,6 +328,19 @@ export function validateData(value: unknown): StudyData {
   // Construct only recognized fields. Imported objects never become application state directly.
   return {
     version: data.version,
+    ...(data.studyCompletions
+      ? {
+          studyCompletions: data.studyCompletions.map((e) => ({
+            id: e.id,
+            date: e.date,
+            kind: e.kind,
+            offline: e.offline,
+            voice: e.voice,
+            dueCount: e.dueCount,
+            reviewedDueCount: e.reviewedDueCount,
+          })),
+        }
+      : {}),
     topics: data.topics.map((t) => ({
       id: t.id,
       name: t.name,
@@ -336,6 +387,7 @@ export function validateData(value: unknown): StudyData {
               userAnswer: r.userAnswer,
               correct: r.correct,
               durationMs: r.durationMs,
+              ...(r.voice !== undefined ? { voice: r.voice } : {}),
             })),
           }
         : {}),
@@ -366,6 +418,9 @@ export function validateData(value: unknown): StudyData {
     ...(data.milestones
       ? {
           milestones: {
+            ...(data.milestones.dueReviewDates
+              ? { dueReviewDates: [...new Set(data.milestones.dueReviewDates)] }
+              : {}),
             ...(data.milestones.studyDates
               ? { studyDates: [...data.milestones.studyDates] }
               : {}),
@@ -384,6 +439,8 @@ export function validateData(value: unknown): StudyData {
     ...(data.schedules
       ? {
           schedules: data.schedules.map((s) => ({
+            ...(s.needsReviewAt ? { needsReviewAt: s.needsReviewAt } : {}),
+            ...(s.recoveredAt ? { recoveredAt: s.recoveredAt } : {}),
             reviewerId: s.reviewerId,
             cardId: s.cardId,
             lastReviewedAt: s.lastReviewedAt,
@@ -418,7 +475,8 @@ export function readData(): { data: StudyData; error: string } {
 }
 export function saveData(data: StudyData) {
   if (databaseReady()) return persistStudyData(data);
-  if (storedSnapshot()?.error) throw new Error("Reload to reopen the study database before saving.");
+  if (storedSnapshot()?.error)
+    throw new Error("Reload to reopen the study database before saving.");
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 export function downloadJson(

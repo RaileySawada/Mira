@@ -16,6 +16,7 @@ export function parseQuizDraft(value: unknown): QuizDraft {
     typeof v.answer !== "string" ||
     v.answer.length > 20000 ||
     typeof v.checked !== "boolean" ||
+    (v.answerWasVoice !== undefined && typeof v.answerWasVoice !== "boolean") ||
     typeof v.startedAt !== "string" ||
     !Number.isFinite(Date.parse(v.startedAt)) ||
     !Number.isInteger(v.index) ||
@@ -31,6 +32,21 @@ export function parseQuizDraft(value: unknown): QuizDraft {
     Number(v.elapsedMs) > 604800000
   )
     throw new Error("Invalid quiz draft.");
+  if (
+    v.dueAtStart !== undefined &&
+    (!Array.isArray(v.dueAtStart) ||
+      v.dueAtStart.length > 100000 ||
+      !v.dueAtStart.every(
+        (c) =>
+          c &&
+          typeof c === "object" &&
+          typeof c.reviewerId === "string" &&
+          c.reviewerId &&
+          typeof c.cardId === "string" &&
+          c.cardId,
+      ))
+  )
+    throw new Error("Invalid starting due queue.");
   const data = validateData({
     ...emptyData(),
     reviewers: [
@@ -96,14 +112,27 @@ export function parseQuizDraft(value: unknown): QuizDraft {
     };
   });
   const results = data.attempts[0]?.results ?? [];
-  if (results.some((result, index) => {
-    const card = cards[index];
-    return result.cardId !== card.id ||
-      result.question !== card.question ||
-      result.expectedAnswer !== card.answer ||
-      (result.reviewerId !== undefined && result.reviewerId !== (card.reviewerId ?? v.reviewerId));
-  })) throw new Error("Quiz draft answers do not match its cards.");
+  if (
+    results.some((result, index) => {
+      const card = cards[index];
+      return (
+        result.cardId !== card.id ||
+        result.question !== card.question ||
+        result.expectedAnswer !== card.answer ||
+        (result.reviewerId !== undefined &&
+          result.reviewerId !== (card.reviewerId ?? v.reviewerId))
+      );
+    })
+  )
+    throw new Error("Quiz draft answers do not match its cards.");
   return {
+    ...(v.dueAtStart
+      ? {
+          dueAtStart: (
+            v.dueAtStart as { reviewerId: string; cardId: string }[]
+          ).map((c) => ({ reviewerId: c.reviewerId, cardId: c.cardId })),
+        }
+      : {}),
     id: v.id,
     title: v.title,
     reviewerId: v.reviewerId,
@@ -116,6 +145,9 @@ export function parseQuizDraft(value: unknown): QuizDraft {
       answer: r.userAnswer,
     })),
     answer: v.answer,
+    ...(v.answerWasVoice !== undefined
+      ? { answerWasVoice: v.answerWasVoice as boolean }
+      : {}),
     checked: v.checked,
     startedAt: v.startedAt,
     elapsedMs: Number(v.elapsedMs),

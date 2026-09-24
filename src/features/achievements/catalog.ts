@@ -1,0 +1,25 @@
+export const ADAPTIVE_BADGE_IDS = [
+  "master-first-card",
+  "master-25-cards",
+  "comeback-kid",
+  "clear-due-queue",
+  "due-five-days",
+  "topic-tamer",
+  "rising-scholar",
+  "second-chance",
+  "voice-learner",
+  "offline-scholar",
+] as const;
+export const ACHIEVEMENT_IDS = [
+  "badge-1",
+  "badge-2",
+  "badge-3",
+  "badge-4",
+  "badge-5",
+  "badge-6",
+  "badge-7",
+  "badge-8",
+  "badge-9",
+  "badge-10",
+  ...ADAPTIVE_BADGE_IDS,
+];

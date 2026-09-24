@@ -1076,6 +1076,11 @@ test("production study flows, themes, mobile overlays and offline reload", async
       uploadThroughput: 0,
     });
     await waitFor("navigator.onLine === false");
+    expect(
+      await evaluate(
+        "Promise.all(['master-first-card','master-25-cards','comeback-kid','clear-due-queue','due-five-days','topic-tamer','rising-scholar','second-chance','voice-learner','offline-scholar'].map(async id => { const response = await fetch('/rewards/' + id + '.webp'); return response.ok && response.headers.get('content-type').includes('image/webp'); })).then(results => results.every(Boolean))",
+      ),
+    ).toBe(true);
     await waitFor("document.querySelector('.ai-panel').hidden");
     await send("Network.emulateNetworkConditions", {
       offline: false,

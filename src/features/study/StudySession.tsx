@@ -1,3 +1,4 @@
+import type { PracticeResult } from "../../types/session";
 import type { Session } from "../../types/session";
 import type { QuizDraft } from "../../types/session";
 
@@ -29,9 +30,12 @@ export function StudySession({
   mastery?: string[];
   onClose: () => void;
   onComplete: (a: Attempt) => boolean | Promise<boolean>;
-  onPracticeComplete?: () => boolean | Promise<boolean>;
+  onPracticeComplete?: (
+    results: PracticeResult[],
+  ) => boolean | Promise<boolean>;
   onRate?: (card: Card, known: boolean) => boolean | Promise<boolean>;
 }) {
+  const voiceAnswer = useRef(session.resume?.answerWasVoice ?? false);
   const questionStarted = useRef(0);
   const fastCorrect = useRef(
     session.resume?.answers.some(
@@ -77,6 +81,7 @@ export function StudySession({
   useEffect(() => {
     if (session.mode === "cards" || complete || completed.current) return;
     draft.current = {
+      dueAtStart: session.dueAtStart,
       id: attemptId,
       title: session.title,
       reviewerId: session.reviewerId,
@@ -87,6 +92,7 @@ export function StudySession({
       index,
       answers,
       answer,
+      answerWasVoice: voiceAnswer.current,
       checked,
       startedAt,
       elapsedMs: Math.min(
@@ -101,10 +107,10 @@ export function StudySession({
         elapsedOffset + Math.round(performance.now() - questionStarted.current),
       );
       void persistActiveDraft(draft.current).catch(() =>
-          setDraftError(
-            "Could not save your unfinished quiz. Keep this page open and try again.",
-          ),
-        );
+        setDraftError(
+          "Could not save your unfinished quiz. Keep this page open and try again.",
+        ),
+      );
     };
     const timer = window.setTimeout(saveDraft, 250);
     const onVisibilityChange = () => {
@@ -154,7 +160,11 @@ export function StudySession({
       if (!complete && !completed.current && session.mode !== "cards") {
         try {
           if (draft.current) {
-            draft.current.elapsedMs = Math.min(604800000, elapsedOffset + Math.round(performance.now() - questionStarted.current));
+            draft.current.elapsedMs = Math.min(
+              604800000,
+              elapsedOffset +
+                Math.round(performance.now() - questionStarted.current),
+            );
           }
           await persistActiveDraft(draft.current);
         } catch {
@@ -191,6 +201,7 @@ export function StudySession({
         () => setComplete(true),
       );
     } else {
+      voiceAnswer.current = false;
       setIndex(index + 1);
       setAnswer("");
       setChecked(false);
@@ -243,6 +254,7 @@ export function StudySession({
                     disabled={!canChoose}
                     aria-pressed={difficulty === "normal"}
                     onClick={() => {
+                      voiceAnswer.current = false;
                       setDifficulty("normal");
                       setAnswer("");
                     }}
@@ -253,6 +265,7 @@ export function StudySession({
                     type="button"
                     aria-pressed={difficulty === "hard"}
                     onClick={() => {
+                      voiceAnswer.current = false;
                       setDifficulty("hard");
                       setAnswer("");
                     }}
@@ -306,7 +319,11 @@ export function StudySession({
                 <VoiceStudy
                   question={card.question}
                   answer={answer}
-                  onAnswer={setAnswer}
+                  onAnswer={(text) => {
+                    voiceAnswer.current ||=
+                      Boolean(text.trim()) && text.trim() !== answer.trim();
+                    setAnswer(text);
+                  }}
                   disabled={checked}
                 />
               )}
@@ -329,6 +346,7 @@ export function StudySession({
                   setAnswers([
                     ...answers,
                     {
+                      voice: difficulty === "hard" && voiceAnswer.current,
                       answer: answer.trim(),
                       correct: matchesAnswer(answer, card),
                       cardId: card.id,
