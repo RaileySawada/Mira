@@ -262,6 +262,16 @@ Mira has a dedicated `/mira` workspace alongside the floating assistant. Enter s
 
 Features own their behavior. Private component props, vendor-adapter types, implementation constants and feature content stay beside the code that uses them. Shared types do not import feature implementations. Storage key values and study thresholds remain unchanged by this organization.
 
-## Code organization
+## Releases and installed PWA updates
 
-See [architecture and SOLID guidelines](docs/architecture.md) for folder responsibilities, dependency boundaries, and extension rules.
+The browser app and installed PWA share the version in package.json. The footer displays the running version; /version.json identifies the deployed version and build fingerprint. Database schema and consent-policy versions are independent.
+
+- Fix release: npm run version:patch
+- Compatible feature release: npm run version:minor
+- Breaking release: npm run version:major
+
+These commands update package.json and package-lock.json without creating a commit or tag. Run npm run lint and npm run test:all before publishing. Commit both version files with your release changes and optionally tag that commit with the matching version.
+
+Each production build creates an offline cache named mira-VERSION-BUILD. Changed assets or service-worker code receive a fresh fingerprint. The manifest identity stays stable so users keep the same installed app. Updates download online and wait until all Mira tabs and installed windows close before activation; reopen Mira to use the update. Active study sessions are not force-reloaded, and the local study database is preserved.
+
+If Netlify completes building, function bundling, and secret scanning but its deploy API returns HTTP 500, retry the failed deploy from its dashboard. If it repeats, send Netlify support the deploy ID and full log. That error alone does not mean dist is missing.
