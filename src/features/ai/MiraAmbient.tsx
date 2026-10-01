@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { MiraMood } from "../../types/learning";
-import "./MiraAmbient.css";
+import "../../assets/styles/features/ai/ambient.css";
 
 export function MiraAmbient({ mood }: { mood: MiraMood }) {
   const [paused, setPaused] = useState(() => document.hidden);
@@ -11,12 +11,25 @@ export function MiraAmbient({ mood }: { mood: MiraMood }) {
   }, []);
 
   return (
-    <div className="mira-ambient" data-mood={mood} data-paused={paused} aria-hidden="true">
-      {(["normal", "thinking", "happy", "amazed", "sad"] as const).map(tone => (
-        <div key={tone} className="mira-ambient-palette" data-tone={tone} data-active={tone === mood}>
-          <span /><span />
-        </div>
-      ))}
+    <div
+      className="mira-ambient"
+      data-mood={mood}
+      data-paused={paused}
+      aria-hidden="true"
+    >
+      {(["normal", "thinking", "happy", "amazed", "sad"] as const).map(
+        (tone) => (
+          <div
+            key={tone}
+            className="mira-ambient-palette"
+            data-tone={tone}
+            data-active={tone === mood}
+          >
+            <span />
+            <span />
+          </div>
+        ),
+      )}
     </div>
   );
 }

@@ -1,3 +1,6 @@
+import { Introduction } from "../features/onboarding/Introduction";
+import { completeIntroduction, needsIntroduction } from "../features/onboarding/onboarding";
+import type { Theme } from "../types/study";
 import {
   captureDueCards,
   recordStudyCompletion,
@@ -52,16 +55,18 @@ export default function App() {
     needsRecovery,
     allowRecovery,
   } = useStudyData();
+  const [introducing, setIntroducing] = useState(() => !needsRecovery && needsIntroduction(data));
+  const [previewTheme, setPreviewTheme] = useState<Theme | null>(null);
   const page = usePage();
   const [accepted, setAccepted] = useState(hasPolicyConsent);
-  const presence = usePresence(accepted);
+  const presence = usePresence(accepted && !introducing);
   useEffect(() => {
     const refresh = () => setAccepted(hasPolicyConsent());
     window.addEventListener("storage", refresh);
     return () => window.removeEventListener("storage", refresh);
   }, []);
   const [recoveryError, setRecoveryError] = useState("");
-  const changeTheme = useTheme(data.settings.theme, (theme) =>
+  const changeTheme = useTheme(previewTheme ?? data.settings.theme, (theme) =>
     update({ ...data, settings: { ...data.settings, theme } }),
   );
   const [editor, setEditor] = useState<Reviewer | "new" | null>(null);
@@ -136,6 +141,22 @@ export default function App() {
     });
   }
   if (!accepted) return <PolicyConsent onAccept={() => setAccepted(true)} />;
+  if (introducing && !needsRecovery) return <Introduction
+    settings={data.settings}
+    onPreviewTheme={setPreviewTheme}
+    onSave={async settings => {
+      if (settings && !(await update(current => ({ ...current, settings: { ...current.settings, ...settings } })))) return false;
+      completeIntroduction();
+      return true;
+    }}
+    onDone={choice => {
+      setPreviewTheme(null);
+      setIntroducing(false);
+      if (choice === "import") navigate("Settings");
+      else if (choice === "create") { navigate("Reviewers"); setEditor("new"); }
+      else navigate("Home");
+    }}
+  />;
   return (
     <div className="min-h-screen bg-page text-ink">
       <Sidebar page={page} />

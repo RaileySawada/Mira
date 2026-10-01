@@ -1,3 +1,4 @@
+import { NotFound } from "./NotFound";
 import { POLICY_VERSION } from "../config/policy";
 
 import type { Page } from "../types/study";
@@ -9,19 +10,7 @@ import { documents } from "../config/documents";
 import type { DocumentPage } from "../config/documents";
 
 export function Documentation({ page }: { page: Page }) {
-  if (!(page in documents))
-    return (
-      <>
-        <PageHeading
-          eyebrow="404 · PAGE NOT FOUND"
-          title="This page is still a blank page."
-          description="The address doesn’t match a Mira page."
-        />
-        <RouteLink page="Home" className="button primary">
-          Back home <Icon name="arrow" size={16} />
-        </RouteLink>
-      </>
-    );
+  if (!(page in documents)) return <NotFound />;
   const document = documents[page as DocumentPage];
   return (
     <>

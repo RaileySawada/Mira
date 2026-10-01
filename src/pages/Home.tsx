@@ -1,4 +1,4 @@
-import "../features/home/HomeDashboard.css";
+import "../assets/styles/features/home/dashboard.css";
 import { LearningInsights } from "../features/home/LearningInsights";
 import { LearningPath } from "../features/home/LearningPath";
 import { learningAnalytics } from "../features/learning/analytics";

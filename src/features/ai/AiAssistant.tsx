@@ -1,5 +1,5 @@
 import { ChatComposer } from "./ChatComposer";
-import "./MiraLayout.css";
+import "../../assets/styles/features/ai/layout.css";
 import type { LibraryAction } from "../../types/agent";
 import { parseLibraryActions, describeLibraryAction } from "./libraryActions";
 import { MiraAmbient } from "./MiraAmbient";
@@ -265,12 +265,10 @@ export default function AiAssistant({
             : {}),
           prompt: question || "General overview",
           ...(studyData ? { overview: buildStudyOverview(studyData) } : {}),
-          history: messages
-            .slice(-6)
-            .map((message) => ({
-              ...message,
-              content: message.content.slice(0, 1800),
-            })),
+          history: messages.slice(-6).map((message) => ({
+            ...message,
+            content: message.content.slice(0, 1800),
+          })),
         },
         pending.signal,
       );

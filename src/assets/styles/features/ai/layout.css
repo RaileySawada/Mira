@@ -1,4 +1,3 @@
-/* A single aligned toolbar keeps icon buttons and selectors on the same baseline. */
 .ai-conversation .chat-composer-toolbar {
   display: flex;
   align-items: center;

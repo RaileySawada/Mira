@@ -10,7 +10,6 @@ const appVersion: string = JSON.parse(
   readFileSync("package.json", "utf8"),
 ).version;
 
-// Generate the offline asset list from the build so each release has its own cache.
 function offlinePlugin(): Plugin {
   return {
     name: "mira-offline",
@@ -20,6 +19,7 @@ function offlinePlugin(): Plugin {
         (name) => !name.endsWith(".map"),
       );
       const branding = [
+        "/404.webp",
         "/brand/logo.png",
         "/brand/mark.png",
         "/icons/favicon-64.png",

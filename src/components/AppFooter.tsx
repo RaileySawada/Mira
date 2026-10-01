@@ -1,6 +1,6 @@
 import { APP_VERSION } from "../config/release";
 import { RouteLink } from "./RouteLink";
-import "./AppFooter.css";
+import "../assets/styles/components/app-footer.css";
 
 export function AppFooter() {
   return (

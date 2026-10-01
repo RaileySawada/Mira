@@ -202,6 +202,42 @@ test("production study flows, themes, mobile overlays and offline reload", async
       "document.querySelectorAll('.consent-card input[type=checkbox]').forEach(input => input.click())",
     );
     await click("Agree & continue");
+    await waitFor("document.querySelector('.onboarding')");
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 360,
+      height: 740,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    expect(
+      await evaluate("document.documentElement.scrollWidth <= innerWidth"),
+    ).toBe(true);
+    await click("Let’s begin");
+    await evaluate(
+      "document.querySelector('input[name=setup-theme]').closest('fieldset').querySelectorAll('input')[1].click()",
+    );
+    expect(await evaluate("document.documentElement.dataset.theme")).toBe(
+      "dark",
+    );
+    const onboardingShot = await send("Page.captureScreenshot", {
+      format: "png",
+      captureBeyondViewport: true,
+    });
+    await writeFile(
+      path.join(tmpdir(), "mira-onboarding-mobile.png"),
+      Buffer.from(onboardingShot.data, "base64"),
+    );
+    await click("Continue");
+    expect(
+      await evaluate("document.querySelectorAll('.onboarding-choice').length"),
+    ).toBe(3);
+    await click("Skip introduction");
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 1440,
+      height: 1100,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
     await waitFor("document.querySelector('.sidebar')");
     expect(await evaluate("document.body.innerText")).toMatch(
       /Your next chapter/,
@@ -1378,7 +1414,19 @@ test("production study flows, themes, mobile overlays and offline reload", async
     await evaluate(
       "history.pushState(null,'','/this-page-does-not-exist'); window.dispatchEvent(new PopStateEvent('popstate'))",
     );
-    await waitFor("document.body.innerText.includes('404')");
+    await waitFor("document.querySelector('.not-found-art img')?.naturalWidth > 0");
+    expect(await evaluate("document.querySelector('#not-found-title').textContent")).toBe("A little lost?");
+    expect(await evaluate("document.querySelector('.not-found-actions a').getAttribute('href')")).toBe("/");
+    await send("Emulation.setDeviceMetricsOverride", {
+      width: 360, height: 740, deviceScaleFactor: 1, mobile: true,
+    });
+    for (const path of ["/this-page-does-not-exist", "/", "/reviewers", "/topics", "/folders", "/quizzes", "/activity", "/achievements", "/settings", "/mira"]) {
+      await evaluate(`history.pushState(null, '', ${JSON.stringify(path)}); window.dispatchEvent(new PopStateEvent('popstate'))`);
+      await waitFor("document.querySelector('.mobile-header') !== null");
+      expect(await evaluate("getComputedStyle(document.documentElement).scrollbarGutter")).toBe("auto");
+      expect(await evaluate("document.documentElement.scrollWidth <= window.innerWidth")).toBe(true);
+      expect(await evaluate("Math.abs(document.querySelector('.mobile-header').getBoundingClientRect().right - document.documentElement.clientWidth) < 1")).toBe(true);
+    }
     expect(errors).toEqual([]);
   } finally {
     socket?.close();

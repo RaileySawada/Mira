@@ -281,3 +281,13 @@ If Netlify completes building, function bundling, and secret scanning but its de
 Mira includes 20 rewards, grouped into Milestones and Challenges. They celebrate progress, consistency, recovery and learning behavior—not intelligence. Master your first card or 25 cards, master an entire topic of at least 10 cards, bring a Needs review card back to Mastered, clear a nonempty starting due queue, or review due cards on five local-calendar days. Improve the same reviewer score by 20 percentage points, recover five unique missed cards, finish a voice-assisted Hard quiz (a transcript for every answer, editable before checking), or complete a valid study session while offline.
 
 Mastery uses the existing scheduler. Historical quiz recovery uses reviewer/card pairs; older backups cannot prove unrecorded voice/offline sessions or unseen mastery transitions. New completion and transition evidence is validated, saved in IndexedDB, and preserved in JSON export/import without changing database version 3. Existing badge-1 through badge-10 IDs and artwork remain unchanged. All ten new rewards use semantic IDs and optimized WebP artwork cached by the PWA. Future hidden achievements show ??? and a generic lock with no mission or progress until earned. Newly earned rewards share the grouped celebration and do not repeat after reload.
+
+## Code and stylesheet organization
+
+All CSS lives in `src/assets/styles/`: `index.css` loads global base/shared styles, `components/` holds reusable UI styles, and `features/` groups feature-specific styles. Feature components import their styles directly to preserve lazy loading. See [architecture guidelines](docs/architecture.md) for responsibilities and practical SOLID conventions.
+
+## First-visit introduction
+
+After policy consent, new empty workspaces meet Mira in a three-step introduction. Name, theme and daily question goal are optional; themes preview immediately and preferences save when finishing. Users can create a reviewer, go to Settings to import a JSON backup, or explore Home. Skip keeps existing preferences. Completion is remembered on this device; populated libraries and recovery mode bypass the introduction. The artwork works offline and animations respect reduced motion.
+
+Optimized onboarding artwork lives in `src/assets/images/onboarding/`, including Mira’s peeking welcome pose.

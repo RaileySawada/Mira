@@ -9,7 +9,7 @@ module.exports = {
     "/node_modules/(?!(estree-util-.*|style-to-object|inline-style-parser|react-markdown|remark-.*|rehype-.*|unified|bail|devlop|is-plain-obj|trough|vfile.*|unist-.*|mdast-.*|micromark.*|hast-.*|property-information|space-separated-tokens|comma-separated-tokens|decode-named-character-reference|character-entities.*|ccount|escape-string-regexp|markdown-table|zwitch|trim-lines|longest-streak|html-url-attributes|html-void-elements)/)",
   ],
   moduleNameMapper: {
-    "\\.(css|svg|png)$": "<rootDir>/tests/support/assetMock.cjs",
+    "\\.(css|svg|png|webp)$": "<rootDir>/tests/support/assetMock.cjs",
   },
   collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/types/**"],
   coverageDirectory: "coverage",

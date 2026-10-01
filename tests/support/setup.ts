@@ -81,6 +81,7 @@ Object.defineProperty(window, "alert", {
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem("mira.onboarding.v1", "done");
   sessionStorage.clear();
   history.replaceState(null, "", "/");
   document.documentElement.removeAttribute("style");
